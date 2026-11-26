@@ -3,18 +3,19 @@ import { X } from "@lucide/svelte";
 import Icon from "./Icon.svelte";
 
 // The close button of a tab in a strip, the editor's file tabs and the
-// grid's panel tabs alike. Unsaved content shows a dot in its place, which
-// turns into the cross under the pointer or with focus. A strip conceals
+// grid's panel tabs alike. A dotted tab, such as one with unsaved text, shows
+// a dot in its place, which turns into the cross under the pointer or with
+// focus. A strip conceals
 // the cross of a clean tab that is not the shown one until its tab, marked
 // `yaa-tab`, is hovered.
 let {
 	label,
-	dirty = false,
+	dotted = false,
 	concealed = false,
 	onclick,
 }: {
 	label: string;
-	dirty?: boolean;
+	dotted?: boolean;
 	concealed?: boolean;
 	onclick: () => void;
 } = $props();
@@ -22,7 +23,7 @@ let {
 
 <button
 	type="button"
-	class={["yaa-tab-close", { dirty, concealed }]}
+	class={["yaa-tab-close", { dotted, concealed }]}
 	aria-label={label}
 	{onclick}
 >
@@ -71,11 +72,11 @@ let {
 	display: flex;
 }
 
-.dirty:not(:hover, :focus-visible) .dot,
-.dirty:is(:hover, :focus-visible) .cross,
-.yaa-tab-close:not(.dirty, .concealed) .cross,
-.yaa-tab-close:not(.dirty):focus-visible .cross,
-:global(.yaa-tab:hover) .yaa-tab-close:not(.dirty) .cross {
+.dotted:not(:hover, :focus-visible) .dot,
+.dotted:is(:hover, :focus-visible) .cross,
+.yaa-tab-close:not(.dotted, .concealed) .cross,
+.yaa-tab-close:not(.dotted):focus-visible .cross,
+:global(.yaa-tab:hover) .yaa-tab-close:not(.dotted) .cross {
 	visibility: visible;
 }
 </style>

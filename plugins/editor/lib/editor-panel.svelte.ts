@@ -38,7 +38,7 @@ export const createEditorPanel = (panel: PanelContext) => {
 		failure = describe(reason);
 	};
 
-	const view = createEditorView(() => saveActive());
+	const view = createEditorView(() => saveActive(), panel.captureKeys);
 	const documents = createDocuments({
 		panel,
 		// An edited file stays open.
@@ -196,12 +196,14 @@ export const createEditorPanel = (panel: PanelContext) => {
 		get tabs() {
 			const labels = tabLabels(tabs.open.map((tab) => tab.path));
 			return tabs.open.map((tab, index) => ({
-				...tab,
+				id: tab.path,
 				name: labels[index]?.name ?? tab.path,
-				folder: labels[index]?.folder,
+				detail: labels[index]?.folder,
+				title: tab.path,
 				active: tab.path === tabs.active,
-				dirty: documents.isDirty(tab.path),
-				deleted: documents.get(tab.path)?.disk === "deleted",
+				italic: tab.preview,
+				struck: documents.get(tab.path)?.disk === "deleted",
+				dot: documents.isDirty(tab.path) ? "unsaved" : undefined,
 			}));
 		},
 		// The file on screen, if a tab is open.

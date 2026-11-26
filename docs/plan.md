@@ -58,7 +58,7 @@ Build order, one pull request each:
 8. Permission modes per worktree, shown in the chat header.
 9. Debug panel: the logs with level, source and worktree filters.
 10. Copilot CLI provider, including how it detects a signed-out state (unverified in `docs/spec/05-agents-chat.md`).
-11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`).
+11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`), with their counts in the chat header.
 12. Exit check: the smoke test opens a worktree, measure worktree switch time and chat streaming.
 
 Exit: you build yaa's next feature inside yaa. Two worktrees run real agents in parallel; one asking a permission question shows Needs attention, and a key jumps to it. Measure worktree switch time and chat streaming.
@@ -66,7 +66,7 @@ Exit: you build yaa's next feature inside yaa. Two worktrees run real agents in 
 ## M3: code
 Editor (Monaco), files, git panel, diff, annotations (notes in diffs or code sent back to the agent), terminal, generated commit messages, text search, conflicts, rebase and stash. Dev-mode plugin hot reload and the agent-authoring tools.
 
-Build order, one pull request each. M3 starts when M2 has met its exit check, except steps 1 and 2, built beside M2. A step can start once the steps it names under "after" are merged, so the others can be built in parallel. Each step is a built-in plugin or extends one, and adds the plugin API it needs (`docs/spec/03-plugins.md`).
+Build order, one pull request each. M3 starts when M2 has met its exit check, except steps 1 to 3, built beside M2. A step can start once the steps it names under "after" are merged, so the others can be built in parallel. Each step is a built-in plugin or extends one, and adds the plugin API it needs (`docs/spec/03-plugins.md`).
 
 1. Files panel (`docs/spec/07-editor-files-terminal.md`): the tree of the active worktree from `git ls-files` plus untracked files, kept fresh by a file watcher, with git status decorations, the ignored toggle, the fuzzy filter, and new, rename and delete. It is the first plugin that works on a worktree, so it adds the API for that: a panel knows its worktree, a UI module calls its backend and receives its events, and a backend reads worktrees and git.
 2. Editor, after 1: Monaco with a theme from the tokens, tabs per worktree (preview, pinned, dirty, next, previous, close, reopen), saving, quick-open by fuzzy path, and tabs restored on start through plugin storage. Files open here at the line; the file paths in chat do once M2 step 6 renders them, through the same call.

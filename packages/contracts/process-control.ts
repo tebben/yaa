@@ -9,9 +9,9 @@ import { logRecord } from "./log.ts";
 // and finds the built-in plugins; the core answers `ready` once its database
 // is open. A `connect` message carries one MessagePort: a new client.
 // `plugin-host` carries the port to a plugin host main forked on the core's
-// request. `log` forwards a line from main. `picked-folder` answers the
-// core's `pick-folder` with the same id: the folder chosen, or null when the
-// dialog was cancelled.
+// request. `log` forwards a line from main. `picked` answers the core's
+// `pick` with the same id: the paths chosen, none when the dialog was
+// cancelled.
 export const toCoreMessage = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("start"),
@@ -24,20 +24,27 @@ export const toCoreMessage = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("plugin-host") }),
 	z.object({ kind: z.literal("log"), record: logRecord }),
 	z.object({
-		kind: z.literal("picked-folder"),
+		kind: z.literal("picked"),
 		id: z.number().int(),
-		path: z.string().nullable(),
+		paths: z.array(z.string()),
 	}),
 ]);
 
 // Core to main. The core's supervisor decides when the plugin host starts
 // and restarts; `start-plugin-host` asks main to fork a new one, replacing
-// any host still running. `pick-folder` asks main for the system's folder
-// picker, which only main can show.
+// any host still running. `pick` asks main for the system's picker of a
+// folder or of files, which only main can show.
+// What the system's picker chooses: one folder, or any number of files.
+const pickTarget = z.enum(["folder", "files"]);
+
 export const fromCoreMessage = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("ready") }),
 	z.object({ kind: z.literal("start-plugin-host") }),
-	z.object({ kind: z.literal("pick-folder"), id: z.number().int() }),
+	z.object({
+		kind: z.literal("pick"),
+		id: z.number().int(),
+		target: pickTarget,
+	}),
 ]);
 
 // Main to the plugin host: the one message, carrying its port to the core.
@@ -57,6 +64,7 @@ export const ipcChannels = {
 	corePort: "core:port",
 } as const;
 
+export type PickTarget = z.infer<typeof pickTarget>;
 export type ToCoreMessage = z.infer<typeof toCoreMessage>;
 export type FromCoreMessage = z.infer<typeof fromCoreMessage>;
 export type ToPluginHostMessage = z.infer<typeof toPluginHostMessage>;

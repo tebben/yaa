@@ -13,15 +13,20 @@
 		"./git": "./git.ts",
 		"./files": "./files.ts",
 		"./projects": "./projects.ts",
-		"./state": "./state.ts"
+		"./state": "./state.ts",
+		"./terminals": "./terminals.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
 	},
 	"dependencies": {
 		"@agentclientprotocol/sdk": "^2.12.0",
+		"@xterm/addon-serialize": "0.14.0",
+		"@xterm/addon-unicode11": "0.9.0",
+		"@xterm/headless": "6.0.0",
 		"@yaa/commands": "workspace:*",
 		"@yaa/contracts": "workspace:*",
+		"node-pty": "1.1.0",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {

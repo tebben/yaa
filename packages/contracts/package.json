@@ -24,7 +24,8 @@
 		"./worktree-state": "./worktree-state.ts",
 		"./worktree-steps": "./worktree-steps.ts",
 		"./worktree-files": "./worktree-files.ts",
-		"./providers": "./providers.ts"
+		"./providers": "./providers.ts",
+		"./terminals": "./terminals.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

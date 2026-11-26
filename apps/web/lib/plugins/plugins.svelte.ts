@@ -6,6 +6,7 @@ import type { OpenFile, PickSource } from "@yaa/plugin-api/ui";
 import type { DockController, PanelKind } from "@yaa/ui/dock";
 import type { Command } from "../commands/index.ts";
 import type { CoreClient } from "../core-connection.ts";
+import type { TerminalLinks } from "../terminals/index.ts";
 import PluginPanel from "./PluginPanel.svelte";
 import { createPanelContext } from "./panel-context.ts";
 import { createPanelHandlers } from "./panel-handlers.ts";
@@ -14,6 +15,7 @@ import { loadPluginUi, type PluginUiModule } from "./plugin-ui.ts";
 
 type PluginsOptions = {
 	client: CoreClient;
+	terminals: TerminalLinks;
 	// Shows a failure the user should see, such as a command that failed.
 	report(message: string): void;
 	// A listed worktree, by id.
@@ -34,6 +36,7 @@ const message = (error: unknown) =>
 // its panels first renders (docs/spec/03-plugins.md).
 export const createPlugins = ({
 	client,
+	terminals,
 	report,
 	worktree,
 	openWorktree,
@@ -47,6 +50,11 @@ export const createPlugins = ({
 	const manifests = client
 		.request("plugins.list", {})
 		.then(({ plugins }) => plugins);
+	const providers = manifests.then((plugins) =>
+		plugins.flatMap(({ contributes }) => contributes.providers),
+	);
+	// A panel that asks for them reports a failure.
+	providers.catch(() => undefined);
 	// Which plugin contributes each panel; filled once core has answered,
 	// before any panel of theirs can render.
 	const owners = new Map<string, PluginManifest>();
@@ -101,6 +109,7 @@ export const createPlugins = ({
 			if (found === undefined) throw new Error(`No worktree ${id}`);
 			const { context, dispose } = createPanelContext({
 				client,
+				terminals,
 				commands: panelCommands,
 				files: panelFiles,
 				openFile: (file) => openFile(found.id, file),
@@ -108,6 +117,7 @@ export const createPlugins = ({
 					if (openWorktree() === found.id) pick(source);
 				},
 				frame,
+				providers,
 				plugin: plugin.id,
 				kind,
 				declared: new Set(

@@ -1,6 +1,7 @@
 import type { LogRecord } from "@yaa/contracts/log";
 import {
 	fromCoreMessage,
+	type PickTarget,
 	type ToCoreMessage,
 } from "@yaa/contracts/process-control";
 import {
@@ -30,9 +31,9 @@ type StartOptions = {
 	onStartupFailure(code: number): void;
 	// The core asked for a plugin host.
 	onStartPluginHost(): void;
-	// The core asked for the system's folder picker: the folder chosen, or
-	// null when cancelled.
-	onPickFolder(): Promise<string | null>;
+	// The core asked for the system's picker: the paths chosen, none when
+	// cancelled.
+	onPick(target: PickTarget): Promise<string[]>;
 };
 
 // Forks the core and forks it again whenever it exits. Main stays out of the
@@ -42,7 +43,7 @@ export const startCoreProcess = ({
 	start,
 	onStartupFailure,
 	onStartPluginHost,
-	onPickFolder,
+	onPick,
 }: StartOptions): CoreProcess => {
 	let child: UtilityProcess;
 	let ready = false;
@@ -75,9 +76,9 @@ export const startCoreProcess = ({
 				case "start-plugin-host":
 					onStartPluginHost();
 					return;
-				case "pick-folder":
-					void onPickFolder().then((path) =>
-						send({ kind: "picked-folder", id: message.id, path }),
+				case "pick":
+					void onPick(message.target).then((paths) =>
+						send({ kind: "picked", id: message.id, paths }),
 					);
 					return;
 			}

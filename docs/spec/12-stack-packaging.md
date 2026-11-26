@@ -12,7 +12,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | UI | Svelte 5, Bits UI, Tailwind | decided |
 | Dock grid | `dockview-core` behind our own Svelte adapter (`docs/decisions/0016-dock-grid-dockview.md`) | decided |
 | Editor | Monaco | decided |
-| Code in chat | Shiki, highlighted lazily | proposed |
+| Chat transcript | virtua for virtualization, marked parsing into Svelte elements, Shiki highlighting lazily, jsdiff for inline diffs (`docs/decisions/0034-chat-plugin.md`) | decided |
 | Backend | TypeScript on Electron's Node in a `utilityProcess`, typed protocol over `MessagePort` (`docs/decisions/0018-core-transport-messageport.md`) | decided |
 | Agents | ACP first, provider-specific fallback | proposed |
 | Storage | JSON settings files (`docs/decisions/0020-settings-files-json.md`); one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | decided |
@@ -27,7 +27,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 - **SQLite binding (decided):** Node's built-in `node:sqlite` in Electron's Node, imported only by the core's storage module (`docs/decisions/0019-native-modules-node-sqlite.md`).
 - **Native modules (decided):** node-pty is the only one. Native dependencies must be N-API, so they load in Electron without `@electron/rebuild`; electron-builder's rebuild step is off. pnpm's `allowBuilds` lists `node-pty` and `electron`. node-pty compiles on install, which needs python3, make and a C++ compiler.
 - **Icons:** `@lucide/svelte`, the Svelte 5 build of Lucide (ISC license), imported per icon so unused icons are tree-shaken. Plugins use the same set through `ui`.
-- **Fonts:** bundled with the app, not fetched, so the app works offline: Geist Sans for the interface and Geist Mono for code and the terminal. Geist is free and open source under the SIL Open Font License, so it can be bundled and redistributed. The variable fonts come from `@fontsource-variable/geist` and `@fontsource-variable/geist-mono`, whose stylesheets name the families `Geist Variable` and `Geist Mono Variable`; the official `geist` package is built for Next.js and does not export its font files. The font family is a theme token, so a theme can change it. Icons and fonts ship with their licence files.
+- **Fonts:** bundled with the app, not fetched, so the app works offline: Geist Sans for the interface and Geist Mono for code and the terminal. Geist is free and open source under the SIL Open Font License, so it can be bundled and redistributed. The variable fonts come from `@fontsource-variable/geist` and `@fontsource-variable/geist-mono`, whose stylesheets name the families `Geist Variable` and `Geist Mono Variable`; the official `geist` package is built for Next.js and does not export its font files. The icons of Nerd Fonts, which shell prompts and terminal programs print, come from the bundled Symbols Nerd Font Mono (`docs/decisions/0035-nerd-font-symbols.md`), a fallback after Geist Mono. The font family is a theme token, so a theme can change it. Icons and fonts ship with their licence files.
 - **Platform:** x64 Linux only for now; arm64 is out of scope.
 
 A Rust backend is not needed: the work is waiting on agents, git and the network. Rust enters only as a native module or sidecar if a measured bottleneck appears, for example file watching on very large repositories.

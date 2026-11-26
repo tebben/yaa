@@ -5,9 +5,12 @@
 // is created and finished, the panel bar opens the files panel at the right edge,
 // which filters on /, follows the folder and makes and deletes a file, a file
 // opens from it in the editor, is edited and saved with vim keys, and another
-// by quick open, the palette runs the hello plugin's command, and the fake
-// agent plays a turn into the chat panel, with the worktree's state following
-// it. A restart brings the editor's tabs back. It prints the launch and palette
+// by quick open, a command runs in the terminal, which keeps Ctrl W and is
+// still there after a reload, the palette runs the hello plugin's command, and
+// the fake agent plays a turn into the chat panel, with the worktree's state
+// following it, then a turn of markdown picked as a slash command, whose file
+// link opens the editor. A restart brings the editor's tabs back and opens the
+// terminal where it was. It prints the launch and palette
 // open times against the targets in docs/spec/12-stack-packaging.md and fails
 // only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
@@ -376,6 +379,59 @@ const useEditor = async (page: Connection, repo: string) => {
 	await waitFor(page, editorTab("first.ts"));
 };
 
+// Optional, as after a reload no dock is there for a moment.
+const TERMINAL_INPUT = `(${DOCK})?.querySelector(".xterm textarea")`;
+const CLOSE_WORD: Key = {
+	key: "w",
+	code: "KeyW",
+	keyCode: 87,
+	modifiers: CTRL,
+};
+
+// Types a command into the terminal and waits for what it writes to `file`.
+const runInTerminal = async (
+	page: Connection,
+	command: string,
+	file: string,
+	expected: string,
+) => {
+	await waitFor(page, TERMINAL_INPUT);
+	await evaluate(page, `${TERMINAL_INPUT}.focus()`, z.undefined());
+	await type(page, `${command} > '${file}'`);
+	await press(page, ENTER);
+	await poll(`${file} to read ${JSON.stringify(expected)}`, async () =>
+		(await readFile(file, "utf8")) === expected ? true : undefined,
+	);
+};
+
+// The terminal's shell runs in the worktree with its index, gets Ctrl W,
+// which deletes a word, and is the same one after the page reloads.
+const useTerminal = async (page: Connection, dataDir: string) => {
+	const out = (name: string) => join(dataDir, `terminal-${name}`);
+	await runInTerminal(page, 'echo "$YAA_WORKTREE_INDEX"', out("index"), "0\n");
+	await type(page, "echo kept dropped");
+	await press(page, CLOSE_WORD);
+	await type(page, `> '${out("word")}'`);
+	await press(page, ENTER);
+	await poll("the word Ctrl W deleted to be gone", async () =>
+		(await readFile(out("word"), "utf8")) === "kept\n" ? true : undefined,
+	);
+	await runInTerminal(
+		page,
+		'mkdir inner && cd inner && export SMOKE=same && basename "$PWD"',
+		out("cd"),
+		"inner\n",
+	);
+	await evaluate(page, "void (globalThis.reloading = true)", z.undefined());
+	await page.send("Page.reload");
+	await poll("the reloaded page", async () =>
+		(await evaluate(page, "!globalThis.reloading", z.boolean()))
+			? true
+			: undefined,
+	);
+	await runInTerminal(page, 'echo "$SMOKE"', out("same"), "same\n");
+};
+
 // A repository with one commit on main, added as a project to the data
 // folder the app is about to use, whose worktrees go into the data folder.
 // Its steps copy an ignored file into a new worktree, write the worktree's
@@ -540,14 +596,14 @@ const NEXT_ATTENTION: Key = {
 	modifiers: ALT,
 };
 
+const CHAT = `(${DOCK}).querySelector('textarea[aria-label="Prompt"]')`;
+
 // The edit turn asks for a permission and a question; answering both lets
 // it end. While it waits, the worktree needs attention, and a key leads back
 // to it from the project's overview.
 const playFakeTurn = async (page: Connection) => {
 	await click(page, "Start Fake agent");
-	const composer = `document.querySelector('input[aria-label="Prompt"]')`;
-	await waitFor(page, composer);
-	await evaluate(page, `${composer}.focus()`, z.undefined());
+	await waitFor(page, `document.activeElement === ${CHAT}`);
 	await type(page, "Make the greeting friendlier");
 	await press(page, ENTER);
 	await waitFor(page, `${FOOTER}.textContent.includes("Needs attention")`);
@@ -559,8 +615,25 @@ const playFakeTurn = async (page: Connection) => {
 	await click(page, "Decline");
 	await waitFor(
 		page,
-		`document.body.textContent.includes("Turn ended: end turn")`,
+		`(${DOCK}).textContent.includes("The greeting now says")`,
 	);
+	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
+};
+
+// A slash command is picked by keys; its reply's code is highlighted, and a
+// file it names opens in the editor.
+const readMarkdownTurn = async (page: Connection, repo: string) => {
+	await mkdir(join(repo, "src"), { recursive: true });
+	await writeFile(join(repo, "src", "greeting.ts"), "export const hi = 3;\n");
+	await clickElement(page, CHAT);
+	await type(page, "/mark");
+	await waitFor(page, `(${DOCK}).querySelector('[role="option"]')`);
+	await press(page, ENTER);
+	await waitFor(page, `${CHAT}.value === "/markdown "`);
+	await press(page, ENTER);
+	await waitFor(page, `(${DOCK}).querySelector("pre code span[style]")`);
+	await click(page, "src/greeting.ts:1");
+	await waitFor(page, editorShows("hi"));
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
 
@@ -590,10 +663,14 @@ try {
 	console.log("The files panel followed the folder, made and deleted a file.");
 	await useEditor(first.page, join(dataDir, "repo"));
 	console.log("The editor opened, saved and quick-opened files.");
+	await useTerminal(first.page, dataDir);
+	console.log("The terminal ran commands and came back after a reload.");
 	await runPluginCommand(first.page, logFile);
 	console.log("The palette ran the hello plugin's command.");
 	await playFakeTurn(first.page);
 	console.log("The fake agent's turn played to its end.");
+	await readMarkdownTurn(first.page, join(dataDir, "repo"));
+	console.log("A slash command's markdown reply opened a file.");
 	const paletteTimes: number[] = [];
 	for (let run = 0; run < PALETTE_OPENS; run += 1) {
 		paletteTimes.push(await paletteOpenMs(first.page));
@@ -606,7 +683,13 @@ try {
 		const app = await launch(dataDir);
 		warmTimes.push(app.launchMs);
 		await waitFor(app.page, editorTab("first.ts"));
-		await waitFor(app.page, editorShows("second"));
+		await waitFor(app.page, editorShows("hi"));
+		await runInTerminal(
+			app.page,
+			'basename "$PWD"',
+			join(dataDir, `terminal-restart-${run}`),
+			"inner\n",
+		);
 		await quit(app);
 		console.log(`The app started again (${run + 1}/${WARM_LAUNCHES}).`);
 	}

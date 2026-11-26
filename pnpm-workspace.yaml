@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   electron: true
   esbuild: true
+  node-pty: true
 patchedDependencies:
   dockview-core@8.9.1: patches/dockview-core@8.9.1.patch
   monaco-vim@0.4.4: patches/monaco-vim@0.4.4.patch

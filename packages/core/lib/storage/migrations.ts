@@ -53,4 +53,11 @@ export const migrations: Migrations = [
 		value TEXT NOT NULL,
 		PRIMARY KEY (plugin, worktree_id, key)
 	) STRICT;`,
+	// 6: each worktree's terminals, so they open again where they were
+	// (docs/spec/07-editor-files-terminal.md).
+	`CREATE TABLE terminals (
+		id TEXT PRIMARY KEY,
+		worktree_id TEXT NOT NULL REFERENCES worktrees (id) ON DELETE CASCADE,
+		cwd TEXT NOT NULL
+	) STRICT;`,
 ];

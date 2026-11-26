@@ -1,10 +1,9 @@
 import type { Context } from "@yaa/commands/when";
 import { isTextEntry, isTextField } from "@yaa/ui/focus";
 import { tick } from "svelte";
-import { createAgentChat } from "./agent/index.ts";
 import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
-import type { CoreClient } from "./core-connection.ts";
+import type { CoreConnection } from "./core-connection.ts";
 import { createRegions } from "./focus/index.ts";
 import { createLayouts } from "./layout.svelte.ts";
 import { createPalette } from "./palette/index.ts";
@@ -15,14 +14,16 @@ import {
 	createWorktrees,
 	projectCommands,
 } from "./projects/index.ts";
+import { createTerminalLinks } from "./terminals/index.ts";
 
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
 
-// The app's composition root: the plugins, the agent chat, the projects
-// and their worktrees, a dock grid per worktree, the left menu, focus across the shell's regions, the
-// commands with their keys, and the palette.
-export const createWorkbench = (client: CoreClient) => {
+// The app's composition root: the plugins, the projects and their
+// worktrees, a dock grid per worktree, the left menu, focus across the
+// shell's regions, the commands with their keys, and the palette.
+export const createWorkbench = (core: CoreConnection) => {
+	const { client } = core;
 	// The last failure the footer shows.
 	let failure = $state<string>();
 	const report = (message: string) => {
@@ -33,6 +34,7 @@ export const createWorkbench = (client: CoreClient) => {
 
 	const plugins = createPlugins({
 		client,
+		terminals: createTerminalLinks(core),
 		report,
 		// Panels render and commands run only after `projects` exists.
 		worktree: (id) =>
@@ -44,13 +46,6 @@ export const createWorkbench = (client: CoreClient) => {
 		// panel or command runs.
 		dock: (id) => layouts.docks.get(id),
 		pick: (source) => palette.pick(source),
-	});
-	const agentChat = createAgentChat({
-		client,
-		report,
-		providers: plugins.manifests.then((manifests) =>
-			manifests.flatMap(({ contributes }) => contributes.providers),
-		),
 	});
 	// The app's kinds in panel bar order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.
@@ -149,7 +144,6 @@ export const createWorkbench = (client: CoreClient) => {
 		commands,
 		palette,
 		plugins,
-		agentChat,
 		get menuOpen() {
 			return menuOpen;
 		},

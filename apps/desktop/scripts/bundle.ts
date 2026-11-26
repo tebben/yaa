@@ -29,6 +29,9 @@ export const bundles: BuildOptions[] = [
 	{
 		...common,
 		entryPoints: { core: fileURLToPath(import.meta.resolve("@yaa/core/main")) },
+		// A native module, loaded from node_modules at run time
+		// (docs/decisions/0019-native-modules-node-sqlite.md).
+		external: ["electron", "node-pty"],
 		format: "esm",
 		outdir: outDir,
 	},

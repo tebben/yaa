@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
 import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
+import type { PickTarget } from "@yaa/contracts/process-control";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
@@ -22,6 +23,7 @@ import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
 import { createPluginStore } from "./storage/plugin-store.ts";
+import { createTerminals } from "./terminals/terminals.ts";
 
 export type CoreOptions = {
 	dataDir: string;
@@ -32,7 +34,7 @@ export type CoreOptions = {
 	// `attachPluginHost`.
 	requestPluginHost(): void;
 	// Shows the system's folder picker through main.
-	pickFolder(): Promise<string | null>;
+	pick(target: PickTarget): Promise<string[]>;
 };
 
 export type Core = {
@@ -48,7 +50,7 @@ export const startCore = ({
 	pluginsDir,
 	dev,
 	requestPluginHost,
-	pickFolder,
+	pick,
 }: CoreOptions): Core => {
 	const logFile = openLogFile({
 		dir: logDir,
@@ -113,12 +115,15 @@ export const startCore = ({
 		git,
 		log,
 	});
+	const terminals = createTerminals({ db, worktree, log });
+	process.on("exit", terminals.shutdown);
 	// A finished worktree, or one of a removed project, is watched no longer,
-	// and its agents stop.
+	// and its agents and terminals end.
 	const dropGone = () => {
 		const listed = new Set(allWorktrees().map(({ id }) => id));
 		watches.keep(listed);
 		agents.keep(listed);
+		terminals.keep(listed);
 	};
 	projects.onChange(dropGone);
 	worktrees.onChange(dropGone);
@@ -151,10 +156,11 @@ export const startCore = ({
 		layouts: createLayoutStore(db),
 		plugins,
 		agents,
-		pickFolder,
+		pick,
 		projects,
 		worktrees,
 		states,
+		terminals,
 	});
 	log.info("core started", { pid: process.pid, dataDir });
 

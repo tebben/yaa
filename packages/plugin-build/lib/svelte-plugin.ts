@@ -5,6 +5,13 @@ import { compile, compileModule } from "svelte/compiler";
 
 const cssNamespace = "svelte-css";
 
+// The compiler's warnings about the plugin's own code; a library's are its
+// authors' to act on.
+const report = (path: string, warnings: readonly { message: string }[]) =>
+	path.includes("/node_modules/")
+		? []
+		: warnings.map(({ message }) => ({ text: message }));
+
 // Compiles .svelte components and .svelte.ts modules for the app's runtime:
 // runes mode, no version beacon, and each component's scoped <style> as a
 // CSS module, which esbuild gathers into the plugin's one CSS file.
@@ -30,11 +37,7 @@ export const sveltePlugin: Plugin = {
 				styles.set(id, css.code);
 				contents += `\nimport ${JSON.stringify(id)};`;
 			}
-			return {
-				contents,
-				loader: "js",
-				warnings: warnings.map(({ message }) => ({ text: message })),
-			};
+			return { contents, loader: "js", warnings: report(path, warnings) };
 		});
 
 		build.onResolve({ filter: /\.svelte\.css$/ }, ({ path }) => ({
@@ -56,7 +59,7 @@ export const sveltePlugin: Plugin = {
 			return {
 				contents: js.code,
 				loader: "js",
-				warnings: warnings.map(({ message }) => ({ text: message })),
+				warnings: report(path, warnings),
 			};
 		});
 	},

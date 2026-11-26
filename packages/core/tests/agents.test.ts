@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
 	normalizeQuestion,
 	openAcpSession,
+	promptContent,
 	startAgentProcess,
 } from "../agents.ts";
 
@@ -36,7 +37,7 @@ const fakeSession = async (
 	const turn = (text: string) =>
 		new Promise<void>((resolve) => {
 			turnOver = resolve;
-			session.prompt(text);
+			session.prompt(text, []);
 		});
 	return { session, events, turn };
 };
@@ -57,8 +58,12 @@ describe("openAcpSession with the fake agent", () => {
 		await turn("Make the greeting friendlier");
 
 		const types = events.map(({ type }) => type);
-		expect(types[0]).toBe("config");
-		expect(types.slice(1, 3)).toEqual(["prompt", "commands"]);
+		expect(types.slice(0, 4)).toEqual([
+			"commands",
+			"capabilities",
+			"config",
+			"prompt",
+		]);
 		expect(types).toContain("thinking");
 		expect(types).toContain("plan");
 		expect(types.indexOf("permission.resolved")).toBeGreaterThan(
@@ -85,6 +90,15 @@ describe("openAcpSession with the fake agent", () => {
 		expect(message).toContain("Hi there!");
 	});
 
+	it("follows the options the agent reports after a change", async () => {
+		const { session, events } = await fakeSession();
+		await session.setConfig("model", "fake-small");
+		const config = events.findLast(({ type }) => type === "config");
+		expect(
+			config?.type === "config" && config.options.map(({ id }) => id),
+		).toEqual(["model", "mode"]);
+	});
+
 	it("ends a failing turn with an error", async () => {
 		const { events, turn } = await fakeSession();
 		await turn("/fail");
@@ -109,6 +123,39 @@ describe("openAcpSession with the fake agent", () => {
 			type: "turn.end",
 			stopReason: "cancelled",
 		});
+	});
+});
+
+describe("promptContent", () => {
+	const file = { type: "file", path: "/repo/a b.ts" } as const;
+	const image = {
+		type: "image",
+		name: "shot.png",
+		mimeType: "image/png",
+		data: "AA==",
+	} as const;
+
+	it("links files and carries images, keeping no image data", () => {
+		const { blocks, sent } = promptContent("look", [file, image], {
+			images: true,
+		});
+		expect(blocks).toEqual([
+			{ type: "text", text: "look" },
+			{
+				type: "resource_link",
+				name: "a b.ts",
+				uri: "file:///repo/a%20b.ts",
+			},
+			{ type: "image", mimeType: "image/png", data: "AA==" },
+		]);
+		expect(sent).toEqual([file, { type: "image", name: "shot.png" }]);
+	});
+
+	it("refuses an image the agent does not take, and an empty prompt", () => {
+		expect(() => promptContent("", [image], { images: false })).toThrow(
+			"takes no images",
+		);
+		expect(() => promptContent("", [], { images: true })).toThrow("empty");
 	});
 });
 

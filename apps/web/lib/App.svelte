@@ -1,7 +1,6 @@
 <script lang="ts">
 import { keyParts } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
-import { setAgentChat } from "./agent/index.ts";
 import { Palette } from "./palette/index.ts";
 import { setPluginPanels } from "./plugins/index.ts";
 import { ProjectMenu, ProjectOverview } from "./projects/index.ts";
@@ -16,7 +15,6 @@ setPluginPanels({
 	mount: (kind, worktree, frame) =>
 		workbench.plugins.panels.mount(kind, worktree, frame),
 });
-setAgentChat(() => workbench.agentChat);
 
 // The window is interactive once a dock is on screen: the launch time the
 // smoke test measures (docs/spec/12-stack-packaging.md).
