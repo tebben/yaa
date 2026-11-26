@@ -1,0 +1,16 @@
+xterm-webgl        plain        50.8 MiB/s  frames 30  p95 25.0ms  max 25ms  >50ms 0  heap 46 MiB  160x48
+xterm-webgl        sgr          47.0 MiB/s  frames 32  p95 24.9ms  max 25ms  >50ms 0  heap 88 MiB  160x48
+xterm-webgl        truecolor    46.2 MiB/s  frames 17  p95 66.7ms  max 67ms  >50ms 1  heap 142 MiB  160x48
+xterm-webgl        unicode      49.5 MiB/s  frames 31  p95 16.7ms  max 25ms  >50ms 0  heap 180 MiB  160x48
+xterm-webgl        tui          96.5 MiB/s  frames 13  p95 25.0ms  max 25ms  >50ms 0  heap 227 MiB  160x48
+xterm-webgl        mixed        46.9 MiB/s  frames 38  p95 25.0ms  max 33ms  >50ms 0  heap 255 MiB  160x48
+xterm-dom          plain        47.6 MiB/s  frames 31  p95 25.0ms  max 33ms  >50ms 0  heap 68 MiB  160x48
+xterm-dom          sgr          45.7 MiB/s  frames 28  p95 25.1ms  max 25ms  >50ms 0  heap 118 MiB  160x48
+xterm-dom          truecolor    32.7 MiB/s  frames 18  p95 49.9ms  max 50ms  >50ms 0  heap 71 MiB  160x48
+xterm-dom          unicode      31.9 MiB/s  frames 28  p95 33.4ms  max 42ms  >50ms 0  heap 71 MiB  160x48
+xterm-dom          tui          99.0 MiB/s  frames 13  p95 16.7ms  max 17ms  >50ms 0  heap 96 MiB  160x48
+xterm-dom          mixed        38.0 MiB/s  frames 34  p95 33.4ms  max 42ms  >50ms 0  heap 83 MiB  160x48
+ghostty-web        plain        53.4 MiB/s  frames 4  p95 116.6ms  max 117ms  >50ms 3  heap 101 MiB  160x48
+ghostty-web        sgr          43.4 MiB/s  frames 5  p95 116.6ms  max 117ms  >50ms 3  heap 132 MiB  160x48
+ghostty-web        truecolor    31.2 MiB/s  frames 5  p95 133.2ms  max 133ms  >50ms 4  heap 109 MiB  160x48
+/home/teebs/dev/yaa-spike-terminal/spikes/terminal/node_modules/.pnpm/electron@45.5.0/node_modules/electron/dist/electron exited with signal SIGTERM

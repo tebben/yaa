@@ -1,0 +1,7 @@
+packages: []
+minimumReleaseAgeExclude:
+  - '@gkoreli/ghostty-vt-js@0.7.1'
+allowBuilds:
+  node-pty: true
+  electron: true
+  esbuild: true

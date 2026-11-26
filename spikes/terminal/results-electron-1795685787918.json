@@ -1,0 +1,58 @@
+{
+ "electron": "45.5.0",
+ "chrome": "156.0.8078.109",
+ "ozone": "wayland",
+ "gpu": {
+  "2d_canvas": "enabled",
+  "direct_rendering_display_compositor": "disabled_off_ok",
+  "gpu_compositing": "enabled",
+  "multiple_raster_threads": "enabled_on",
+  "opengl": "enabled_on",
+  "rasterization": "enabled",
+  "raw_draw": "disabled_off_ok",
+  "skia_graphite": "disabled_off",
+  "trees_in_viz": "disabled_off",
+  "video_decode": "enabled",
+  "video_encode": "disabled_software",
+  "vulkan": "disabled_off",
+  "webgl": "enabled",
+  "webgpu": "enabled",
+  "webgpu_on_vk_via_gl_interop": "disabled_off",
+  "webnn": "disabled_off"
+ },
+ "results": [
+  {
+   "engine": "ghostty-web",
+   "corpus": "unicode",
+   "timeout": true
+  },
+  {
+   "engine": "ghostty-web",
+   "corpus": "tui",
+   "cols": 160,
+   "rows": 48,
+   "ms": 330,
+   "bytes": 16781928,
+   "mibs": 48.45441632875547,
+   "frames": 4,
+   "p95": 116.69999999999999,
+   "maxFrame": 116.69999999999999,
+   "long": 3,
+   "heapMiB": 9
+  },
+  {
+   "engine": "ghostty-web",
+   "corpus": "mixed",
+   "cols": 160,
+   "rows": 48,
+   "ms": 520,
+   "bytes": 21083941,
+   "mibs": 38.704933629113974,
+   "frames": 6,
+   "p95": 125.00000000000001,
+   "maxFrame": 125.00000000000001,
+   "long": 4,
+   "heapMiB": 11
+  }
+ ]
+}

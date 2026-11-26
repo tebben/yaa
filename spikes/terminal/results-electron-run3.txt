@@ -1,0 +1,19 @@
+null               plain       175.4 MiB/s  frames 8  p95 12.2ms  max 12ms  >50ms 0  heap 6 MiB  160x48
+null               sgr         191.7 MiB/s  frames 9  p95 8.4ms  max 8ms  >50ms 0  heap 7 MiB  160x48
+null               truecolor   283.9 MiB/s  frames 6  p95 8.4ms  max 8ms  >50ms 0  heap 42 MiB  160x48
+null               unicode     240.6 MiB/s  frames 7  p95 8.4ms  max 8ms  >50ms 0  heap 26 MiB  160x48
+null               tui         267.2 MiB/s  frames 6  p95 8.4ms  max 8ms  >50ms 0  heap 41 MiB  160x48
+null               mixed       239.7 MiB/s  frames 9  p95 8.4ms  max 8ms  >50ms 0  heap 45 MiB  160x48
+ghostty-1.0.2-raw  plain       170.5 MiB/s  frames 10  p95 8.4ms  max 8ms  >50ms 0  heap 17 MiB  160x48
+ghostty-1.0.2-raw  sgr          82.1 MiB/s  frames 19  p95 16.7ms  max 17ms  >50ms 0  heap 25 MiB  160x48
+ghostty-1.0.2-raw  truecolor   116.4 MiB/s  frames 14  p95 16.7ms  max 17ms  >50ms 0  heap 23 MiB  160x48
+ghostty-1.0.2-raw  unicode     109.2 MiB/s  frames 14  p95 16.7ms  max 17ms  >50ms 0  heap 57 MiB  160x48
+ghostty-1.0.2-raw  tui         212.0 MiB/s  frames 7  p95 8.4ms  max 8ms  >50ms 0  heap 59 MiB  160x48
+ghostty-1.0.2-raw  mixed       108.5 MiB/s  frames 19  p95 16.7ms  max 17ms  >50ms 0  heap 65 MiB  160x48
+xterm-webgl        plain        47.5 MiB/s  frames 31  p95 25.0ms  max 25ms  >50ms 0  heap 51 MiB  160x48
+xterm-webgl        sgr          45.7 MiB/s  frames 33  p95 25.0ms  max 25ms  >50ms 0  heap 112 MiB  160x48
+xterm-webgl        truecolor    47.6 MiB/s  frames 17  p95 58.3ms  max 58ms  >50ms 1  heap 160 MiB  160x48
+xterm-webgl        unicode      49.5 MiB/s  frames 31  p95 16.7ms  max 25ms  >50ms 0  heap 198 MiB  160x48
+xterm-webgl        tui          80.7 MiB/s  frames 17  p95 24.9ms  max 25ms  >50ms 0  heap 39 MiB  160x48
+  [renderer error] xterm.js: Parsing error:  [object Object]
+xterm-webgl        mixed        44.5 MiB/s  frames 38  p95 41.6ms  max 42ms  >50ms 0  heap 111 MiB  160x48
