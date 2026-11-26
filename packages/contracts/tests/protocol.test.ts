@@ -48,6 +48,29 @@ const errorCode = (promise: Promise<unknown>) =>
 	);
 
 describe("protocol", () => {
+	it("tells a handler when its caller's connection goes", async () => {
+		const gone = vi.fn();
+		const server = createServer(
+			testProtocol,
+			{
+				...handlers,
+				add: ({ a, b }, caller) => {
+					caller.onClose(gone);
+					return { sum: a + b };
+				},
+			},
+			{ onError: vi.fn() },
+		);
+		const client = createClient(testProtocol);
+		const [clientEnd, serverEnd] = createPortPair();
+		server.connect(serverEnd);
+		client.attach(clientEnd);
+		await client.request("add", { a: 1, b: 1 });
+		expect(gone).not.toHaveBeenCalled();
+		clientEnd.close();
+		await vi.waitFor(() => expect(gone).toHaveBeenCalledOnce());
+	});
+
 	it("answers a request with the parsed result", async () => {
 		const { client } = setup().connect();
 		await expect(client.request("add", { a: 2, b: 3 })).resolves.toEqual({

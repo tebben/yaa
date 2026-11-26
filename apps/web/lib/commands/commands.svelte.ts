@@ -1,8 +1,10 @@
-import { keyFromEvent } from "@yaa/commands/key-chord";
+import { keyFromEvent, normalizeKey } from "@yaa/commands/key-chord";
 import { createKeymap } from "@yaa/commands/keymap";
 import { type Context, parseWhen } from "@yaa/commands/when";
 import type { Keybinding } from "@yaa/contracts/keybindings";
+import { coreSettings, type SettingsState } from "@yaa/contracts/settings";
 import type { CoreClient } from "../core-connection.ts";
+import { capturesKeys } from "./capture-keys.ts";
 
 // An action with an id (docs/spec/01-ui-layout-theming.md). Keys reach it
 // through keybindings; the palette lists the ones with a title.
@@ -73,6 +75,17 @@ export const createCommands = ({ client, context }: CommandsOptions) => {
 		user = state.bindings;
 	});
 
+	// The keys that stay the app's where an element captures the keyboard.
+	let appKeys: ReadonlySet<string> = new Set();
+	const takeSettings = ({ values }: SettingsState) => {
+		const keys = coreSettings["keyboard.terminalAppKeys"].parse(
+			values["keyboard.terminalAppKeys"],
+		);
+		appKeys = new Set(keys.map(normalizeKey));
+	};
+	client.request("settings.get", {}).then(takeSettings);
+	client.subscribe("settings.changed", takeSettings);
+
 	const canRun = (id: string, now: Context) =>
 		registry.get(id)?.holds(now) ?? false;
 
@@ -108,10 +121,12 @@ export const createCommands = ({ client, context }: CommandsOptions) => {
 			return keymap.keysFor(id);
 		},
 		// The app's one key listener: a bound key runs its command and goes no
-		// further; every other key reaches the focused element.
+		// further; every other key reaches the focused element. An element that
+		// captures the keyboard gets all but the keys the app keeps.
 		handleKey(event: KeyboardEvent) {
 			const key = keyFromEvent(event);
 			if (key === undefined) return;
+			if (!appKeys.has(key) && capturesKeys(event.target)) return;
 			const now = context();
 			const id = keymap.resolve(key, now, (command) => canRun(command, now));
 			if (id === undefined) return;

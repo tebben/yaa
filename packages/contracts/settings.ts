@@ -19,6 +19,31 @@ export const coreSettings = {
 	"worktree.branchTemplate": z.string().min(1).default("{ticketId}-{slug}"),
 	// Put before a bare ticket number, such as "PROJ-".
 	"worktree.ticketPrefix": z.string().default(""),
+	// The keys a terminal gives up to the app while it has focus; every other
+	// key goes to its program (docs/spec/01-ui-layout-theming.md).
+	"keyboard.terminalAppKeys": z
+		.array(z.string())
+		.default([
+			"ctrl+shift+p",
+			"ctrl+h",
+			"ctrl+j",
+			"ctrl+k",
+			"ctrl+l",
+			"ctrl+shift+h",
+			"ctrl+shift+j",
+			"ctrl+shift+k",
+			"ctrl+shift+l",
+			"ctrl+shift+n",
+			"alt+j",
+			"alt+k",
+			"alt+a",
+			"ctrl+`",
+			"ctrl+shift+~",
+			"ctrl+shift+w",
+			"ctrl+shift+c",
+			"ctrl+pageup",
+			"ctrl+pagedown",
+		]),
 } satisfies SettingDefinitions;
 
 export type CoreSettings = z.infer<z.ZodObject<typeof coreSettings>>;

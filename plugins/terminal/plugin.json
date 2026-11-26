@@ -1,0 +1,87 @@
+{
+	"id": "terminal",
+	"version": "0.1.0",
+	"ui": "dist/ui.js",
+	"styles": "dist/ui.css",
+	"contributes": {
+		"commands": [
+			{
+				"id": "terminal.focus",
+				"title": "Focus terminal",
+				"category": "Terminal",
+				"panel": "terminal",
+				"reveal": true
+			},
+			{
+				"id": "terminal.new",
+				"title": "New terminal",
+				"category": "Terminal",
+				"panel": "terminal",
+				"reveal": true
+			},
+			{
+				"id": "terminal.close",
+				"title": "Close terminal",
+				"category": "Terminal",
+				"panel": "terminal"
+			},
+			{
+				"id": "terminal.next",
+				"title": "Next terminal",
+				"category": "Terminal",
+				"panel": "terminal"
+			},
+			{
+				"id": "terminal.previous",
+				"title": "Previous terminal",
+				"category": "Terminal",
+				"panel": "terminal"
+			},
+			{
+				"id": "terminal.copy",
+				"title": "Copy terminal selection",
+				"category": "Terminal",
+				"panel": "terminal"
+			}
+		],
+		"keybindings": [
+			{
+				"key": "ctrl+`",
+				"command": "terminal.focus",
+				"when": "!palette.open"
+			},
+			{
+				"key": "ctrl+shift+~",
+				"command": "terminal.new",
+				"when": "!palette.open"
+			},
+			{
+				"key": "ctrl+shift+w",
+				"command": "terminal.close",
+				"when": "panel.kind == terminal && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+pagedown",
+				"command": "terminal.next",
+				"when": "panel.kind == terminal && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+pageup",
+				"command": "terminal.previous",
+				"when": "panel.kind == terminal && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+shift+c",
+				"command": "terminal.copy",
+				"when": "panel.kind == terminal && focus.region == dock && !palette.open"
+			}
+		],
+		"panels": [
+			{
+				"id": "terminal",
+				"title": "Terminal",
+				"icon": "icon.svg"
+			}
+		]
+	}
+}

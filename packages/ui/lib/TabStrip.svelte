@@ -1,12 +1,13 @@
 <script lang="ts">
 import X from "@lucide/svelte/icons/x";
+import type { Snippet } from "svelte";
 import Icon from "./Icon.svelte";
 import type { IconSource } from "./icon-source.ts";
 import type { Tab } from "./tab.ts";
 
 // Tabs for a panel's header, such as open files. A middle click or a tab's
 // close button closes it; the active tab is scrolled into view. `empty` takes
-// the tabs' place when there are none.
+// the tabs' place when there are none, and `after` follows them.
 let {
 	tabs,
 	label,
@@ -15,6 +16,7 @@ let {
 	onselect,
 	onclose,
 	ondblclick,
+	after,
 }: {
 	tabs: readonly Tab[];
 	// Names the list for screen readers.
@@ -24,62 +26,81 @@ let {
 	onselect: (id: string) => void;
 	onclose: (id: string) => void;
 	ondblclick?: (id: string) => void;
+	after?: Snippet;
 } = $props();
 </script>
 
-<div class="tabs" role="tablist" aria-label={label}>
-	{#each tabs as tab (tab.id)}
-		<div
-			class={[
-				"tab",
-				{ active: tab.active, italic: tab.italic, struck: tab.struck },
-			]}
-			{@attach tab.active
-				? (node: Element) =>
-						node.scrollIntoView({ block: "nearest", inline: "nearest" })
-				: undefined}
-		>
-			<button
-				type="button"
-				class="pick"
-				role="tab"
-				aria-selected={tab.active}
-				title={tab.title}
-				onclick={() => onselect(tab.id)}
-				ondblclick={() => ondblclick?.(tab.id)}
-				onauxclick={(event) => {
-					if (event.button === 1) onclose(tab.id);
-				}}
+<div class="strip">
+	<div class="tabs" role="tablist" aria-label={label}>
+		{#each tabs as tab (tab.id)}
+			<div
+				class={[
+					"tab",
+					{ active: tab.active, italic: tab.italic, struck: tab.struck },
+				]}
+				{@attach tab.active
+					? (node: Element) =>
+							node.scrollIntoView({ block: "nearest", inline: "nearest" })
+					: undefined}
 			>
-				<Icon {icon} />
-				<span class="name">{tab.name}</span>
-				{#if tab.detail}
-					<span class="detail">{tab.detail}</span>
-				{/if}
-			</button>
-			<button
-				type="button"
-				class={["close", { dotted: tab.dot !== undefined }]}
-				aria-label={tab.dot === undefined
-					? `Close ${tab.name}`
-					: `Close ${tab.name}, ${tab.dot}`}
-				onclick={() => onclose(tab.id)}
-			>
-				<span class="dot"></span>
-				<span class="cross"><Icon icon={X} /></span>
-			</button>
-		</div>
-	{:else}
-		<span class="none">{empty}</span>
-	{/each}
+				<button
+					type="button"
+					class="pick"
+					role="tab"
+					aria-selected={tab.active}
+					title={tab.title}
+					onclick={() => onselect(tab.id)}
+					ondblclick={() => ondblclick?.(tab.id)}
+					onauxclick={(event) => {
+						if (event.button === 1) onclose(tab.id);
+					}}
+				>
+					<Icon {icon} />
+					<span class="name">{tab.name}</span>
+					{#if tab.detail}
+						<span class="detail">{tab.detail}</span>
+					{/if}
+				</button>
+				<button
+					type="button"
+					class={["close", { dotted: tab.dot !== undefined }]}
+					aria-label={tab.dot === undefined
+						? `Close ${tab.name}`
+						: `Close ${tab.name}, ${tab.dot}`}
+					onclick={() => onclose(tab.id)}
+				>
+					<span class="dot"></span>
+					<span class="cross"><Icon icon={X} /></span>
+				</button>
+			</div>
+		{:else}
+			<span class="none">{empty}</span>
+		{/each}
+	</div>
+	{#if after}
+		<div class="after">{@render after()}</div>
+	{/if}
 </div>
 
 <style>
-.tabs {
+.strip {
 	display: flex;
 	height: 100%;
+	min-width: 0;
+}
+
+.tabs {
+	display: flex;
+	min-width: 0;
 	overflow-x: auto;
 	scrollbar-width: none;
+}
+
+.after {
+	display: flex;
+	flex: none;
+	align-items: center;
+	padding: 0 var(--spacing-1);
 }
 
 .tab {

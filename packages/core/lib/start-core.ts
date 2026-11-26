@@ -22,6 +22,7 @@ import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
 import { createPluginStore } from "./storage/plugin-store.ts";
+import { createTerminals } from "./terminals/terminals.ts";
 
 export type CoreOptions = {
 	dataDir: string;
@@ -115,11 +116,17 @@ export const startCore = ({
 		git,
 		log,
 	});
-	// A finished worktree, or one of a removed project, is watched no longer.
-	const unwatchGone = () =>
-		watches.keep(new Set(allWorktrees().map(({ id }) => id)));
-	projects.onChange(unwatchGone);
-	worktrees.onChange(unwatchGone);
+	const terminals = createTerminals({ db, worktree, log });
+	process.on("exit", terminals.shutdown);
+	// A finished worktree, or one of a removed project, is watched no longer,
+	// and its terminals end.
+	const dropGone = () => {
+		const kept = new Set(allWorktrees().map(({ id }) => id));
+		watches.keep(kept);
+		terminals.keep(kept);
+	};
+	projects.onChange(dropGone);
+	worktrees.onChange(dropGone);
 	const pluginApi = createPluginApiServer({
 		worktree,
 		git,
@@ -152,6 +159,7 @@ export const startCore = ({
 		projects,
 		worktrees,
 		states,
+		terminals,
 	});
 	log.info("core started", { pid: process.pid, dataDir });
 
