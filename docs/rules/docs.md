@@ -6,6 +6,8 @@ Where things go:
 - `docs/decisions/`: one file per choice or spike result. `open-questions.md` lists what is still open.
 - `docs/design/`: how it looks.
 - `docs/rules/`: how code is written.
+- `docs/glossary.md`: domain terms, one line each. Use these names in code and docs.
+- `.claude/skills/`: agent skills, copied from upstream and owned here; sources and local changes in its `README.md`.
 
 Updating a spec:
 1. A change that alters behaviour updates the spec file in the same commit. Code and spec never disagree on the main branch.

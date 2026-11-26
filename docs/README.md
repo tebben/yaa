@@ -6,7 +6,7 @@ Read this first. Authority order when sources disagree:
 3. `docs/design/ui.md` + `tokens.json` (how it looks)
 4. `docs/design/mockups/` (a guide only, not a pixel spec)
 
-`docs/plan.md` says what to do in what order. `docs/decisions/` records choices and spike results. If you change behaviour, update the spec file in the same change. How to change or add specs and decisions: `docs/rules/docs.md`.
+`docs/plan.md` says what to do in what order. `docs/decisions/` records choices and spike results. If you change behaviour, update the spec file in the same change. How to change or add specs and decisions: `docs/rules/docs.md`. Domain terms: `docs/glossary.md`.
 
 ## Spec index
 | File | Topic |

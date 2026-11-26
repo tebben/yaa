@@ -39,4 +39,6 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 - Tests only for pure logic, contracts and the workflow engine; no component or wiring tests.
 - Behaviour change: update the owning spec in the same commit (docs/rules/docs.md).
 - Do not invent package names, APIs or sources; verify against docs or the registry, and say when unsure.
+- Bugs: fix the first place the system went wrong, not where the symptom showed. A guard, retry, fallback or swallowed error that hides a bad state is not a fix. Use the `diagnosing-bugs` skill for anything not obvious.
+- Svelte files: follow the `svelte-core-bestpractices` skill and run the `svelte-code-writer` autofixer (or the Svelte MCP) before finishing.
 - Before finishing: `check` passes, you reread your own diff, and your summary lists what you were unsure about and any refactor you did.

@@ -29,7 +29,7 @@ The repo adopts Matt Pocock's [setup-ts-deep-modules skill](https://skills.sh/ma
 - tests import only entry points, and dependency cycles are not allowed;
 - a `lint:boundaries` script enforces this, and the skill proves the rules work by adding a deliberate violation and checking that the script fails.
 
-The skill sits in the `in-progress` folder of its repository, so expect it to change. We copy its output into the repo and own the rules from then on.
+The skill sits in the `in-progress` folder of its repository, so expect it to change. A copy pinned to an upstream commit lives in `.claude/skills/setup-ts-deep-modules` (see `.claude/skills/README.md`), and the repo owns the rules it produces.
 
 How it maps here: every workspace package and every plugin is a deep module. A plugin exposes only its manifest and entry modules, so one plugin cannot reach into another's internals and must use exposed services. The skill's default packages root may need adjusting to this layout. `AGENTS.md` links to the packages README, so an agent finds the boundary rule before it trips over it.
 
@@ -89,7 +89,7 @@ The repo's own `AGENTS.md` at the root is the current version; edit it there rat
 
 **Rules and conventions**
 
-- `typescript.md`: strict mode; no `any`, use `unknown` and narrow; named exports; no barrel files except package entry points; no deep imports across packages; one concept per file; small functions, pure where possible; no dead code; no comments that restate the code.
+- `typescript.md`: strict mode; no `any`, use `unknown` and narrow; named exports; no barrel files except package entry points; no deep imports across packages; one concept per file; small functions, pure where possible; no dead code; no comments that restate the code; validate and narrow data with Zod where it crosses a boundary (protocol, plugin host, disk, agent output, CLI output) and trust the types inside, with no repeated checks.
 - `svelte.md`: the rules in the previous section.
 - `plugins.md`: manifest fields, contribution points, tokens only, dispose everything registered, expose functions as services.
 - `testing.md`: tests import entry points only; test pure logic, contracts and the workflow engine, not components or wiring; use a fake agent, not a real one; the default check runs only the changed packages. See Testing strategy below.
