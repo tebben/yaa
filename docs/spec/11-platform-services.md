@@ -39,7 +39,7 @@ Parallel worktrees will conflict. The git plugin lists conflicted files, opens a
 
 Lands in: M6.
 
-A first-run flow and a doctor command check for `git`, each agent CLI, `gh` and `glab`, show each one's sign-in state, and say what to install or run. The same check is available any time from the palette.
+A first-run flow and a doctor command check for `git`, each agent CLI, `gh` and `glab`, show each one's sign-in state, and say what to install or run. The doctor also reports when the app runs without Chromium's sandbox and how to fix it: on Ubuntu, install the deb, or add an AppArmor profile for the AppImage (`docs/spec/12-stack-packaging.md`). The same check is available any time from the palette.
 
 ## Settings and keybinding files
 

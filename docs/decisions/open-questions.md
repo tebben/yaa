@@ -4,7 +4,6 @@ Each open question becomes a spike or a decision file in this folder. When one i
 
 ## Open questions
 
-- **SQLite binding:** `node:sqlite` in Electron's Node or `better-sqlite3`. Part of the M0 native-modules spike.
 - **Jira authentication:** API token or OAuth, with the secret in the system keyring on Linux.
 - **Workflow format:** declarative YAML or JSON with a service-call escape hatch (proposed), or TypeScript. Decide before the workflows plugin starts.
 - **Unattended runs:** which steps may be `auto` without a human, in particular push and MR creation. The proposed guardrails are in `docs/spec/10-workflows.md`.
@@ -26,6 +25,7 @@ Each open question becomes a spike or a decision file in this folder. When one i
 - ~~Grid~~: `0016-dock-grid-dockview.md`
 - ~~Ghostty~~: `0017-terminal-xterm-first.md`
 - ~~Core transport~~: `0018-core-transport-messageport.md`
+- ~~SQLite binding~~: `0019-native-modules-node-sqlite.md`
 
 ## Risks
 

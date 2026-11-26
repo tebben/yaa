@@ -23,7 +23,8 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 **Tooling and assets (proposed)**
 
 - **Package manager and runtime:** pnpm workspaces and Node (`docs/decisions/0002-pnpm-and-node.md`).
-- **SQLite binding:** Node's built-in `node:sqlite` would avoid a native module, if the Node version inside Electron ships it without a flag. Otherwise `better-sqlite3`, rebuilt for Electron. Unverified; the M0 native-modules spike decides.
+- **SQLite binding (decided):** Node's built-in `node:sqlite` in Electron's Node, imported only by the core's storage module (`docs/decisions/0019-native-modules-node-sqlite.md`).
+- **Native modules (decided):** node-pty is the only one. Native dependencies must be N-API, so they load in Electron without `@electron/rebuild`; electron-builder's rebuild step is off. pnpm's `allowBuilds` lists `node-pty` and `electron`. node-pty compiles on install, which needs python3, make and a C++ compiler.
 - **Icons:** `@lucide/svelte`, the Svelte 5 build of Lucide (ISC license), imported per icon so unused icons are tree-shaken. Plugins use the same set through `ui`.
 - **Fonts:** bundled with the app, not fetched, so the app works offline: Geist Sans for the interface and Geist Mono for code and the terminal. Geist is free and open source under the SIL Open Font License, so it can be bundled and redistributed. The font family is a theme token, so a theme can change it. Icons and fonts ship with their licence files.
 - **Platform:** x64 Linux only for now; arm64 is out of scope.
@@ -60,5 +61,7 @@ Linux is the first supported platform. The code carries no Linux-only assumption
 - **Updates:** none in the first release. Users download the new AppImage, deb or rpm from the release page, and the app can show a notice when a newer version exists. Auto-update through electron-updater comes later.
 - **Desktop integration:** a desktop entry with icon and categories, and a URL scheme handler for deep links, for example opening a worktree from a link.
 - **Runtime dependencies:** `git` on the PATH is required. Agent CLIs, `gh` and `glab` are detected at runtime and never bundled, and the app says what is missing and how to install it.
-- **Display servers:** test on both Wayland and X11 from the first build. Also check recent Ubuntu releases for sandbox startup problems with the AppImage, before the first release.
+- **Display servers:** Electron uses Wayland natively when available and X11 otherwise. Test both from the first build, and the AppImage on a real Ubuntu 24.04 host before the first release.
+- **Chromium sandbox:** the AppImage's launcher adds `--no-sandbox` where unprivileged user namespaces are blocked, as on stock Ubuntu 23.10 and later; the deb installs an AppArmor profile that keeps the sandbox on. The app never adds `--no-sandbox` itself, and the doctor reports when it runs without the sandbox (`docs/spec/11-platform-services.md`).
+- **glibc:** releases run on Ubuntu 22.04 (glibc 2.35) and later. Artifacts are built in a container with glibc 2.36 or older, because node-pty links against the build machine's glibc, and the release job fails if a bundled `.node` file needs a newer glibc than 2.35.
 - **CI and releases:** GitHub Actions. From the repo foundation on, every push and pull request runs `pnpm run check:all` on a Linux runner, and a red check blocks merging to `main`. From M6, a version tag also builds the Linux artifacts, writes SHA256 checksums and attaches both to a GitHub release.
