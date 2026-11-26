@@ -19,19 +19,26 @@ A project is a git repository added by folder, chosen with the system's folder p
 
 **State**
 
-State is derived from events, not polled, and shown as a badge in the left menu, in the footer and in the project overview. Core writes those events to an append-only event log in SQLite, so the derived state is the same after a restart.
+State is derived from events, not polled, and shown as a badge in the left menu (the colour of the worktree's node in the tree), in the footer (the open worktree's) and, from M4, in the project overview. Core writes those events to an append-only event log in SQLite, so the derived state is the same after a restart.
 
 | State | Set by | Meaning |
 | --- | --- | --- |
 | Idle | no running turn | nothing is happening |
-| Running | agent turn started, or a workflow step running | an agent or a run is working |
+| Running | agent turn started, setup or teardown steps running, or a workflow step running | an agent or a run is working |
 | Needs attention | agent question or permission request, or a run waiting for approval | the agent or run is blocked on the user |
 | Error | provider or tool failure, crashed agent, failed setup step | the last turn or step failed |
-| Done | user, or PR merged | ready to finish |
+| Done | user, or PR merged (M4) | ready to finish |
 
-A worktree can have several chats and workflow runs. Each source has its own state, and the worktree shows the highest one in this order: Needs attention, Error, Running, Done, Idle. The reducer from events to state, and this ordering, are pure functions with unit tests.
+A worktree can have several chats and workflow runs. Each chat, each run, the setup and teardown steps and the done mark is a source with its own state, and the worktree shows the highest one in this order: Needs attention, Error, Running, Done, Idle. The reducer from events to state, and this ordering, are pure functions with unit tests.
 
-A key jumps to the next worktree that needs attention.
+How long a source keeps its state (`docs/decisions/0028-worktree-state-sources.md`):
+
+- A chat needs attention while a request waits. An ended turn, a cancelled one included, leaves it Idle; a failed one leaves it in Error until its next turn.
+- Failed steps stay in Error until a turn starts in the worktree or steps run again.
+- The user marks a worktree other than the main checkout done, or not done, from the palette (Mark worktree done). A turn or steps starting take the mark off.
+- When core starts, a turn that was under way counts as over, and steps that were running count as failed.
+
+Alt A (Next worktree that needs attention) opens the next one in the left menu's order, across projects, wrapping around.
 
 **Git operations**
 

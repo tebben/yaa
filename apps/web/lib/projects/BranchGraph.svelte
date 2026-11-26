@@ -1,10 +1,20 @@
 <script lang="ts">
+import type { WorktreeState } from "@yaa/contracts/worktree-state";
+import { stateBadges } from "../worktree-state.ts";
+
 // The gutter of a worktree's row in the branch graph (docs/design/ui.md):
 // the project's trunk, which ends at the last row, and a tick to the node.
-// The main checkout's node is filled, a worktree's an open ring; one under
-// way pulses.
-let { last, main, busy }: { last: boolean; main: boolean; busy: boolean } =
+// The node has the state's colour. The main checkout's is filled, as is a
+// done worktree's, and any other is an open ring; one under way pulses.
+let {
+	last,
+	main,
+	busy,
+	state,
+}: { last: boolean; main: boolean; busy: boolean; state: WorktreeState } =
 	$props();
+const badge = $derived(stateBadges[state]);
+const filled = $derived(main || state === "done");
 </script>
 
 <svg
@@ -18,13 +28,10 @@ let { last, main, busy }: { last: boolean; main: boolean; busy: boolean } =
 		fill="none"
 	/>
 	<circle
-		class={[
-			main ? "fill-state-idle" : "fill-none stroke-state-idle",
-			busy && "busy",
-		]}
+		class={[filled ? badge.fill : ["fill-none", badge.stroke], busy && "busy"]}
 		cx="33"
 		cy="13.5"
-		r={main ? 3.5 : 3.25}
+		r={filled ? 3.5 : 3.25}
 		stroke-width="1.5"
 	/>
 </svg>

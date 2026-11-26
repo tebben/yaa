@@ -34,6 +34,7 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "ctrl+shift+n", command: "worktree.new", when: NOT_IN_PALETTE },
 	{ key: "alt+j", command: "worktree.next", when: NOT_IN_PALETTE },
 	{ key: "alt+k", command: "worktree.previous", when: NOT_IN_PALETTE },
+	{ key: "alt+a", command: "worktree.nextAttention", when: NOT_IN_PALETTE },
 	{ key: "ctrl+h", command: "focus.left", when: NOT_IN_PALETTE },
 	{ key: "ctrl+j", command: "focus.down", when: NOT_IN_PALETTE },
 	{ key: "ctrl+k", command: "focus.up", when: NOT_IN_PALETTE },

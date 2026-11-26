@@ -3,9 +3,10 @@
 // project (added beforehand: the system's folder picker cannot be driven),
 // its overview opens, search finds it, its main checkout opens, a worktree
 // is created and finished, the palette runs the hello plugin's command, the rail opens a panel at the
-// right edge, and the fake agent plays a turn into the chat panel. It prints
-// the launch and palette open times against the targets in
-// docs/spec/12-stack-packaging.md and fails only when a step fails
+// right edge, and the fake agent plays a turn into the chat panel, with the
+// worktree's state following it. It prints the launch and palette open times
+// against the targets in docs/spec/12-stack-packaging.md and fails only when
+// a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
@@ -413,8 +414,18 @@ const runPluginCommand = async (page: Connection, logFile: string) => {
 	);
 };
 
+const FOOTER = `document.querySelector("footer")`;
+const ALT = 1;
+const NEXT_ATTENTION: Key = {
+	key: "a",
+	code: "KeyA",
+	keyCode: 65,
+	modifiers: ALT,
+};
+
 // The edit turn asks for a permission and a question; answering both lets
-// it end.
+// it end. While it waits, the worktree needs attention, and a key leads back
+// to it from the project's overview.
 const playFakeTurn = async (page: Connection) => {
 	await click(page, "Start a fake session");
 	const composer = `document.querySelector('input[aria-label="Prompt"]')`;
@@ -422,12 +433,18 @@ const playFakeTurn = async (page: Connection) => {
 	await evaluate(page, `${composer}.focus()`, z.undefined());
 	await type(page, "Make the greeting friendlier");
 	await press(page, ENTER);
+	await waitFor(page, `${FOOTER}.textContent.includes("Needs attention")`);
+	await clickElement(page, menuButton("repo"));
+	await waitFor(page, `!${FOOTER}.textContent.includes("Needs attention")`);
+	await press(page, NEXT_ATTENTION);
+	await waitFor(page, `${FOOTER}.textContent.includes("Needs attention")`);
 	await click(page, "Allow");
 	await click(page, "Decline");
 	await waitFor(
 		page,
 		`document.body.textContent.includes("Turn ended: end turn")`,
 	);
+	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
 
 const median = (values: readonly number[]) => {

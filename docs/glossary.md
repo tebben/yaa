@@ -12,6 +12,7 @@ One line per term. Code, specs and agents use these names; add a term when a new
 - **Session:** one running agent process with its ACP connection, owned by core, shown as a chat.
 - **Turn:** one user message and the agent's work until it ends, fails or is cancelled.
 - **Worktree state:** Idle, Running, Needs attention, Error or Done, derived from events.
+- **State source:** one thing a worktree's state comes from: a chat, a workflow run, its setup and teardown steps, or the done mark.
 - **Event log:** the append-only record of core events in SQLite that state is derived from.
 - **Annotation:** a comment on a line range in a diff or file, sent to the agent as review.
 - **Connector:** a plugin that implements the source-control or issue-tracker interface.
