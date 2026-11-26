@@ -1,0 +1,1 @@
+{"name":"plugin-ui-spike","private":true,"type":"module","dependencies":{"@sveltejs/vite-plugin-svelte":"^7.3.2","@tailwindcss/vite":"^4.3.5","electron":"^45.5.0","esbuild":"^0.28.2","svelte":"~5.59.1","tailwindcss":"^4.3.5","vite":"^8.3.8"}}

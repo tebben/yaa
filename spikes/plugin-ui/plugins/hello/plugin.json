@@ -1,0 +1,1 @@
+{ "id": "hello", "version": "0.0.1", "ui": "src/ui.ts", "styles": "dist/ui.css" }

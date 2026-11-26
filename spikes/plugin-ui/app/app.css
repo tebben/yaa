@@ -1,0 +1,8 @@
+@import "tailwindcss" source("./");
+:root {
+  --yaa-accent: rgb(10, 132, 255);
+  --yaa-surface: rgb(30, 30, 34);
+  --yaa-text: rgb(235, 235, 240);
+  --yaa-space-2: 8px;
+}
+body { background: var(--yaa-surface); color: var(--yaa-text); font-family: sans-serif; }
