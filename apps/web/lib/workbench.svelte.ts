@@ -5,11 +5,15 @@ import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
 import type { CoreClient } from "./core-connection.ts";
 import { createRegions } from "./focus/index.ts";
-import { createLayout } from "./layout.svelte.ts";
+import { createLayouts } from "./layout.svelte.ts";
 import { createPalette } from "./palette/index.ts";
 import { panelKinds } from "./panels/index.ts";
 import { createPlugins } from "./plugins/index.ts";
-import { createProjects, projectCommands } from "./projects/index.ts";
+import {
+	createProjects,
+	createWorktrees,
+	projectCommands,
+} from "./projects/index.ts";
 
 // Keys typed here are text, so bindings such as shift+h leave them alone.
 const isTextEntry = (element: Element | null) =>
@@ -20,8 +24,8 @@ const isTextEntry = (element: Element | null) =>
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
 
-// The app's composition root: the plugins, the agent chat, the projects,
-// the dock layout, the left menu, focus across the shell's regions, the
+// The app's composition root: the plugins, the agent chat, the projects
+// and their worktrees, a dock grid per worktree, the left menu, focus across the shell's regions, the
 // commands with their keys, and the palette.
 export const createWorkbench = (client: CoreClient) => {
 	// The last failure the footer shows.
@@ -39,17 +43,26 @@ export const createWorkbench = (client: CoreClient) => {
 	const kinds = plugins
 		.kinds()
 		.then((contributed) => new Map([...panelKinds, ...contributed]));
-	const layout = createLayout({ client, kinds, fail: unreachable });
-	const projects = createProjects({ client, report });
-	// The dock is on screen only while a branch is selected; the overview
-	// takes its place otherwise, and the dock's keys do nothing.
-	const dock = () => (projects.view === "branch" ? layout.dock : undefined);
+	const layouts = createLayouts({ client, kinds, fail: unreachable });
+	const projects = createProjects({
+		client,
+		report,
+		opening: layouts.open,
+		listed: layouts.keep,
+	});
+	// The open worktree's dock; an overview has none, and the dock's keys do
+	// nothing there.
+	const dock = () => {
+		const { worktree } = projects;
+		return worktree && layouts.docks.get(worktree.id);
+	};
 	let menuOpen = $state(true);
 	const regions = createRegions({ dock, menuOpen: () => menuOpen });
 
 	const context = (): Context => ({
 		"panel.kind": dock()?.activeKind,
 		"project.selected": projects.selected !== undefined,
+		"worktree.selected": (projects.worktree?.index ?? 0) > 0,
 		"focus.region": regions.current(),
 		"focus.list": regions.list(),
 		"focus.highlight": regions.highlighted,
@@ -59,8 +72,10 @@ export const createWorkbench = (client: CoreClient) => {
 	const commands = createCommands({ client, context });
 	const palette = createPalette({
 		commands: () => commands.listed(context()),
+		keysFor: commands.keysFor,
 		run: commands.run,
 	});
+	const worktrees = createWorktrees({ client, projects, palette, report });
 	commands.register({
 		commands: appCommands({
 			dock,
@@ -78,6 +93,7 @@ export const createWorkbench = (client: CoreClient) => {
 	commands.register({
 		commands: projectCommands({
 			projects,
+			worktrees,
 			showMenu: () => {
 				menuOpen = true;
 				return tick();
@@ -105,8 +121,12 @@ export const createWorkbench = (client: CoreClient) => {
 	}, unreachable);
 
 	return {
-		layout,
+		layouts,
+		get dock() {
+			return dock();
+		},
 		projects,
+		worktrees,
 		regions,
 		commands,
 		palette,

@@ -7,8 +7,11 @@ import { Button, Icon } from "@yaa/ui";
 // The project's overview page: a placeholder until the worktree list with
 // state, changes and cost, and the issue list, arrive (M4,
 // docs/spec/02-worktrees.md).
-let { project, onopenbranch }: { project: Project; onopenbranch: () => void } =
-	$props();
+let {
+	project,
+	onopenbranch,
+}: { project: Project; onopenbranch: (worktree: string) => void } = $props();
+const main = $derived(project.worktrees[0]);
 </script>
 
 <section
@@ -25,12 +28,15 @@ let { project, onopenbranch }: { project: Project; onopenbranch: () => void } =
 		<dt class="text-text-muted">Default branch</dt>
 		<dd class="font-mono text-text-soft">{project.defaultBranch}</dd>
 	</dl>
-	<div>
-		<Button onclick={onopenbranch}>
-			<Icon icon={GitBranch} class="size-3.5" />
-			Open {project.defaultBranch}
-		</Button>
-	</div>
+	{#if main}
+		{@const { id } = main}
+		<div>
+			<Button onclick={() => onopenbranch(id)}>
+				<Icon icon={GitBranch} class="size-3.5" />
+				Open {project.defaultBranch}
+			</Button>
+		</div>
+	{/if}
 	<p class="text-text-muted">
 		Worktrees with their state, changes and cost, and the issue list, come here.
 	</p>

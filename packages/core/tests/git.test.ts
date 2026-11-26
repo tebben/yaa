@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createGitService, mainWorktree, parseStatus } from "../git.ts";
+import {
+	createGitService,
+	mainWorktree,
+	parseBranches,
+	parseStatus,
+} from "../git.ts";
 
 describe("parseStatus", () => {
 	it("reads the branch, upstream, ahead and behind, and counts changed files", () => {
@@ -46,6 +51,23 @@ describe("mainWorktree", () => {
 			bare: true,
 		});
 		expect(mainWorktree("")).toBeUndefined();
+	});
+});
+
+describe("parseBranches", () => {
+	it("lists local branches, then remote ones without HEAD, each sorted", () => {
+		const output = [
+			"refs/heads/main",
+			"refs/heads/feat/a",
+			"refs/remotes/origin/HEAD",
+			"refs/remotes/origin/main",
+			"refs/remotes/fork/b",
+			"",
+		].join("\n");
+		expect(parseBranches(output)).toEqual({
+			local: ["feat/a", "main"],
+			remote: ["fork/b", "origin/main"],
+		});
 	});
 });
 

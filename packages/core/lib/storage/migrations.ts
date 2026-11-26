@@ -24,4 +24,25 @@ export const migrations: Migrations = [
 		default_branch TEXT NOT NULL,
 		added_at INTEGER NOT NULL
 	) STRICT;`,
+	// 4: worktrees (docs/spec/02-worktrees.md), with the main checkout of
+	// each project as index 0, and layouts kept per worktree instead of one
+	// for the app.
+	`CREATE TABLE worktrees (
+		id TEXT PRIMARY KEY,
+		project_id TEXT NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+		branch TEXT NOT NULL,
+		path TEXT NOT NULL UNIQUE,
+		idx INTEGER NOT NULL,
+		created_at INTEGER NOT NULL,
+		UNIQUE (project_id, idx)
+	) STRICT;
+	INSERT INTO worktrees (id, project_id, branch, path, idx, created_at)
+		SELECT lower(hex(randomblob(16))), id, default_branch, path, 0, added_at
+		FROM projects;
+	DROP TABLE layouts;
+	CREATE TABLE layouts (
+		worktree_id TEXT PRIMARY KEY REFERENCES worktrees (id) ON DELETE CASCADE,
+		layout TEXT NOT NULL,
+		saved_at INTEGER NOT NULL
+	) STRICT;`,
 ];

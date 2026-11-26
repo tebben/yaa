@@ -48,7 +48,7 @@ Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and
 An overlay with rounded corners and a shadow. The query and the rows share one text edge; the selected row is a rounded `selection` tint. Each row shows the command's first key as key caps and its category.
 
 ## Project tree
-Drawn as a **branch graph**: main is the trunk, each worktree a node on a branch. Ring = agent working, filled = done. Selection = tint `selection`, no side border. State dots use the state colours.
+Drawn as a **branch graph**: the project's trunk runs down from under its chevron and ends at the last worktree, and a tick leads from it to each worktree's node, which sits under the project's folder icon. The main checkout's node is filled, a worktree's an open ring (until the state badges colour them: ring = agent working, filled = done); a worktree being created or finished pulses. Branch names are Geist Mono at `sm`, in `textSoft`, `text` when selected, and line up with the project name. Selection = tint `selection` across the full row, no side border. State dots use the state colours. Projects are 8px apart; hover actions (new worktree, remove, finish) are small icon buttons at the row's right edge that replace its detail while hovered.
 
 ## Composer (chat input)
 - Context chips (files, issues), `@` autocomplete, `/` for commands and skills.

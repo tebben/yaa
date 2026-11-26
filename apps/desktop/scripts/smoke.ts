@@ -1,15 +1,22 @@
 // The smoke test: runs the built app in dev mode, with a fresh data folder,
 // and drives its window over the DevTools protocol. The app starts with a
 // project (added beforehand: the system's folder picker cannot be driven),
-// its overview opens, search finds it, its default branch opens, the
-// palette runs the hello plugin's command, the rail opens a panel at the
+// its overview opens, search finds it, its main checkout opens, a worktree
+// is created and finished, the palette runs the hello plugin's command, the rail opens a panel at the
 // right edge, and the fake agent plays a turn into the chat panel. It prints
 // the launch and palette open times against the targets in
 // docs/spec/12-stack-packaging.md and fails only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import {
+	access,
+	mkdir,
+	mkdtemp,
+	readFile,
+	rm,
+	writeFile,
+} from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -178,6 +185,12 @@ const OPEN_PALETTE: Key = {
 const ESCAPE: Key = { key: "Escape", code: "Escape", keyCode: 27 };
 const SLASH: Key = { key: "/", code: "Slash", keyCode: 191, text: "/" };
 const ENTER: Key = { key: "Enter", code: "Enter", keyCode: 13, text: "\r" };
+const NEW_WORKTREE: Key = {
+	key: "N",
+	code: "KeyN",
+	keyCode: 78,
+	modifiers: CTRL_SHIFT,
+};
 
 const press = async (
 	page: Connection,
@@ -223,10 +236,13 @@ const clickElement = async (page: Connection, element: string) => {
 	});
 };
 
+// The open worktree's dock; the docks of other worktrees stay, hidden.
+const DOCK = `[...document.querySelectorAll(".yaa-dock")].find((dock) => dock.offsetParent !== null)`;
+
 const checkRailPlacement = async (page: Connection) => {
-	const changes = `[...document.querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Changes")`;
+	const changes = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Changes")`;
 	const files = `document.querySelector('[aria-label="Panels"] button[aria-label="Files"]')`;
-	const filesTab = `[...document.querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Files")`;
+	const filesTab = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Files")`;
 	await clickElement(page, changes);
 	await clickElement(page, files);
 	await waitFor(page, filesTab);
@@ -234,7 +250,7 @@ const checkRailPlacement = async (page: Connection) => {
 		page,
 		`(() => {
 			const panel = (${filesTab}).closest(".dv-groupview").getBoundingClientRect();
-			const grid = document.querySelector(".yaa-dock").getBoundingClientRect();
+			const grid = (${DOCK}).getBoundingClientRect();
 			return Math.abs(panel.right - grid.right) < 1 &&
 				Math.abs(panel.top - grid.top) < 1 &&
 				Math.abs(panel.bottom - grid.bottom) < 1;
@@ -243,8 +259,12 @@ const checkRailPlacement = async (page: Connection) => {
 };
 
 // A repository with one commit on main, added as a project to the data
-// folder the app is about to use.
+// folder the app is about to use, whose worktrees go into the data folder.
 const addRepo = async (dataDir: string, dir: string) => {
+	await writeFile(
+		join(dataDir, "settings.json"),
+		JSON.stringify({ "worktree.directory": join(dataDir, "worktrees") }),
+	);
 	await mkdir(dir);
 	const git = (...args: string[]) =>
 		execFileSync("git", ["-C", dir, ...args], { stdio: "ignore" });
@@ -275,8 +295,8 @@ const SEARCH = `document.querySelector('input[aria-label="Search projects"]')`;
 const menuButton = (text: string) =>
 	`[...${MENU}.querySelectorAll("button")].find((button) => button.textContent.includes(${JSON.stringify(text)}))`;
 
-// Opens the project's overview, searches the tree, and opens the default
-// branch, which shows the dock.
+// Opens the project's overview, searches the tree, and opens the main
+// checkout, which shows the dock.
 const openProject = async (page: Connection) => {
 	await clickElement(page, menuButton("repo"));
 	await waitFor(
@@ -291,6 +311,46 @@ const openProject = async (page: Connection) => {
 	await waitFor(page, `${SEARCH}.value === ""`);
 	await clickElement(page, menuButton("main"));
 	await waitFor(page, `document.querySelector('[aria-label="Panels"]')`);
+};
+
+const HEADER = `document.querySelector("header")`;
+
+// Creates a worktree from the palette, which opens its grid, then finishes
+// it, removing its folder and branch, which opens the main checkout again.
+const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
+	await press(page, NEW_WORKTREE);
+	await waitFor(
+		page,
+		`document.querySelector('[role="dialog"][aria-label="New worktree"]')`,
+	);
+	await type(page, "1 smoke");
+	await waitFor(
+		page,
+		`document.querySelector('[role="option"]')?.textContent.includes("1-smoke")`,
+	);
+	await press(page, ENTER);
+	await waitFor(page, `${HEADER}.textContent.includes("1-smoke")`);
+	const folder = join(dataDir, "worktrees", "repo", "1-smoke");
+	await access(folder);
+	await press(page, OPEN_PALETTE);
+	await waitFor(page, PALETTE);
+	await type(page, "Finish worktree");
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`document.querySelector('[role="dialog"][aria-label="Finish 1-smoke"]')`,
+	);
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`${HEADER}.textContent.includes("main") && !${MENU}.textContent.includes("1-smoke")`,
+	);
+	await access(folder).then(
+		() => {
+			throw new Error(`${folder} is still there after finishing`);
+		},
+		() => undefined,
+	);
 };
 
 // From the key's event to the frame after the palette is in the DOM, so
@@ -366,7 +426,9 @@ try {
 	const first = await launch(dataDir);
 	console.log("The app started.");
 	await openProject(first.page);
-	console.log("The project's overview, search and default branch opened.");
+	console.log("The project's overview, search and main checkout opened.");
+	await createAndFinishWorktree(first.page, dataDir);
+	console.log("A worktree was created and finished.");
 	await checkRailPlacement(first.page);
 	console.log("The rail opened a panel at the right edge.");
 	await runPluginCommand(first.page, logFile);

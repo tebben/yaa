@@ -6,11 +6,9 @@ import type { SettingsState } from "@yaa/contracts/settings";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
 import type { Projects } from "./projects/projects.ts";
+import type { Worktrees } from "./projects/worktrees.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
-
-// The only layout scope until projects arrive in M2.
-const APP_LAYOUT = "app";
 
 export type CoreServerOptions = {
 	log: Logger;
@@ -20,6 +18,7 @@ export type CoreServerOptions = {
 	plugins: PluginManager;
 	agents: AgentSessions;
 	projects: Projects;
+	worktrees: Worktrees;
 	pickFolder(): Promise<string | null>;
 };
 
@@ -31,6 +30,7 @@ export const createCoreServer = ({
 	plugins,
 	agents,
 	projects,
+	worktrees,
 	pickFolder,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
@@ -38,9 +38,11 @@ export const createCoreServer = ({
 		{
 			"settings.get": () => settings.current(),
 			"keybindings.get": () => keybindings.current(),
-			"layout.get": () => ({ layout: layouts.get(APP_LAYOUT) ?? null }),
-			"layout.save": ({ layout }) => {
-				layouts.save(APP_LAYOUT, layout);
+			"layout.get": ({ worktree }) => ({
+				layout: layouts.get(worktree) ?? null,
+			}),
+			"layout.save": ({ worktree, layout }) => {
+				layouts.save(worktree, layout);
 				return {};
 			},
 			"projects.list": () => ({ projects: projects.list() }),
@@ -50,7 +52,14 @@ export const createCoreServer = ({
 				projects.remove(id);
 				return {};
 			},
-			"projects.status": ({ id }) => projects.status(id),
+			"projects.branches": async ({ id }) => ({
+				branches: await worktrees.branches(id),
+			}),
+			"worktrees.create": (params) => worktrees.create(params),
+			"worktrees.status": ({ id }) => worktrees.status(id),
+			"worktrees.finishCheck": ({ id }) => worktrees.finishCheck(id),
+			"worktrees.finish": ({ id, action, force }) =>
+				worktrees.finish(id, action, force),
 			"plugins.list": () => ({ plugins: plugins.plugins }),
 			"plugins.runCommand": async ({ command }) => {
 				await plugins.runCommand(command);
@@ -79,8 +88,9 @@ export const createCoreServer = ({
 	);
 	settings.onChange((state) => server.emit("settings.changed", state));
 	keybindings.onChange((state) => server.emit("keybindings.changed", state));
-	projects.onChange((list) =>
-		server.emit("projects.changed", { projects: list }),
-	);
+	const projectsChanged = () =>
+		server.emit("projects.changed", { projects: projects.list() });
+	projects.onChange(projectsChanged);
+	worktrees.onChange(projectsChanged);
 	return server;
 };

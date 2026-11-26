@@ -1,18 +1,36 @@
 import * as z from "zod";
 
+// A git worktree of a project (docs/spec/02-worktrees.md). `index` is its
+// stable YAA_WORKTREE_INDEX: 0 for the project's main checkout, and for a
+// worktree yaa created the lowest number from 1 up that no other worktree
+// of the project held when it was created.
+export const worktree = z.object({
+	id: z.string(),
+	branch: z.string(),
+	path: z.string(),
+	index: z.number().int().nonnegative(),
+});
+
 // A git repository added by folder (docs/spec/02-worktrees.md). `path` is
-// the main checkout's folder, where the default branch lives.
+// the main checkout's folder, where the default branch lives. `worktrees`
+// starts with the main checkout, then the ones yaa created, oldest first.
 export const project = z.object({
 	id: z.string(),
 	name: z.string(),
 	path: z.string(),
 	defaultBranch: z.string(),
+	worktrees: z.array(worktree),
 });
 
 // Adding fails, with a reason the user can act on, when the folder is not
 // in a git repository or the project is already in the list.
 export const addProjectResult = z.union([
 	z.object({ project }),
+	z.object({ problem: z.string() }),
+]);
+
+export const createWorktreeResult = z.union([
+	z.object({ worktree }),
 	z.object({ problem: z.string() }),
 ]);
 
@@ -28,6 +46,31 @@ export const branchStatus = z.object({
 	changes: z.number().int().nonnegative(),
 });
 
+// What finishing a worktree would lose: uncommitted changes, and commits on
+// its branch that are neither on the default branch nor on a remote. The
+// remote branch is the upstream that deleting on the remote would delete.
+// A folder removed outside yaa has nothing to lose.
+export const finishCheck = z.object({
+	folder: z.boolean(),
+	changes: z.number().int().nonnegative(),
+	unpushed: z.number().int().nonnegative(),
+	remoteBranch: z.string().nullable(),
+});
+
+// How far finishing goes, each step including the ones before: forget the
+// worktree and keep its folder and branch, remove the folder, delete the
+// local branch, delete the remote branch too.
+export const finishAction = z.enum([
+	"close",
+	"remove",
+	"deleteBranch",
+	"deleteRemote",
+]);
+
+export type Worktree = z.infer<typeof worktree>;
 export type Project = z.infer<typeof project>;
 export type AddProjectResult = z.infer<typeof addProjectResult>;
+export type CreateWorktreeResult = z.infer<typeof createWorktreeResult>;
 export type BranchStatus = z.infer<typeof branchStatus>;
+export type FinishCheck = z.infer<typeof finishCheck>;
+export type FinishAction = z.infer<typeof finishAction>;

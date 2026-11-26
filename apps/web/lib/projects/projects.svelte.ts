@@ -6,33 +6,43 @@ import { focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
 import type { CoreClient } from "../core-connection.ts";
 import type { Crumb } from "../shell/index.ts";
-import { filterTree } from "./project-tree.ts";
-
-// What the grid area shows for the selected project: its overview, or its
-// default branch with the dock.
-export type ProjectView = "overview" | "branch";
+import { filterTree, type Place, stepWorktree } from "./project-tree.ts";
 
 type ProjectsOptions = {
 	client: CoreClient;
 	report(message: string): void;
+	// A worktree is about to show, so its dock can load.
+	opening(worktree: string): void;
+	// The worktrees that exist now; the others' docks can go.
+	listed(worktrees: ReadonlySet<string>): void;
 };
 
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
 
-// The project list core keeps, the selection and the search over the tree
-// (docs/spec/02-worktrees.md).
-export const createProjects = ({ client, report }: ProjectsOptions) => {
+// The project list core keeps, with each project's worktrees, where the
+// grid is, and the search over the tree (docs/spec/02-worktrees.md).
+export const createProjects = ({
+	client,
+	report,
+	opening,
+	listed,
+}: ProjectsOptions) => {
 	let projects = $state.raw<readonly Project[]>([]);
-	let selection = $state.raw<{ id: string; view: ProjectView }>();
-	// The status of the selected project's main checkout, once core answers.
+	let place = $state.raw<Place>();
+	// The status of the open worktree, once core answers.
 	let status = $state.raw<{ id: string; value: BranchStatus }>();
 	let query = $state("");
 	let collapsed = $state.raw<ReadonlySet<string>>(new Set());
 
-	// A removed project is no longer selected.
+	// A removed project or a finished worktree is no longer selected.
 	const selected = $derived(
-		projects.find((project) => project.id === selection?.id),
+		projects.find((project) => project.id === place?.project),
+	);
+	const worktree = $derived(
+		place?.worktree === undefined
+			? undefined
+			: selected?.worktrees.find(({ id }) => id === place?.worktree),
 	);
 	const tree = $derived(filterTree(query, projects));
 
@@ -42,23 +52,34 @@ export const createProjects = ({ client, report }: ProjectsOptions) => {
 
 	const fail = (reason: unknown) => report(`Projects: ${describe(reason)}`);
 
-	client.subscribe("projects.changed", (changed) => {
-		projects = changed.projects;
-	});
-	client.request("projects.list", {}).then((listed) => {
-		projects = listed.projects;
-	}, fail);
-
-	const refreshStatus = (id: string) => {
-		client.request("projects.status", { id }).then((value) => {
-			if (selection?.id === id) status = { id, value };
+	const go = (next: Place) => {
+		place = next;
+		const id = next.worktree;
+		if (id === undefined) return;
+		opening(id);
+		client.request("worktrees.status", { id }).then((value) => {
+			if (place?.worktree === id) status = { id, value };
 		}, fail);
 	};
 
-	const select = (id: string, view: ProjectView) => {
-		selection = { id, view };
-		refreshStatus(id);
+	const update = (next: readonly Project[]) => {
+		projects = next;
+		listed(
+			new Set(next.flatMap(({ worktrees }) => worktrees.map(({ id }) => id))),
+		);
 	};
+
+	client.subscribe("projects.changed", (changed) => update(changed.projects));
+	// Until session restore, the window opens on the first project's main
+	// checkout.
+	client.request("projects.list", {}).then((list) => {
+		update(list.projects);
+		const [first] = list.projects;
+		const main = first?.worktrees[0];
+		if (place === undefined && first && main) {
+			go({ project: first.id, worktree: main.id });
+		}
+	}, fail);
 
 	return {
 		get projects() {
@@ -70,23 +91,31 @@ export const createProjects = ({ client, report }: ProjectsOptions) => {
 		get selected() {
 			return selected;
 		},
-		get selection(): { id: string; view: ProjectView } | undefined {
-			return selected && selection;
+		// The worktree the grid shows; undefined on an overview.
+		get worktree() {
+			return worktree;
 		},
-		get view(): ProjectView | undefined {
-			return selected && selection?.view;
+		get place(): Place | undefined {
+			return selected && place;
+		},
+		get view(): "overview" | "worktree" | undefined {
+			if (selected === undefined) return undefined;
+			if (place?.worktree === undefined) return "overview";
+			return worktree && "worktree";
 		},
 		// The header's path: the project, then its overview or its branch.
 		get crumbs(): Crumb[] {
-			if (selected === undefined || selection === undefined) return [];
-			const place: Crumb =
-				selection.view === "overview"
-					? { icon: LayoutGrid, label: "Overview" }
-					: { icon: GitBranch, label: selected.defaultBranch, mono: true };
-			return [{ icon: Folder, label: selected.name }, place];
+			if (selected === undefined) return [];
+			const project: Crumb = { icon: Folder, label: selected.name };
+			if (place?.worktree === undefined) {
+				return [project, { icon: LayoutGrid, label: "Overview" }];
+			}
+			return worktree === undefined
+				? [project]
+				: [project, { icon: GitBranch, label: worktree.branch, mono: true }];
 		},
 		get status(): BranchStatus | undefined {
-			return status !== undefined && status.id === selected?.id
+			return status !== undefined && status.id === worktree?.id
 				? status.value
 				: undefined;
 		},
@@ -105,7 +134,12 @@ export const createProjects = ({ client, report }: ProjectsOptions) => {
 			if (!next.delete(id)) next.add(id);
 			collapsed = next;
 		},
-		select,
+		go,
+		// The next or previous worktree in the tree, across projects.
+		step(by: 1 | -1) {
+			const next = stepWorktree(projects, place, by);
+			if (next !== undefined) go(next);
+		},
 		searchField: ((element: HTMLInputElement) => {
 			searchField = element;
 			return () => {
@@ -141,7 +175,7 @@ export const createProjects = ({ client, report }: ProjectsOptions) => {
 				.then((result) => {
 					if (result === undefined) return;
 					if ("problem" in result) report(result.problem);
-					else select(result.project.id, "overview");
+					else go({ project: result.project.id });
 				}, fail);
 		},
 	};

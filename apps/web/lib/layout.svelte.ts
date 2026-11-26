@@ -1,4 +1,5 @@
 import { createDock, type DockController, type PanelKind } from "@yaa/ui/dock";
+import { SvelteMap } from "svelte/reactivity";
 import type { CoreClient } from "./core-connection.ts";
 import { defaultLayout } from "./panels/index.ts";
 
@@ -12,42 +13,68 @@ type LayoutOptions = {
 	fail(reason: unknown): void;
 };
 
-// The dock grid, created once core has returned the saved layout and the
-// plugins, and saved back to core as it changes.
-export const createLayout = ({ client, kinds, fail }: LayoutOptions) => {
-	let dock = $state.raw<DockController>();
+// One dock grid per worktree, each with its own saved layout
+// (docs/spec/02-worktrees.md). A worktree's dock is created the first time
+// it opens and kept while the app runs, so switching back finds its panels
+// as they were.
+export const createLayouts = ({ client, kinds, fail }: LayoutOptions) => {
+	const docks = new SvelteMap<string, DockController>();
+	const loading = new Set<string>();
+	const timers = new Map<string, ReturnType<typeof setTimeout>>();
 	let available = $state.raw<ReadonlyMap<string, PanelKind>>(new Map());
-	let timer: ReturnType<typeof setTimeout> | undefined;
+	kinds.then((all) => {
+		available = all;
+	}, fail);
 
-	const save = (layout: string) => {
-		clearTimeout(timer);
-		timer = setTimeout(() => {
-			client.request("layout.save", { layout }).catch(fail);
-		}, SAVE_DELAY_MS);
+	const save = (worktree: string, layout: string) => {
+		clearTimeout(timers.get(worktree));
+		timers.set(
+			worktree,
+			setTimeout(() => {
+				timers.delete(worktree);
+				client.request("layout.save", { worktree, layout }).catch(fail);
+			}, SAVE_DELAY_MS),
+		);
 	};
 
-	Promise.all([client.request("layout.get", {}), kinds]).then(
-		([{ layout }, all]) => {
-			available = all;
-			dock = createDock({
-				kinds: all,
-				layout: layout ?? undefined,
-				defaultLayout,
-				onChange: save,
-			});
-		},
-		fail,
-	);
-
 	return {
-		get dock() {
-			return dock;
+		// Created docks by worktree id.
+		get docks(): ReadonlyMap<string, DockController> {
+			return docks;
 		},
-		// Empty until the dock exists.
+		// Every panel kind; empty until the plugins have answered.
 		get kinds() {
 			return available;
+		},
+		// Loads the worktree's layout and makes its dock, once.
+		open(worktree: string) {
+			if (docks.has(worktree) || loading.has(worktree)) return;
+			loading.add(worktree);
+			Promise.all([client.request("layout.get", { worktree }), kinds])
+				.then(([{ layout }, all]) => {
+					docks.set(
+						worktree,
+						createDock({
+							kinds: all,
+							layout: layout ?? undefined,
+							defaultLayout,
+							onChange: (changed) => save(worktree, changed),
+						}),
+					);
+				}, fail)
+				.finally(() => loading.delete(worktree));
+		},
+		// Drops the docks of worktrees that are gone, with any save still to
+		// come: core dropped their layouts with them.
+		keep(worktrees: ReadonlySet<string>) {
+			for (const id of [...docks.keys(), ...timers.keys()]) {
+				if (worktrees.has(id)) continue;
+				docks.delete(id);
+				clearTimeout(timers.get(id));
+				timers.delete(id);
+			}
 		},
 	};
 };
 
-export type LayoutController = ReturnType<typeof createLayout>;
+export type LayoutsController = ReturnType<typeof createLayouts>;

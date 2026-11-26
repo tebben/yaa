@@ -10,6 +10,7 @@ import { createGitService } from "./git/git-service.ts";
 import { openLogFile } from "./log/log-file.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
 import { createProjects } from "./projects/projects.ts";
+import { createWorktrees } from "./projects/worktrees.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
 import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
@@ -89,6 +90,7 @@ export const startCore = ({
 		// Sessions emit only after a client starts one, once `server` exists.
 		emit: (event) => server.emit("agent.event", event),
 	});
+	const git = createGitService();
 	const server = createCoreServer({
 		log,
 		settings,
@@ -97,9 +99,11 @@ export const startCore = ({
 		plugins,
 		agents,
 		pickFolder,
-		projects: createProjects({
+		projects: createProjects({ db, git, home: homedir() }),
+		worktrees: createWorktrees({
 			db,
-			git: createGitService(),
+			git,
+			settings: () => settings.current().values,
 			home: homedir(),
 		}),
 	});

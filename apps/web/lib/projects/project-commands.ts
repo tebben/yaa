@@ -1,16 +1,19 @@
 import type { Command } from "../commands/index.ts";
 import type { ProjectsController } from "./projects.svelte.ts";
+import type { WorktreesController } from "./worktrees.svelte.ts";
 
 type ProjectCommandsOptions = {
 	projects: ProjectsController;
+	worktrees: WorktreesController;
 	// Shows the left menu if it is hidden, resolving once it is on screen.
 	showMenu(): Promise<void>;
 	highlight(): void;
 };
 
-// The commands of the project list in the left menu.
+// The commands of the project list in the left menu and its worktrees.
 export const projectCommands = ({
 	projects,
+	worktrees,
 	showMenu,
 	highlight,
 }: ProjectCommandsOptions): Command[] => [
@@ -29,6 +32,50 @@ export const projectCommands = ({
 			const { selected } = projects;
 			if (selected !== undefined) projects.remove(selected.id);
 		},
+	},
+	{
+		id: "worktree.new",
+		title: "New worktree",
+		category: "Worktree",
+		when: "project.selected",
+		run: () => {
+			const { selected } = projects;
+			if (selected !== undefined) worktrees.create(selected.id);
+		},
+	},
+	{
+		id: "worktree.newFrom",
+		title: "New worktree from branch",
+		category: "Worktree",
+		when: "project.selected",
+		run: () => {
+			const { selected } = projects;
+			if (selected !== undefined) worktrees.createFrom(selected.id);
+		},
+	},
+	{
+		id: "worktree.finish",
+		title: "Finish worktree",
+		category: "Worktree",
+		when: "worktree.selected",
+		run: () => {
+			const { place } = projects;
+			if (place?.worktree !== undefined) {
+				worktrees.finish(place.project, place.worktree);
+			}
+		},
+	},
+	{
+		id: "worktree.next",
+		title: "Next worktree",
+		category: "Worktree",
+		run: () => projects.step(1),
+	},
+	{
+		id: "worktree.previous",
+		title: "Previous worktree",
+		category: "Worktree",
+		run: () => projects.step(-1),
 	},
 	{
 		id: "menu.search",
