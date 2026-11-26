@@ -21,9 +21,9 @@ import { createPluginHostProcess } from "./lib/plugin-host-process.ts";
 import { hardenSession, openWindow } from "./lib/window.ts";
 
 // Dev mode, set by scripts/dev.ts and scripts/smoke.ts: its own data
-// folder, debug logs and the fake agent. The dev server URL, set by dev.ts
-// only, loads the renderer from Vite instead of the build, and the plugins
-// folder the built-in plugins from the repository.
+// folder, debug logs and the dev-only plugins. The dev server URL, set by
+// dev.ts only, loads the renderer from Vite instead of the build, and the
+// plugins folder the built-in plugins from the repository.
 const dev = process.env["YAA_DEV"] === "1";
 const devServerUrl = process.env["YAA_DEV_SERVER_URL"];
 const here = import.meta.dirname;
@@ -62,8 +62,6 @@ app.whenReady().then(() => {
 			dataDir: app.getPath("userData"),
 			logDir: app.getPath("logs"),
 			pluginsDir,
-			// The fake agent is a dev-only provider (docs/spec/05-agents-chat.md).
-			fakeAgent: dev ? join(here, "fake-agent.js") : null,
 			dev,
 		},
 		onStartPluginHost: () => pluginHost.start(),

@@ -14,8 +14,14 @@ import {
 	splitPort,
 } from "@yaa/contracts/protocol";
 import { createServer, type Handlers } from "@yaa/contracts/server";
-import type { CommandHandler, PluginContext } from "@yaa/plugin-api";
+import type {
+	AgentProvider,
+	CommandHandler,
+	PluginContext,
+} from "@yaa/plugin-api";
 import { backendModule } from "./backend-module.ts";
+import { createProgramsApi } from "./programs.ts";
+import { providerStatusOf } from "./provider-status.ts";
 import { createStorageApi, createWorktreeApi } from "./worktree-api.ts";
 
 type Service = (method: string, params: unknown) => Promise<unknown>;
@@ -50,6 +56,15 @@ export const startPluginHost = (port: Port) => {
 	const active = new Set<string>();
 	const handlers = new Map<string, CommandHandler>();
 	const services = new Map<string, Service>();
+	const providers = new Map<string, AgentProvider>();
+	const provider = (id: string) => {
+		const found = providers.get(id);
+		if (found === undefined) {
+			throw new Error(`No provider is registered as ${id}`);
+		}
+		return found;
+	};
+	const programs = createProgramsApi();
 	const { serving, calling } = splitPort(port);
 	const core = createClient(pluginCoreProtocol);
 	const api = createWorktreeApi(core);
@@ -57,7 +72,7 @@ export const startPluginHost = (port: Port) => {
 	const server = createServer(
 		pluginHostProtocol,
 		{
-			"plugin.activate": async ({ id, main, commands }) => {
+			"plugin.activate": async ({ id, main, ...declared }) => {
 				if (active.has(id)) throw new Error(`Plugin ${id} is already active`);
 				// Marked first: a plugin whose activate throws stays failed until
 				// the host restarts, rather than registering twice on a retry.
@@ -65,7 +80,7 @@ export const startPluginHost = (port: Port) => {
 				const module = backendModule.parse(
 					await import(pathToFileURL(main).href),
 				);
-				await module.activate(context(id, new Set(commands)));
+				await module.activate(context(id, declared));
 				return {};
 			},
 			"command.run": async ({ command }) => {
@@ -76,6 +91,10 @@ export const startPluginHost = (port: Port) => {
 				await handler();
 				return {};
 			},
+			"provider.status": (params) =>
+				providerStatusOf(provider(params.provider)),
+			"provider.spawn": async (params) =>
+				provider(params.provider).spawn({ cwd: params.cwd }),
 			"plugin.call": async ({ id, method, params }) => {
 				const service = services.get(id);
 				if (service === undefined) {
@@ -93,26 +112,32 @@ export const startPluginHost = (port: Port) => {
 		"plugin-host",
 	);
 
-	const context = (id: string, declared: Set<string>): PluginContext => ({
+	// Registers what a plugin's manifest declares, once.
+	const registrar =
+		<T>(plugin: string, declared: readonly string[], into: Map<string, T>) =>
+		(name: string, value: T) => {
+			if (!declared.includes(name)) {
+				throw new Error(
+					`Plugin ${plugin} registered ${name}, which its manifest does not contribute`,
+				);
+			}
+			if (into.has(name)) throw new Error(`${name} is registered twice`);
+			into.set(name, value);
+			return {
+				dispose() {
+					if (into.get(name) === value) into.delete(name);
+				},
+			};
+		};
+
+	const context = (
+		id: string,
+		declared: { commands: string[]; providers: string[] },
+	): PluginContext => ({
 		id,
-		commands: {
-			register(command, handler) {
-				if (!declared.has(command)) {
-					throw new Error(
-						`Plugin ${id} registered ${command}, which its manifest does not contribute`,
-					);
-				}
-				if (handlers.has(command)) {
-					throw new Error(`Command ${command} is registered twice`);
-				}
-				handlers.set(command, handler);
-				return {
-					dispose() {
-						if (handlers.get(command) === handler) handlers.delete(command);
-					},
-				};
-			},
-		},
+		commands: { register: registrar(id, declared.commands, handlers) },
+		providers: { register: registrar(id, declared.providers, providers) },
+		programs,
 		serve(protocol, served) {
 			if (services.has(id)) throw new Error(`Plugin ${id} serves twice`);
 			const service = serviceOf(id, protocol, served);

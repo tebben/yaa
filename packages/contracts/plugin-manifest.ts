@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { keybinding } from "./keybindings.ts";
+import { providerCapability } from "./providers.ts";
 
 // plugin.json (docs/spec/03-plugins.md). Core reads it from disk and sends it
 // to the renderer, so both ends parse it with this schema.
@@ -47,6 +48,14 @@ const pluginPanel = z.strictObject({
 	opensFiles: z.boolean().exactOptional(),
 });
 
+// An agent the plugin connects: its backend module registers how to detect,
+// sign in to and start it.
+const pluginProvider = z.strictObject({
+	id: z.string(),
+	title: z.string().min(1),
+	capabilities: z.array(providerCapability).default([]),
+});
+
 // Running a contributed command activates the plugin anyway; onStartup
 // activates it when core starts.
 const activationEvent = z.enum(["onStartup"]);
@@ -55,6 +64,7 @@ const contributions = z.strictObject({
 	commands: z.array(pluginCommand).default([]),
 	keybindings: z.array(keybinding).default([]),
 	panels: z.array(pluginPanel).default([]),
+	providers: z.array(pluginProvider).default([]),
 });
 
 const ownId = (plugin: string, id: string) =>
@@ -75,12 +85,16 @@ export const pluginManifest = z
 		// The built UI module, and the CSS the plugin build extracted from it.
 		ui: pluginPath.optional(),
 		styles: pluginPath.optional(),
+		// The built Node module core runs as an agent process.
+		agent: pluginPath.optional(),
+		// Loaded in dev mode only.
+		devOnly: z.boolean().optional(),
 		contributes: contributions.prefault({}),
 	})
 	.superRefine((manifest, context) => {
 		const issue = (path: (string | number)[], message: string) =>
 			context.addIssue({ code: "custom", path, message });
-		const { commands, keybindings, panels } = manifest.contributes;
+		const { commands, keybindings, panels, providers } = manifest.contributes;
 		const commandIds = new Set<string>();
 		commands.forEach(({ id }, index) => {
 			const path = ["contributes", "commands", index, "id"];
@@ -98,6 +112,15 @@ export const pluginManifest = z
 			}
 			if (panelIds.has(id)) issue(path, `Panel ${id} is listed twice`);
 			panelIds.add(id);
+		});
+		const providerIds = new Set<string>();
+		providers.forEach(({ id }, index) => {
+			const path = ["contributes", "providers", index, "id"];
+			if (!ownId(manifest.id, id)) {
+				issue(path, `Expected ${manifest.id} or ${manifest.id}.<name>`);
+			}
+			if (providerIds.has(id)) issue(path, `Provider ${id} is listed twice`);
+			providerIds.add(id);
 		});
 		keybindings.forEach(({ command }, index) => {
 			if (!commandIds.has(command)) {
@@ -131,6 +154,12 @@ export const pluginManifest = z
 		if (inBackend && manifest.main === undefined) {
 			issue(["main"], "Commands need a backend module");
 		}
+		if (providers.length > 0 && manifest.main === undefined) {
+			issue(["main"], "Providers need a backend module");
+		}
+		if (manifest.agent !== undefined && providers.length === 0) {
+			issue(["agent"], "An agent module belongs to a provider");
+		}
 		if (panels.length > 0 && manifest.ui === undefined) {
 			issue(["ui"], "Panels need a UI module");
 		}
@@ -142,3 +171,4 @@ export const pluginManifest = z
 export type PluginManifest = z.infer<typeof pluginManifest>;
 export type PluginCommand = z.infer<typeof pluginCommand>;
 export type PluginPanel = z.infer<typeof pluginPanel>;
+export type PluginProvider = z.infer<typeof pluginProvider>;

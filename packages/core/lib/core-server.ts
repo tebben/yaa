@@ -75,8 +75,9 @@ export const createCoreServer = ({
 			},
 			"plugins.call": ({ plugin, method, params }) =>
 				plugins.call(plugin, method, params),
-			"agent.start": async ({ worktree }) => ({
-				sessionId: await agents.start(worktree),
+			"providers.status": ({ provider }) => plugins.providerStatus(provider),
+			"agent.start": async ({ worktree, provider }) => ({
+				sessionId: await agents.start(worktree, provider),
 			}),
 			"agent.sessions": () => ({ sessions: agents.list() }),
 			"agent.prompt": ({ sessionId, text }) => {

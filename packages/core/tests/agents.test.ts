@@ -2,7 +2,11 @@ import type { AgentEvent } from "@yaa/contracts/agent-events";
 import { createLogger } from "@yaa/contracts/log";
 import { connectFakeAgent } from "@yaa/fake-agent";
 import { describe, expect, it } from "vitest";
-import { normalizeQuestion, openAcpSession } from "../agents.ts";
+import {
+	normalizeQuestion,
+	openAcpSession,
+	startAgentProcess,
+} from "../agents.ts";
 
 const log = createLogger(() => {}, "core");
 
@@ -17,7 +21,10 @@ const fakeSession = async (
 	const events: AgentEvent[] = [];
 	let turnOver: () => void = () => {};
 	const session = await openAcpSession({
-		stream: connectFakeAgent({ delayScale: 0 }),
+		agent: {
+			stream: connectFakeAgent({ delayScale: 0 }),
+			exited: new Promise(() => {}),
+		},
 		cwd: "/fake",
 		log,
 		emit(event) {
@@ -102,6 +109,31 @@ describe("openAcpSession with the fake agent", () => {
 			type: "turn.end",
 			stopReason: "cancelled",
 		});
+	});
+});
+
+describe("startAgentProcess", () => {
+	const run = (script: string) =>
+		startAgentProcess({
+			launch: { command: "/bin/sh", args: ["-c", script], env: {} },
+			cwd: "/",
+			log,
+		});
+
+	it("reports an exit with the last lines the agent wrote", async () => {
+		const agent = run("echo no model >&2; exit 3");
+		await expect(
+			openAcpSession({ agent, cwd: "/", log, emit: () => {} }),
+		).rejects.toThrow("The agent exited with code 3\nno model");
+	});
+
+	it("says when the agent could not start", async () => {
+		const agent = startAgentProcess({
+			launch: { command: "/nowhere/agent", args: [], env: {} },
+			cwd: "/",
+			log,
+		});
+		await expect(agent.exited).resolves.toContain("could not start");
 	});
 });
 

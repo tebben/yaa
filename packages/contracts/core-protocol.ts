@@ -12,6 +12,7 @@ import {
 	finishCheck,
 	project,
 } from "./projects.ts";
+import { providerStatus } from "./providers.ts";
 import { settingsState } from "./settings.ts";
 import { worktreeState } from "./worktree-state.ts";
 
@@ -123,11 +124,15 @@ export const coreProtocol = defineProtocol({
 			}),
 			result: z.object({ result: z.unknown() }),
 		},
-		// Starts an agent session in a worktree. Until providers arrive in M2
-		// the only agent is the fake one, in dev mode only
-		// (docs/spec/05-agents-chat.md).
+		// Whether a chat can start with a provider a plugin contributes, checked
+		// anew on each call.
+		"providers.status": {
+			params: z.object({ provider: z.string() }),
+			result: providerStatus,
+		},
+		// Starts the provider's agent in a worktree, with a session on it.
 		"agent.start": {
-			params: z.object({ worktree: z.string() }),
+			params: z.object({ worktree: z.string(), provider: z.string() }),
 			result: z.object({ sessionId: z.string() }),
 		},
 		// Every session with the events it has sent so far; `agent.event`
@@ -139,6 +144,7 @@ export const coreProtocol = defineProtocol({
 					z.object({
 						sessionId: z.string(),
 						worktree: z.string(),
+						provider: z.string(),
 						events: z.array(agentEvent),
 					}),
 				),
