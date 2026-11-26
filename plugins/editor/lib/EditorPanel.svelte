@@ -56,8 +56,30 @@ const hasText = $derived(editor.active?.document?.model !== undefined);
 }
 
 .code {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.code :global(.text) {
 	flex: 1;
 	min-height: 0;
+}
+
+.code :global(.vim) {
+	padding: 0 var(--spacing-3);
+	font-family: var(--font-mono);
+	font-size: var(--text-sm);
+	color: var(--color-text-muted);
+}
+
+.code :global(.vim input) {
+	border: none;
+	outline: none;
+	background: transparent;
+	color: var(--color-text);
+	font: inherit;
 }
 
 .hidden {

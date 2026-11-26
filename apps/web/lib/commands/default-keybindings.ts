@@ -30,7 +30,12 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "ctrl+p", command: "palette.previous", when: "palette.open" },
 	{ key: "enter", command: "palette.run", when: "palette.open" },
 	{ key: "ctrl+b", command: "menu.toggle", when: NOT_IN_PALETTE },
-	{ key: "/", command: "menu.search", when: "!inputFocus && !palette.open" },
+	// A panel keeps / for itself, such as to search in it.
+	{
+		key: "/",
+		command: "menu.search",
+		when: "(focus.region != dock || !panel.kind) && !inputFocus && !palette.open",
+	},
 	{ key: "ctrl+shift+n", command: "worktree.new", when: NOT_IN_PALETTE },
 	{ key: "alt+j", command: "worktree.next", when: NOT_IN_PALETTE },
 	{ key: "alt+k", command: "worktree.previous", when: NOT_IN_PALETTE },

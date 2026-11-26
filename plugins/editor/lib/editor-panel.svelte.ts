@@ -38,7 +38,7 @@ export const createEditorPanel = (panel: PanelContext) => {
 		failure = describe(reason);
 	};
 
-	const view = createEditorView();
+	const view = createEditorView(() => saveActive());
 	const documents = createDocuments({
 		panel,
 		// An edited file stays open.
@@ -166,9 +166,10 @@ export const createEditorPanel = (panel: PanelContext) => {
 	const onActive = (task: (path: string) => void) => () => {
 		if (tabs.active !== null) task(tabs.active);
 	};
+	const saveActive = onActive((path) => void save(path));
 	const commands: Record<string, () => void> = {
 		"editor.quickOpen": () => whenRestored(() => quickOpen().catch(fail)),
-		"editor.save": onActive((path) => void save(path)),
+		"editor.save": saveActive,
 		"editor.nextTab": () => select(cycleTab(tabs, 1)),
 		"editor.previousTab": () => select(cycleTab(tabs, -1)),
 		"editor.closeTab": onActive(requestClose),

@@ -5,3 +5,5 @@ packages:
 allowBuilds:
   electron: true
   esbuild: true
+patchedDependencies:
+  monaco-vim@0.4.4: patches/monaco-vim@0.4.4.patch

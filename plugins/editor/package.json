@@ -23,6 +23,7 @@
 		"@yaa/plugin-api": "workspace:*",
 		"@yaa/ui": "workspace:*",
 		"monaco-editor": "0.58.0",
+		"monaco-vim": "0.4.4",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {

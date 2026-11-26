@@ -1,0 +1,33 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index bb2e8e00e0fb7ece8fb1d946d3aa25077ffac64b..30bca4d39c0118f7987cda8d716b2008aa402653 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -1,5 +1,5 @@
+-import { KeyCode, Position, Range, Selection, SelectionDirection, editor } from "monaco-editor/esm/vs/editor/editor.api";
+-import { ShiftCommand } from "monaco-editor/esm/vs/editor/common/commands/shiftCommand";
++import { KeyCode, Position, Range, Selection, SelectionDirection, editor } from "monaco-editor/editor/editor.api";
++import { ShiftCommand } from "monaco-editor/editor/common/commands/shiftCommand";
+ 
+ //#region src/cm_adapter.ts
+ /**
+@@ -733,7 +733,7 @@ var CMAdapter = class CMAdapter {
+ 			tabSize: cursorConfig.tabSize,
+ 			indentSize: cursorConfig.indentSize,
+ 			insertSpaces: cursorConfig.insertSpaces,
+-			useTabStops: cursorConfig.useTabStops,
++			useTabStops: false,
+ 			autoIndent: cursorConfig.autoIndent
+ 		}));
+ 	}
+diff --git a/package.json b/package.json
+index 13ee86eb5d51b72fb646651a1c28e42f5bf03485..28542aa16680eaa925c0c00ec3056cd18a5c08a0 100644
+--- a/package.json
++++ b/package.json
+@@ -7,7 +7,6 @@
+   "types": "./dist/index.d.cts",
+   "exports": {
+     ".": {
+-      "browser": "./dist/monaco-vim.umd.js",
+       "types": {
+         "import": "./dist/index.d.mts",
+         "default": "./dist/index.d.cts"

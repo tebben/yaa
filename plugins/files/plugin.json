@@ -89,6 +89,11 @@
 				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
 			},
 			{
+				"key": "/",
+				"command": "files.filter",
+				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+			},
+			{
 				"key": "n",
 				"command": "files.new",
 				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
