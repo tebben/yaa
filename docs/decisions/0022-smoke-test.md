@@ -16,7 +16,8 @@ M1 measurements, Electron 45.5.0, dev mode, production renderer:
 | Machine | First launch | Launch (median of 3) | Palette open (median of 5) |
 | --- | --- | --- | --- |
 | Desktop, Ryzen AI Max+ 395, 32 threads, Wayland, 10 runs | 294–323 ms | 299–326 ms | 14 ms |
+| GitHub Actions `ubuntu-latest`, 4 vCPU, Xvfb, 1 run | 3,629 ms | 529 ms | 12 ms |
 
-Both are well inside the targets (1.5 s, 50 ms). The desktop is faster than the mid-range laptop the launch target names, so the margin there is smaller than these numbers suggest.
+Launch and palette open are inside the targets (1.5 s, 50 ms) on both. The CI first launch is over: it is the first Electron start on a fresh virtual machine, with nothing in the disk cache, so it measures the runner more than the app. The desktop is faster than the mid-range laptop the launch target names, so the margin there is smaller than its numbers suggest; the warm CI launch is the closer stand-in.
 
-Consequences: the smoke run adds about half a minute to CI. Timing regressions show in the CI log, not as a failure, so they are found by reading it at milestone exit checks. The smoke test depends on visible text and ARIA labels (the palette's dialog label, the prompt input, button names); renaming them breaks it, which is the point.
+Consequences: the smoke run adds about 20 seconds to CI. Timing regressions show in the CI log, not as a failure, so they are found by reading it at milestone exit checks. The smoke test depends on visible text and ARIA labels (the palette's dialog label, the prompt input, button names); renaming them breaks it, which is the point.
