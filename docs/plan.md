@@ -31,6 +31,17 @@ Exit: one decision file per spike, and the specs updated where a spike changed t
 ## M1: skeleton
 Electron shell with a hardened renderer, core process, typed protocol with runtime validation, SQLite with migrations and the event log, log files, app-level settings and keybinding files, dock grid, panels with focus, keybindings with focus contexts, command palette, tokens and theming, plugin host with the first contribution points, and the fake ACP agent.
 
+Build order, one pull request each:
+1. Typed protocol in `contracts` (client and server over a port-like interface, Zod-validated both ways), the core as a `utilityProcess`, Electron main and preload (hardened window, replaced menu, port per page load, core restart), and a Svelte page that shows a reply from the core. `pnpm run dev` runs it.
+2. Storage and logs: `node:sqlite` with numbered migrations, the event log, log files with levels and rotation.
+3. App-level settings and keybinding files with schemas, read and watched by core.
+4. Tokens and theming: CSS variables generated from `tokens.json`, Tailwind mapped to them, bundled Geist fonts, the first `ui` primitives.
+5. Shell and dock grid: left menu, header, footer and right rail placeholders; the `dockview-core` adapter in `ui`, panels with focus, layout saved and restored.
+6. Commands, keybindings with `when` contexts, and the command palette.
+7. Plugin host: the second `utilityProcess`, manifest schema, `plugin-api` with commands, keybindings and panels, the plugin build, the shared-module registry, and one built-in plugin.
+8. Fake ACP agent: scripted event files, core's ACP session over `@agentclientprotocol/sdk`, normalized events, a placeholder panel that streams a turn.
+9. Exit check: measure launch and palette open time, add the smoke test.
+
 Exit: the app starts, panels can be arranged and focused by keyboard, the palette runs a command from a plugin, and the fake agent streams a turn into a placeholder panel. Measure launch time and palette open time.
 
 ## M2: worktrees and chat (first product slice)
