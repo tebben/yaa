@@ -1,10 +1,11 @@
 import { type Client, createClient } from "@yaa/contracts/client";
 import type { Logger, LogRecord } from "@yaa/contracts/log";
 import {
+	type PluginEvent,
 	type PluginHostProtocol,
 	pluginHostProtocol,
 } from "@yaa/contracts/plugin-host-protocol";
-import type { Port } from "@yaa/contracts/protocol";
+import { type Port, splitPort } from "@yaa/contracts/protocol";
 import { CRASH_LIMIT, recordCrash } from "./crash-budget.ts";
 
 export type PluginHostClient = Client<PluginHostProtocol>;
@@ -14,6 +15,10 @@ export type PluginHostSupervisorOptions = {
 	requestHost(): void;
 	// The host's log lines, for the core's log file.
 	write(record: LogRecord): void;
+	// An event a plugin's backend sends its UI.
+	onEvent(event: PluginEvent): void;
+	// Serves the plugin API to a host on its half of the port.
+	serve(port: Port): void;
 	log: Logger;
 	// The host went away. Whatever it had activated is gone with it.
 	onLost(): void;
@@ -26,6 +31,8 @@ export type PluginHostSupervisorOptions = {
 export const createPluginHostSupervisor = ({
 	requestHost,
 	write,
+	onEvent,
+	serve,
 	log,
 	onLost,
 	now = Date.now,
@@ -39,6 +46,7 @@ export const createPluginHostSupervisor = ({
 	const start = (): PluginHostClient => {
 		const client = createClient(pluginHostProtocol);
 		client.subscribe("log", write);
+		client.subscribe("plugin.event", onEvent);
 		current = client;
 		log.info("starting the plugin host");
 		requestHost();
@@ -76,7 +84,9 @@ export const createPluginHostSupervisor = ({
 				port.close();
 				return;
 			}
-			current.attach(port);
+			const { serving, calling } = splitPort(port);
+			serve(serving);
+			current.attach(calling);
 			port.onClose(lost);
 		},
 	};

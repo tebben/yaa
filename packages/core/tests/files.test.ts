@@ -1,0 +1,140 @@
+import {
+	mkdir,
+	mkdtemp,
+	readFile,
+	rm,
+	symlink,
+	writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+	createFile,
+	readFolder,
+	removePath,
+	renamePath,
+	type TreeWatcher,
+	watchTree,
+} from "../files.ts";
+import { parseChanges, parseFiles } from "../git.ts";
+
+let dir = "";
+let root = "";
+
+beforeEach(async () => {
+	dir = await mkdtemp(join(tmpdir(), "yaa-files-"));
+	root = join(dir, "worktree");
+	await mkdir(root);
+});
+
+afterEach(() => rm(dir, { recursive: true, force: true }));
+
+describe("parseChanges", () => {
+	it("reads staged, unstaged, renamed, conflicted and untracked entries", () => {
+		const hashes = "N... 100644 100644 100644 abc abc";
+		const output = [
+			`1 M. ${hashes} staged.ts`,
+			`1 AM ${hashes} with space.ts`,
+			`2 R. ${hashes} R100 new.ts`,
+			"old.ts",
+			"u UU N... 100644 100644 100644 100644 abc abc abc both.ts",
+			"? loose.ts",
+			"",
+		].join("\0");
+		expect(parseChanges(output)).toEqual([
+			{ path: "staged.ts", staged: "modified", unstaged: null },
+			{ path: "with space.ts", staged: "added", unstaged: "modified" },
+			{ path: "new.ts", staged: "renamed", unstaged: null },
+			{ path: "both.ts", staged: null, unstaged: "unmerged" },
+			{ path: "loose.ts", staged: null, unstaged: "untracked" },
+		]);
+	});
+});
+
+describe("parseFiles", () => {
+	it("lists each file once, and submodules and nested repositories as folders", () => {
+		const tracked = [
+			"100644 abc 1\ta.ts",
+			"100644 abd 2\ta.ts",
+			"160000 abe 0\tvendor/lib",
+			"",
+		].join("\0");
+		expect(parseFiles(tracked, "new.ts\0nested/\0")).toEqual({
+			files: ["a.ts", "new.ts"],
+			folders: ["vendor/lib", "nested"],
+		});
+	});
+});
+
+describe("worktree file operations", () => {
+	it("creates, renames and removes, making the folders a path needs", async () => {
+		await createFile(root, "src/a.ts");
+		await renamePath(root, "src/a.ts", "lib/b.ts");
+		expect(await readFolder(root, "lib")).toEqual([
+			{ name: "b.ts", folder: false },
+		]);
+		await removePath(root, "lib");
+		expect(await readFolder(root, "")).toEqual([{ name: "src", folder: true }]);
+	});
+
+	it("never writes over a file", async () => {
+		await writeFile(join(root, "a"), "a");
+		await writeFile(join(root, "b"), "b");
+		await expect(createFile(root, "a")).rejects.toThrow("exists already");
+		await expect(renamePath(root, "a", "b")).rejects.toThrow("exists already");
+		expect(await readFile(join(root, "b"), "utf8")).toBe("b");
+	});
+
+	it("refuses paths that leave the worktree or touch .git", async () => {
+		await mkdir(join(dir, "outside"));
+		await writeFile(join(dir, "outside", "kept"), "");
+		await symlink(join(dir, "outside"), join(root, "link"));
+		for (const path of ["", "../outside/kept", "/etc", "a//b", ".GIT/config"]) {
+			await expect(removePath(root, path)).rejects.toThrow("Not a path");
+		}
+		await expect(removePath(root, "link/kept")).rejects.toThrow("leads out");
+		await expect(createFile(root, "link/new/file")).rejects.toThrow(
+			"leads out",
+		);
+		await expect(readFolder(root, "link")).rejects.toThrow("is a link");
+		// The link itself is the worktree's to remove.
+		await removePath(root, "link");
+		expect(await readFile(join(dir, "outside", "kept"), "utf8")).toBe("");
+	});
+});
+
+describe("watchTree", () => {
+	it("sees changes in folders made after it started, and in the index", async () => {
+		const gitDir = join(dir, "git");
+		await mkdir(gitDir);
+		let seen = () => {};
+		const next = () =>
+			new Promise<void>((resolve) => {
+				seen = resolve;
+			});
+		let watcher: TreeWatcher | undefined;
+		try {
+			watcher = await watchTree({
+				root,
+				gitDir,
+				ignored: async () => [],
+				onChange: () => seen(),
+				onError: (error) => {
+					throw error;
+				},
+			});
+			let change = next();
+			await mkdir(join(root, "new", "deeper"), { recursive: true });
+			await change;
+			change = next();
+			await writeFile(join(root, "new", "deeper", "file"), "");
+			await change;
+			change = next();
+			await writeFile(join(gitDir, "index"), "");
+			await change;
+		} finally {
+			watcher?.close();
+		}
+	});
+});

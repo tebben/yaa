@@ -1,6 +1,6 @@
 import { pluginFileUrl } from "@yaa/contracts/app-urls";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
-import type { Component } from "svelte";
+import type { PluginUi } from "@yaa/plugin-api/ui";
 import { version as svelteVersion } from "svelte/package.json";
 import * as z from "zod";
 
@@ -12,7 +12,7 @@ const uiModule = z.object({
 	svelteVersion: z.string(),
 	panels: z.record(
 		z.string(),
-		z.custom<Component>(isFunction, "Expected a component"),
+		z.custom<PluginUi["panels"][string]>(isFunction, "Expected a component"),
 	),
 });
 

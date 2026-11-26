@@ -36,7 +36,16 @@ export const createWorkbench = (client: CoreClient) => {
 	const unreachable = (reason: unknown) =>
 		report(`Core unreachable: ${describe(reason)}`);
 
-	const plugins = createPlugins({ client, report });
+	const plugins = createPlugins({
+		client,
+		report,
+		// Panels render and commands run only after `projects` exists.
+		worktree: (id) =>
+			projects.projects
+				.flatMap(({ worktrees }) => worktrees)
+				.find((worktree) => worktree.id === id),
+		openWorktree: () => projects.worktree?.id,
+	});
 	const agentChat = createAgentChat({ client, report });
 	// The app's kinds in rail order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.

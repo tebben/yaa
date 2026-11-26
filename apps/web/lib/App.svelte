@@ -1,18 +1,20 @@
 <script lang="ts">
 import { keyParts } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
-import { Dock } from "@yaa/ui/dock";
 import { setAgentChat } from "./agent/index.ts";
 import { Palette } from "./palette/index.ts";
 import { setPluginPanels } from "./plugins/index.ts";
 import { ProjectMenu, ProjectOverview } from "./projects/index.ts";
 import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
+import WorktreeDock from "./WorktreeDock.svelte";
 import type { Workbench } from "./workbench.svelte.ts";
 
 let { workbench }: { workbench: Workbench } = $props();
 const { layouts, regions, commands, palette, projects, worktrees } =
 	$derived(workbench);
-setPluginPanels({ load: (kind) => workbench.plugins.panels.load(kind) });
+setPluginPanels({
+	mount: (kind, worktree) => workbench.plugins.panels.mount(kind, worktree),
+});
 setAgentChat(() => workbench.agentChat);
 
 // The window is interactive once a dock is on screen: the launch time the
@@ -72,7 +74,7 @@ const shortcut = (id: string) => {
 			     keep their state. -->
 			{#each layouts.docks as [id, dock] (id)}
 				<div class={["size-full", projects.worktree?.id !== id && "hidden"]}>
-					<Dock {dock} />
+					<WorktreeDock worktree={id} {dock} />
 				</div>
 			{/each}
 		</main>

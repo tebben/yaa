@@ -12,6 +12,9 @@ export type Command = {
 	category?: string;
 	// When the command can run, and so whether the palette lists it.
 	when?: string;
+	// What `when` cannot say, such as whether the panel that runs the command
+	// is open.
+	enabled?(): boolean;
 	run(): void;
 };
 
@@ -35,13 +38,21 @@ type CommandsOptions = {
 
 const always = () => true;
 
-const compile = (command: Command): Registered => {
-	if (command.when === undefined) return { ...command, holds: always };
-	const when = parseWhen(command.when);
-	if (!when.ok) {
-		throw new Error(`Command ${command.id}: bad when: ${when.message}`);
+const condition = ({ id, when }: Command) => {
+	if (when === undefined) return always;
+	const parsed = parseWhen(when);
+	if (!parsed.ok) {
+		throw new Error(`Command ${id}: bad when: ${parsed.message}`);
 	}
-	return { ...command, holds: when.test };
+	return parsed.test;
+};
+
+const compile = (command: Command): Registered => {
+	const when = condition(command);
+	return {
+		...command,
+		holds: (context) => when(context) && (command.enabled?.() ?? true),
+	};
 };
 
 // The command registry and the keymap: the user's keybindings.json from

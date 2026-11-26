@@ -2,8 +2,10 @@
 // and drives its window over the DevTools protocol. The app starts with a
 // project (added beforehand: the system's folder picker cannot be driven),
 // its overview opens, search finds it, its main checkout opens, a worktree
-// is created and finished, the palette runs the hello plugin's command, the rail opens a panel at the
-// right edge, and the fake agent plays a turn into the chat panel. It prints
+// is created and finished, the rail opens the files panel at the right edge,
+// which follows the folder and makes and deletes a file, the palette runs the
+// hello plugin's command, and the fake agent plays a turn into the chat
+// panel. It prints
 // the launch and palette open times against the targets in
 // docs/spec/12-stack-packaging.md and fails only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
@@ -258,6 +260,46 @@ const checkRailPlacement = async (page: Connection) => {
 	);
 };
 
+const NEW_FILE: Key = { key: "n", code: "KeyN", keyCode: 78, text: "n" };
+const DELETE_FILE: Key = { key: "d", code: "KeyD", keyCode: 68, text: "d" };
+
+const fileRow = (path: string) =>
+	`(${DOCK}).querySelector('button[title="${path}"]')`;
+
+// In the files panel the rail opened: a file made outside the app appears,
+// and one is created and deleted by keys.
+const useFilesPanel = async (page: Connection, repo: string) => {
+	await waitFor(page, `(${DOCK}).querySelector('[aria-label="Files"]')`);
+	await writeFile(join(repo, "outside.txt"), "");
+	await clickElement(page, fileRow("outside.txt"));
+	await press(page, NEW_FILE);
+	await waitFor(
+		page,
+		`document.activeElement?.getAttribute("aria-label") === "New file path"`,
+	);
+	await type(page, "made/by-keys.txt");
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`document.activeElement === ${fileRow("made/by-keys.txt")}`,
+	);
+	const made = join(repo, "made", "by-keys.txt");
+	await access(made);
+	await press(page, DELETE_FILE);
+	await waitFor(
+		page,
+		`document.activeElement?.textContent.trim() === "Delete"`,
+	);
+	await press(page, ENTER);
+	await waitFor(page, `!${fileRow("made/by-keys.txt")}`);
+	await access(made).then(
+		() => {
+			throw new Error(`${made} is still there after deleting`);
+		},
+		() => undefined,
+	);
+};
+
 // A repository with one commit on main, added as a project to the data
 // folder the app is about to use, whose worktrees go into the data folder.
 // Its steps copy an ignored file into a new worktree, write the worktree's
@@ -452,6 +494,8 @@ try {
 	console.log("A worktree was created, set up, torn down and finished.");
 	await checkRailPlacement(first.page);
 	console.log("The rail opened a panel at the right edge.");
+	await useFilesPanel(first.page, join(dataDir, "repo"));
+	console.log("The files panel followed the folder, made and deleted a file.");
 	await runPluginCommand(first.page, logFile);
 	console.log("The palette ran the hello plugin's command.");
 	await playFakeTurn(first.page);

@@ -1,11 +1,13 @@
 import { pluginFileUrl } from "@yaa/contracts/app-urls";
 import type { Keybinding } from "@yaa/contracts/keybindings";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
+import type { Worktree } from "@yaa/contracts/projects";
 import type { PanelKind } from "@yaa/ui/dock";
-import type { Component } from "svelte";
 import type { Command } from "../commands/index.ts";
 import type { CoreClient } from "../core-connection.ts";
 import PluginPanel from "./PluginPanel.svelte";
+import { createPanelCommands } from "./panel-commands.ts";
+import { createPanelContext } from "./panel-context.ts";
 import type { PluginPanels } from "./plugin-panels.ts";
 import { loadPluginUi, type PluginUiModule } from "./plugin-ui.ts";
 
@@ -13,6 +15,10 @@ type PluginsOptions = {
 	client: CoreClient;
 	// Shows a failure the user should see, such as a command that failed.
 	report(message: string): void;
+	// A listed worktree, by id.
+	worktree(id: string): Worktree | undefined;
+	// The worktree whose grid is open, if one is.
+	openWorktree(): string | undefined;
 };
 
 const message = (error: unknown) =>
@@ -21,17 +27,27 @@ const message = (error: unknown) =>
 // The plugins core loaded, as the renderer uses them: their panel kinds,
 // their commands and keys, and their UI modules, each loaded when one of
 // its panels first renders (docs/spec/03-plugins.md).
-export const createPlugins = ({ client, report }: PluginsOptions) => {
+export const createPlugins = ({
+	client,
+	report,
+	worktree,
+	openWorktree,
+}: PluginsOptions) => {
+	const panelCommands = createPanelCommands();
 	const manifests = client
 		.request("plugins.list", {})
 		.then(({ plugins }) => plugins);
-	const owners = manifests.then(
-		(plugins) =>
-			new Map(
-				plugins.flatMap((plugin) =>
-					plugin.contributes.panels.map(({ id }) => [id, plugin] as const),
-				),
-			),
+	// Which plugin contributes each panel; filled once core has answered,
+	// before any panel of theirs can render.
+	const owners = new Map<string, PluginManifest>();
+	manifests.then(
+		(plugins) => {
+			for (const plugin of plugins) {
+				for (const { id } of plugin.contributes.panels) owners.set(id, plugin);
+			}
+		},
+		// `kinds` and the contributions report an unreachable core.
+		() => undefined,
 	);
 	const modules = new Map<string, Promise<PluginUiModule>>();
 
@@ -44,19 +60,34 @@ export const createPlugins = ({ client, report }: PluginsOptions) => {
 		return module;
 	};
 
+	const loadPanel = async (plugin: PluginManifest, kind: string) => {
+		const component = (await moduleOf(plugin)).panels[kind];
+		if (component === undefined) {
+			throw new Error(`Plugin ${plugin.id} exports no panel ${kind}`);
+		}
+		return component;
+	};
+
 	const panels: PluginPanels = {
-		async load(kind) {
-			const plugin = (await owners).get(kind);
+		mount(kind, id) {
+			const plugin = owners.get(kind);
 			if (plugin === undefined) {
 				throw new Error(`No plugin contributes the panel ${kind}`);
 			}
-			const component: Component | undefined = (await moduleOf(plugin)).panels[
-				kind
-			];
-			if (component === undefined) {
-				throw new Error(`Plugin ${plugin.id} exports no panel ${kind}`);
-			}
-			return component;
+			const found = worktree(id);
+			if (found === undefined) throw new Error(`No worktree ${id}`);
+			const { context, dispose } = createPanelContext({
+				client,
+				commands: panelCommands,
+				plugin: plugin.id,
+				declared: new Set(
+					plugin.contributes.commands.flatMap((command) =>
+						command.panel === kind ? [command.id] : [],
+					),
+				),
+				worktree: found,
+			});
+			return { context, dispose, component: loadPanel(plugin, kind) };
 		},
 	};
 
@@ -81,22 +112,36 @@ export const createPlugins = ({ client, report }: PluginsOptions) => {
 				),
 			);
 		},
-		// A plugin's commands, which run in the plugin host, and its keys.
+		// A plugin's commands, which run in the plugin host or in one of its
+		// panels, and its keys.
 		contributions({ contributes }: PluginManifest): {
 			commands: Command[];
 			keybindings: readonly Keybinding[];
 		} {
 			return {
-				commands: contributes.commands.map((command) => ({
-					...command,
-					run: () => {
-						client
-							.request("plugins.runCommand", { command: command.id })
-							.catch((error: unknown) =>
-								report(`${command.title} failed: ${message(error)}`),
-							);
-					},
-				})),
+				commands: contributes.commands.map(({ panel, ...command }) => {
+					if (panel !== undefined) {
+						const handler = () =>
+							panelCommands.find(openWorktree(), command.id);
+						return {
+							...command,
+							enabled: () => handler() !== undefined,
+							run: () => handler()?.(),
+						};
+					}
+					return {
+						...command,
+						run: () => {
+							client
+								.request("plugins.runCommand", { command: command.id })
+								.catch((error: unknown) =>
+									report(
+										`${command.title ?? command.id} failed: ${message(error)}`,
+									),
+								);
+						},
+					};
+				}),
 				keybindings: contributes.keybindings,
 			};
 		},

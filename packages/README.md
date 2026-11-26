@@ -19,6 +19,6 @@ packages/<name>/
 
 **No cycles.** Dependency cycles fail the check.
 
-**Layering.** Plugins never import `packages/core`; they use `plugin-api`, `contracts` and `ui`. The renderer (`apps/web`, `packages/ui`) never imports `packages/core`; it talks to core through the typed protocol.
+**Layering.** Plugins never import `packages/core`; they use `plugin-api`, `contracts`, `ui` and `commands`. The renderer (`apps/web`, `packages/ui`) never imports `packages/core`; it talks to core through the typed protocol.
 
 **No barrels.** Do not re-export a whole subtree through one `index.ts`. Expose several small entry points instead, each a root file.

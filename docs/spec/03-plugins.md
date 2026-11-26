@@ -11,8 +11,9 @@ Core provides the shell and a set of registries. Every feature, including the gi
 A plugin is a folder with a manifest (`plugin.json`: id, version, activation events, contributions, dependencies on other plugins) and up to two entry modules: a backend module that runs in the plugin host process, and a UI module of Svelte components loaded in the renderer. Plugins import shared UI primitives from the app's design system so they match the look.
 
 - The manifest schema is in `contracts`. The folder's name is the plugin's id, lower-case letters, digits and `-`. `main`, `ui` and `styles` name the built backend module, UI module and CSS file, paths inside the folder. Dependencies on other plugins arrive with services.
-- The plugin build compiles `main.ts` and `ui.ts` at the folder's root to those paths. The backend module exports `activate(context)`; the UI module exports `panels`, one component per contributed panel.
+- The plugin build compiles `main.ts` and `ui.ts` at the folder's root to those paths. The backend module exports `activate(context)`; the UI module exports `panels`, one component per contributed panel, which gets its panel context as the `panel` prop.
 - Command and panel ids are the plugin's id or start with it and a dot (`hello.greet`). A plugin binds keys only to its own commands.
+- A command with `panel`, one of the plugin's panels, runs in that panel's UI: the panel registers its handler, and the command can run, and the palette lists it, only while the open worktree has that panel. Without a `title` it is reached by its keys only. Any other command runs in the backend and needs a title.
 - Activation events: `onStartup` activates the plugin when core starts; running a contributed command activates its plugin first (`docs/decisions/0021-plugin-host-lifecycle-and-panel-icons.md`).
 - Built-in plugins live in `plugins/` and are built with the app. Core reads the plugin folders once at start. A plugin whose manifest has any problem, an id taken by an earlier plugin or a `when` that does not parse included, is not loaded, and the problems are logged.
 
@@ -33,6 +34,8 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 **API surface**
 
 - A typed context object gives access to commands, views, settings, storage, git, worktrees, agent sessions and the event bus.
+- **Worktrees** (backend): look one up by id; git's files, ignored files and uncommitted changes in it; and, in its folder, read a folder, create, rename and remove, and watch for changes. Core does the work and refuses a path that leaves the folder or touches `.git`.
+- **A panel and its backend:** the plugin defines a protocol with `defineProtocol`; the backend `serve`s it, and a panel calls it and subscribes to its events, which are the events the plugin declares. A call activates the plugin. A panel knows its worktree, is told when the backend started over after a host crash, and has everything it registered disposed when it closes (`docs/decisions/0028-worktree-plugin-api.md`).
 - **Events:** core emits typed events (`worktree.*`, `agent.*`, `git.*`, including agent questions, permission requests, tool calls and usage). Plugins subscribe, and may emit their own events under their namespace. This is how a plugin can show a questionnaire panel when an agent asks a question, or a panel of the skills an agent loaded.
 - **Services:** a plugin exposes functions to others with `services.expose(name, api)`. Consumers declare the dependency in their manifest and receive a versioned handle, so load order is resolved by the manager.
 
@@ -40,7 +43,7 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 Backend plugin code runs in a separate plugin host process, so a crashing plugin does not take down the core or the agents. Agent processes and PTYs belong to core, not to the plugin host (see `00-overview.md`). An agent provider plugin returns detection results, spawn configuration and capabilities; core starts the process and owns the ACP connection. UI modules run in the renderer. Both are loaded lazily on their activation events.
 
-- Core starts the host on first use and talks to it over its own typed protocol in `contracts`: activate a plugin, run a command, and the host's log lines. Commands run in the host; the palette and keys reach them through core.
+- Core starts the host on first use and talks to it over its own typed protocol in `contracts`: activate a plugin, run a command, and the host's log lines. Backend commands run in the host; the palette and keys reach them through core. The same port carries the plugin API's requests from the host to core.
 - When the host crashes, core forgets what it had activated and starts a new host on the next use, at once if an `onStartup` plugin needs one. After 3 crashes within a minute it stops restarting the host until yaa restarts, and plugin commands fail with that reason in the footer.
 - A UI module loads when one of its panels first renders. A plugin's panel with the id of one of the app's placeholder panels takes its place in the rail.
 

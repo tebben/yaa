@@ -65,6 +65,8 @@ export const createCoreServer = ({
 				await plugins.runCommand(command);
 				return {};
 			},
+			"plugins.call": ({ plugin, method, params }) =>
+				plugins.call(plugin, method, params),
 			"agent.start": async () => ({ sessionId: await agents.start() }),
 			"agent.sessions": () => ({ sessions: agents.list() }),
 			"agent.prompt": ({ sessionId, text }) => {
