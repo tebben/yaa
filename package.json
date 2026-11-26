@@ -20,7 +20,8 @@
 		"test:changed": "pnpm -r --filter '...[origin/main]' --filter '!yaa' test",
 		"check": "pnpm run check:static && pnpm run test:changed",
 		"check:all": "pnpm run check:static && pnpm run test",
-		"check:static": "pnpm run lint && pnpm run typecheck && pnpm run lint:boundaries && pnpm run lint:svelte-size && pnpm run check:docs && pnpm run check:tokens"
+		"check:static": "pnpm run lint && pnpm run typecheck && pnpm run lint:boundaries && pnpm run lint:svelte-size && pnpm run check:docs && pnpm run check:tokens",
+		"plugins:build": "node packages/plugin-build/cli.ts plugins/*"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.6.9",

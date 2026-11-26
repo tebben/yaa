@@ -7,7 +7,8 @@
 		"./main": "./main.ts",
 		"./storage": "./storage.ts",
 		"./log": "./log.ts",
-		"./settings": "./settings.ts"
+		"./settings": "./settings.ts",
+		"./plugins": "./plugins.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

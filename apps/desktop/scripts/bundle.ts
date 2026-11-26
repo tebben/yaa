@@ -1,6 +1,8 @@
-// esbuild settings for the three Node-side bundles: Electron main, the
-// preload (CommonJS, because sandboxed preloads cannot be ES modules) and the
-// core's utilityProcess entry. Shared by build.ts and dev.ts.
+// esbuild settings for the Node-side bundles: Electron main, the preload
+// (CommonJS, because sandboxed preloads cannot be ES modules), and the
+// utilityProcess entries of the core and the plugin host. Shared by build.ts
+// and dev.ts.
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { BuildOptions } from "esbuild";
@@ -32,6 +34,16 @@ export const bundles: BuildOptions[] = [
 	},
 	{
 		...common,
+		entryPoints: {
+			"plugin-host": fileURLToPath(
+				import.meta.resolve("@yaa/plugin-host/main"),
+			),
+		},
+		format: "esm",
+		outdir: outDir,
+	},
+	{
+		...common,
 		entryPoints: { preload: join(desktop, "preload.ts") },
 		format: "cjs",
 		outExtension: { ".js": ".cjs" },
@@ -40,3 +52,11 @@ export const bundles: BuildOptions[] = [
 ];
 
 export const webRoot = join(desktop, "../web");
+
+// The built-in plugins, one folder each, built beside their sources.
+export const pluginsRoot = join(desktop, "../../plugins");
+
+export const pluginDirs = (): string[] =>
+	readdirSync(pluginsRoot, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => join(pluginsRoot, entry.name));

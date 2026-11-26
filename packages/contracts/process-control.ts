@@ -5,24 +5,34 @@ import { logRecord } from "./log.ts";
 // They stay outside the core protocol: main only forks processes and hands
 // out ports (docs/decisions/0018-core-transport-messageport.md).
 
-// Main to core. `start` comes first and says where the core keeps its data;
-// the core answers `ready` once its database is open. A `connect` message
-// carries one MessagePort: a new client. `log` forwards a line from main.
+// Main to core. `start` comes first and says where the core keeps its data
+// and finds the built-in plugins; the core answers `ready` once its database
+// is open. A `connect` message carries one MessagePort: a new client.
+// `plugin-host` carries the port to a plugin host main forked on the core's
+// request. `log` forwards a line from main.
 export const toCoreMessage = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("start"),
 		dataDir: z.string(),
 		logDir: z.string(),
+		pluginsDir: z.string(),
 		dev: z.boolean(),
 	}),
 	z.object({ kind: z.literal("connect") }),
+	z.object({ kind: z.literal("plugin-host") }),
 	z.object({ kind: z.literal("log"), record: logRecord }),
 ]);
 
-// Core to main.
+// Core to main. The core's supervisor decides when the plugin host starts
+// and restarts; `start-plugin-host` asks main to fork a new one, replacing
+// any host still running.
 export const fromCoreMessage = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("ready") }),
+	z.object({ kind: z.literal("start-plugin-host") }),
 ]);
+
+// Main to the plugin host: the one message, carrying its port to the core.
+export const toPluginHostMessage = z.object({ kind: z.literal("connect") });
 
 // Between the page and its preload, over window.postMessage. The page asks
 // once per load; the preload answers with a port, and again with a new port
@@ -40,5 +50,6 @@ export const ipcChannels = {
 
 export type ToCoreMessage = z.infer<typeof toCoreMessage>;
 export type FromCoreMessage = z.infer<typeof fromCoreMessage>;
+export type ToPluginHostMessage = z.infer<typeof toPluginHostMessage>;
 export type ConnectCoreMessage = z.infer<typeof connectCoreMessage>;
 export type CorePortMessage = z.infer<typeof corePortMessage>;

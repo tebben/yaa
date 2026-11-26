@@ -1,0 +1,20 @@
+{
+	"name": "@yaa/plugin-host",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./main": "./main.ts"
+	},
+	"scripts": {
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@yaa/contracts": "workspace:*",
+		"@yaa/plugin-api": "workspace:*",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"electron": "45.5.0"
+	}
+}

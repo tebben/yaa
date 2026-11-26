@@ -15,6 +15,8 @@ packages/
   contracts/      shared types, runtime schemas and the core protocol
   commands/       when conditions, the keymap, key names and the palette filter
   plugin-api/     the typed API plugins import
+  plugin-host/    the plugin host process: runs backend plugin code
+  plugin-build/   the yaa plugin build: esbuild plus the Svelte compiler
   ui/             design tokens and Bits UI wrappers
 plugins/          built-in plugins: git, chat, files, terminal, github, jira, pr
 docs/             architecture notes and rules

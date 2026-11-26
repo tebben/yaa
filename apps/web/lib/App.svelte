@@ -3,12 +3,13 @@ import { formatKey } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
 import { Dock } from "@yaa/ui/dock";
 import { Palette } from "./palette/index.ts";
-import { panelKinds } from "./panels/index.ts";
+import { setPluginPanels } from "./plugins/index.ts";
 import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
 import type { Workbench } from "./workbench.svelte.ts";
 
 let { workbench }: { workbench: Workbench } = $props();
 const { layout, regions, commands, palette } = $derived(workbench);
+setPluginPanels({ load: (kind) => workbench.plugins.panels.load(kind) });
 
 const shortcut = (id: string) => {
 	const [key] = commands.keysFor(id);
@@ -32,11 +33,11 @@ const shortcut = (id: string) => {
 			{/if}
 		</main>
 		<Footer
-			error={layout.error}
+			message={workbench.failure}
 			region={regions.region("footer", "horizontal")}
 		/>
 		<Rail
-			kinds={panelKinds}
+			kinds={layout.kinds}
 			isOpen={(kind) => layout.dock?.isOpen(kind) ?? false}
 			shortcut={(kind) => shortcut(`panel.toggle.${kind}`)}
 			ontoggle={(kind) => commands.run(`panel.toggle.${kind}`)}

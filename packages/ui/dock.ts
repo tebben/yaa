@@ -10,5 +10,6 @@ export {
 	type DockOptions,
 	type DockPlacement,
 	type PanelKind,
+	type PanelProps,
 } from "./lib/dock/dock.svelte.ts";
 export { parseDockLayout } from "./lib/dock/dock-layout.ts";

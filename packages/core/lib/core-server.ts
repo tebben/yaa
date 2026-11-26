@@ -3,6 +3,7 @@ import type { KeybindingsState } from "@yaa/contracts/keybindings";
 import { errorData, type Logger } from "@yaa/contracts/log";
 import { createServer, type Server } from "@yaa/contracts/server";
 import type { SettingsState } from "@yaa/contracts/settings";
+import type { PluginManager } from "./plugins/plugins.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
 
@@ -14,6 +15,7 @@ export type CoreServerOptions = {
 	settings: SettingsFile<SettingsState>;
 	keybindings: SettingsFile<KeybindingsState>;
 	layouts: LayoutStore;
+	plugins: PluginManager;
 };
 
 export const createCoreServer = ({
@@ -21,6 +23,7 @@ export const createCoreServer = ({
 	settings,
 	keybindings,
 	layouts,
+	plugins,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
 		coreProtocol,
@@ -30,6 +33,11 @@ export const createCoreServer = ({
 			"layout.get": () => ({ layout: layouts.get(APP_LAYOUT) ?? null }),
 			"layout.save": ({ layout }) => {
 				layouts.save(APP_LAYOUT, layout);
+				return {};
+			},
+			"plugins.list": () => ({ plugins: plugins.plugins }),
+			"plugins.runCommand": async ({ command }) => {
+				await plugins.runCommand(command);
 				return {};
 			},
 		},

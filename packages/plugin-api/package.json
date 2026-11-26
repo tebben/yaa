@@ -3,7 +3,17 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"exports": {
+		".": "./index.ts",
+		"./ui": "./ui.ts"
+	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@yaa/contracts": "workspace:*"
+	},
+	"peerDependencies": {
+		"svelte": "~5.59.1"
 	}
 }

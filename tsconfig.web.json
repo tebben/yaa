@@ -9,7 +9,11 @@
 		"apps/web",
 		"packages/ui",
 		"packages/contracts",
-		"packages/commands"
+		"packages/commands",
+		"packages/plugin-api",
+		"plugins/*/ui.ts",
+		"plugins/*/lib/**/*.svelte",
+		"plugins/*/lib/**/*.svelte.ts"
 	],
 	"exclude": [
 		"**/node_modules",

@@ -12,7 +12,9 @@
 	},
 	"dependencies": {
 		"@yaa/contracts": "workspace:*",
-		"@yaa/core": "workspace:*"
+		"@yaa/core": "workspace:*",
+		"@yaa/plugin-build": "workspace:*",
+		"@yaa/plugin-host": "workspace:*"
 	},
 	"devDependencies": {
 		"electron": "45.5.0",

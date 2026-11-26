@@ -13,7 +13,11 @@
 		"./core-events": "./core-events.ts",
 		"./file-problem": "./file-problem.ts",
 		"./settings": "./settings.ts",
-		"./keybindings": "./keybindings.ts"
+		"./keybindings": "./keybindings.ts",
+		"./plugin-manifest": "./plugin-manifest.ts",
+		"./plugin-host-protocol": "./plugin-host-protocol.ts",
+		"./plugin-ui": "./plugin-ui.ts",
+		"./app-urls": "./app-urls.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

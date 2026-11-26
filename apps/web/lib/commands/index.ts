@@ -2,6 +2,7 @@
 export {
 	type Command,
 	type CommandsController,
+	type Contribution,
 	createCommands,
 	type PaletteEntry,
 } from "./commands.svelte.ts";

@@ -2,18 +2,19 @@
 import type { Attachment } from "svelte/attachments";
 
 // Core info for the selected project and plugin chips come in M2; until then
-// the footer reports when the core cannot be reached.
+// the footer shows the last failure, such as an unreachable core or a
+// command that failed.
 let {
-	error,
+	message,
 	region,
-}: { error: string | undefined; region: Attachment<HTMLElement> } = $props();
+}: { message: string | undefined; region: Attachment<HTMLElement> } = $props();
 </script>
 
 <footer
 	{@attach region}
 	class="yaa-focus-region col-start-2 flex h-footer items-center border-t border-border bg-chrome px-3 text-sm"
 >
-	{#if error}
-		<span class="truncate text-state-error">Core unreachable: {error}</span>
+	{#if message}
+		<span class="truncate text-state-error">{message}</span>
 	{/if}
 </footer>

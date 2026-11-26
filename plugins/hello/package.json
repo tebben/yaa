@@ -1,0 +1,23 @@
+{
+	"name": "@yaa/plugin-hello",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./main": "./main.ts",
+		"./ui": "./ui.ts",
+		"./plugin.json": "./plugin.json"
+	},
+	"scripts": {
+		"build": "yaa-plugin-build .",
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@yaa/plugin-api": "workspace:*",
+		"@yaa/ui": "workspace:*"
+	},
+	"devDependencies": {
+		"@yaa/plugin-build": "workspace:*",
+		"svelte": "~5.59.1"
+	}
+}

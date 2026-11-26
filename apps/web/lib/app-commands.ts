@@ -6,7 +6,6 @@ import type { PaletteController } from "./palette/index.ts";
 type AppCommandsOptions = {
 	// Undefined until core has returned the saved layout.
 	dock(): DockController | undefined;
-	kinds: ReadonlyMap<string, PanelKind>;
 	palette: PaletteController;
 	regions: RegionsController;
 	toggleMenu(): void;
@@ -14,10 +13,9 @@ type AppCommandsOptions = {
 
 const directions: readonly DockDirection[] = ["left", "right", "up", "down"];
 
-// The shell's own commands. Plugins add theirs from M1 step 7.
+// The shell's own commands. Plugins add theirs (plugins/index.ts).
 export const appCommands = ({
 	dock,
-	kinds,
 	palette,
 	regions,
 	toggleMenu,
@@ -88,12 +86,6 @@ export const appCommands = ({
 		category: "Panel",
 		run: () => dock()?.closeActive(),
 	},
-	...[...kinds].map(([kind, { title }]) => ({
-		id: `panel.toggle.${kind}`,
-		title: `Toggle ${title} panel`,
-		category: "Panel",
-		run: () => dock()?.toggle(kind),
-	})),
 	{
 		id: "layout.reset",
 		title: "Reset layout",
@@ -101,3 +93,15 @@ export const appCommands = ({
 		run: () => dock()?.reset(),
 	},
 ];
+
+// One toggle per panel kind, once the kinds plugins contribute are known.
+export const panelCommands = (
+	kinds: ReadonlyMap<string, PanelKind>,
+	dock: () => DockController | undefined,
+): Command[] =>
+	[...kinds].map(([kind, { title }]) => ({
+		id: `panel.toggle.${kind}`,
+		title: `Toggle ${title} panel`,
+		category: "Panel",
+		run: () => dock()?.toggle(kind),
+	}));

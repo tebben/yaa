@@ -10,11 +10,17 @@ Core provides the shell and a set of registries. Every feature, including the gi
 
 A plugin is a folder with a manifest (`plugin.json`: id, version, activation events, contributions, dependencies on other plugins) and up to two entry modules: a backend module that runs in the plugin host process, and a UI module of Svelte components loaded in the renderer. Plugins import shared UI primitives from the app's design system so they match the look.
 
+- The manifest schema is in `contracts`. The folder's name is the plugin's id, lower-case letters, digits and `-`. `main`, `ui` and `styles` name the built backend module, UI module and CSS file, paths inside the folder. Dependencies on other plugins arrive with services.
+- The plugin build compiles `main.ts` and `ui.ts` at the folder's root to those paths. The backend module exports `activate(context)`; the UI module exports `panels`, one component per contributed panel.
+- Command and panel ids are the plugin's id or start with it and a dot (`hello.greet`). A plugin binds keys only to its own commands.
+- Activation events: `onStartup` activates the plugin when core starts; running a contributed command activates its plugin first (`docs/decisions/0021-plugin-host-lifecycle-and-panel-icons.md`).
+- Built-in plugins live in `plugins/` and are built with the app. Core reads the plugin folders once at start. A plugin whose manifest has any problem, an id taken by an earlier plugin or a `when` that does not parse included, is not loaded, and the problems are logged.
+
 **Contribution points**
 
 | Point | What a plugin adds |
 | --- | --- |
-| Panels | a view in the grid, scoped to the app, a project or a worktree |
+| Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the rail before the UI module loads |
 | Header and footer items | components in named slots |
 | Commands and keybindings | actions in the palette, default keys |
 | Settings | a schema-rendered settings page, or a custom panel |
@@ -34,12 +40,16 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 Backend plugin code runs in a separate plugin host process, so a crashing plugin does not take down the core or the agents. Agent processes and PTYs belong to core, not to the plugin host (see `00-overview.md`). An agent provider plugin returns detection results, spawn configuration and capabilities; core starts the process and owns the ACP connection. UI modules run in the renderer. Both are loaded lazily on their activation events.
 
+- Core starts the host on first use and talks to it over its own typed protocol in `contracts`: activate a plugin, run a command, and the host's log lines. Commands run in the host; the palette and keys reach them through core.
+- When the host crashes, core forgets what it had activated and starts a new host on the next use, at once if an `onStartup` plugin needs one. After 3 crashes within a minute it stops restarting the host until yaa restarts, and plugin commands fail with that reason in the footer.
+- A UI module loads when one of its panels first renders. A plugin's panel with the id of one of the app's placeholder panels takes its place in the rail.
+
 **Plugin UI in the renderer**
 
 - Plugin UI runs on the app's single Svelte runtime and the app's `ui` package, never a bundled copy. Two Svelte runtimes in one page break context and reactivity. The app exposes a registry of the shared modules' real namespaces (every public client entry of `svelte`, the private entries compiled code imports, and `ui`), and the yaa plugin build compiles a plugin's imports of them into reads from that registry. Import maps do not work, because compiled Svelte code reads live bindings from the runtime (`docs/decisions/0015-plugin-ui-loading.md`).
 - The plugin build (esbuild plus the Svelte compiler) compiles in runes mode and stamps the Svelte version into the output. The loader runs a plugin only on the exact Svelte version it was built with; on a mismatch the plugin manager refuses it and shows the command that rebuilds it. A plugin folder ships its built output beside its source, and third-party plugins are rebuilt when an app upgrade changes Svelte.
 - The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins never rely on Tailwind classes: they style with `ui` components, the token CSS variables and scoped `<style>` blocks, which the plugin build extracts into one CSS file declared in the manifest.
-- Plugin UI modules and styles are served over a custom protocol that the renderer's CSP allows. The app renders each plugin panel inside its own tree, so context reaches it, wrapped in an error boundary keyed by the plugin version, so a plugin that throws shows an error in its panel and a fixed version renders again.
+- Plugin UI modules, styles and icons are served from `yaa://plugins/<id>/`, which the renderer's CSP allows. The app renders each plugin panel inside its own tree, so context reaches it, wrapped in an error boundary keyed by the plugin version, so a plugin that throws shows an error in its panel and a fixed version renders again. Until hot reload (M3) the boundary is the dock's, around every panel.
 
 **API stability**
 
