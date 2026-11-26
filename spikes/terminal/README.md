@@ -1,6 +1,6 @@
 # Spike: terminal emulator (libghostty-vt vs xterm.js)
 
-Throwaway code for the M0 terminal spike. Decision: `docs/decisions/0016-terminal-xterm-first.md` on `main`.
+Throwaway code for the M0 terminal spike. Decision: `docs/decisions/0017-terminal-xterm-first.md` on `main`.
 
 Machine: x64 Arch Linux, Hyprland (Wayland), Node 24.9.0, Electron 45.5.0, run on 2026-11-26.
 
