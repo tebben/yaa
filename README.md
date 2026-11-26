@@ -17,7 +17,7 @@ Requires Node 24 and pnpm (version pinned in `package.json`).
 
 ```sh
 pnpm install
-pnpm run dev        # the app in dev mode, with hot reload
+pnpm run dev        # the app in dev mode, with hot reload (the first run downloads Electron)
 pnpm run check      # lint, typecheck, boundaries, docs, tests of changed packages
 pnpm run check:all  # everything, as CI runs it
 ```
