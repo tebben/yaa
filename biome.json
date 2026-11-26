@@ -21,6 +21,9 @@
 			},
 			"complexity": {
 				"useLiteralKeys": "off"
+			},
+			"correctness": {
+				"useImportExtensions": "error"
 			}
 		}
 	},

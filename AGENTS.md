@@ -27,7 +27,6 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 - Plugins: docs/rules/plugins.md
 - Testing: docs/rules/testing.md
 - Docs, specs and decisions: docs/rules/docs.md
-(The code rules are written during repo foundation; until then follow docs/spec/13-repo-conventions.md.)
 
 ## Change style
 - Smallest change that leaves the design right. If the existing structure does not fit the task, refactor it first, in its own commit, then build on it. Never patch around it: no special-case flags or parameters for one caller, no copied code, no shims, no casts, `any` or suppression comments to quiet the checker.
