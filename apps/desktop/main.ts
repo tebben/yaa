@@ -18,15 +18,18 @@ import { type CoreProcess, startCoreProcess } from "./lib/core-process.ts";
 import { createPluginHostProcess } from "./lib/plugin-host-process.ts";
 import { hardenSession, openWindow } from "./lib/window.ts";
 
-// Set by scripts/dev.ts: load the Vite dev server instead of the build, and
-// the built-in plugins from the repository instead of the build.
+// Dev mode, set by scripts/dev.ts and scripts/smoke.ts: its own data
+// folder, debug logs and the fake agent. The dev server URL, set by dev.ts
+// only, loads the renderer from Vite instead of the build, and the plugins
+// folder the built-in plugins from the repository.
+const dev = process.env["YAA_DEV"] === "1";
 const devServerUrl = process.env["YAA_DEV_SERVER_URL"];
 const here = import.meta.dirname;
 const pluginsDir = process.env["YAA_PLUGINS_DIR"] ?? join(here, "plugins");
 
 // Dev mode keeps its own settings, database and logs, so a development
 // build never migrates the database the installed app uses.
-app.setName(devServerUrl === undefined ? "yaa" : "yaa-dev");
+app.setName(dev ? "yaa-dev" : "yaa");
 registerAppScheme();
 
 const givePort = (core: CoreProcess, contents: WebContents) => {
@@ -58,9 +61,8 @@ app.whenReady().then(() => {
 			logDir: app.getPath("logs"),
 			pluginsDir,
 			// The fake agent is a dev-only provider (docs/spec/05-agents-chat.md).
-			fakeAgent:
-				devServerUrl === undefined ? null : join(here, "fake-agent.js"),
-			dev: devServerUrl !== undefined,
+			fakeAgent: dev ? join(here, "fake-agent.js") : null,
+			dev,
 		},
 		onStartPluginHost: () => pluginHost.start(),
 		onStartupFailure: (code) => {

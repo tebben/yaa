@@ -30,6 +30,7 @@ const startElectron = () => {
 		stdio: "inherit",
 		env: {
 			...process.env,
+			YAA_DEV: "1",
 			YAA_DEV_SERVER_URL: devServerUrl,
 			YAA_PLUGINS_DIR: pluginsRoot,
 		},

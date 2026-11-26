@@ -19,3 +19,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check:all
+      # The smoke test runs Electron with its Chromium sandbox on. Ubuntu
+      # 24.04 blocks the unprivileged user namespaces the sandbox needs, so
+      # the runner allows them, as the deb's AppArmor profile will
+      # (docs/spec/12-stack-packaging.md).
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: xvfb-run --auto-servernum pnpm run smoke
+        timeout-minutes: 5
