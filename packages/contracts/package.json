@@ -20,7 +20,8 @@
 		"./app-urls": "./app-urls.ts",
 		"./agent-events": "./agent-events.ts",
 		"./projects": "./projects.ts",
-		"./worktree-name": "./worktree-name.ts"
+		"./worktree-name": "./worktree-name.ts",
+		"./worktree-steps": "./worktree-steps.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

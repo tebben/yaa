@@ -20,6 +20,10 @@ export type GitService = {
 	defaultBranch(repo: string): Promise<string>;
 	status(dir: string): Promise<BranchStatus>;
 	branches(repo: string): Promise<{ local: string[]; remote: string[] }>;
+	// The files in `dir` that git does not track, ignored ones included, and
+	// that match one of the glob patterns, relative to `dir`. A repository
+	// inside it is listed as its folder.
+	untracked(dir: string, patterns: readonly string[]): Promise<string[]>;
 	// How many commits of `branch` are neither on `base` nor on a remote.
 	unpushed(repo: string, branch: string, base: string): Promise<number>;
 	// The remote and the branch there that `branch` tracks, if any.
@@ -69,6 +73,18 @@ export const createGitService = (run: RunGit = runGit): GitService => {
 					"refs/remotes",
 				]),
 			),
+		async untracked(dir, patterns) {
+			// Without a pattern, git would list every untracked file.
+			if (patterns.length === 0) return [];
+			const out = await run(dir, [
+				"ls-files",
+				"-z",
+				"--others",
+				"--",
+				...patterns.map((pattern) => `:(glob)${pattern}`),
+			]);
+			return out.split("\0").filter((path) => path !== "");
+		},
 		unpushed: async (repo, branch, base) =>
 			Number(
 				(

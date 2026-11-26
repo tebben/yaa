@@ -260,6 +260,8 @@ const checkRailPlacement = async (page: Connection) => {
 
 // A repository with one commit on main, added as a project to the data
 // folder the app is about to use, whose worktrees go into the data folder.
+// Its steps copy an ignored file into a new worktree, write the worktree's
+// index beside it, and copy that out again on teardown.
 const addRepo = async (dataDir: string, dir: string) => {
 	await writeFile(
 		join(dataDir, "settings.json"),
@@ -277,6 +279,19 @@ const addRepo = async (dataDir: string, dir: string) => {
 		"commit",
 		"--allow-empty",
 		"--message=start",
+	);
+	await writeFile(join(dir, ".git", "info", "exclude"), ".env*\n.yaa\n");
+	await writeFile(join(dir, ".env"), "SMOKE=1\n");
+	await mkdir(join(dir, ".yaa"));
+	await writeFile(
+		join(dir, ".yaa", "worktree.json"),
+		JSON.stringify({
+			copy: [".env"],
+			setup: [
+				'cat .env > .env.setup && echo "$YAA_WORKTREE_INDEX" >> .env.setup',
+			],
+			teardown: [`cp .env.setup '${join(dataDir, "teardown")}'`],
+		}),
 	);
 	const db = openDatabase(join(dataDir, "yaa.db"));
 	const projects = createProjects({
@@ -331,7 +346,12 @@ const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
 	await press(page, ENTER);
 	await waitFor(page, `${HEADER}.textContent.includes("1-smoke")`);
 	const folder = join(dataDir, "worktrees", "repo", "1-smoke");
-	await access(folder);
+	await poll("the worktree's setup", async () =>
+		(await readFile(join(folder, ".env.setup"), "utf8").catch(() => "")) ===
+		"SMOKE=1\n1\n"
+			? true
+			: undefined,
+	);
 	await press(page, OPEN_PALETTE);
 	await waitFor(page, PALETTE);
 	await type(page, "Finish worktree");
@@ -345,6 +365,7 @@ const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
 		page,
 		`${HEADER}.textContent.includes("main") && !${MENU}.textContent.includes("1-smoke")`,
 	);
+	await access(join(dataDir, "teardown"));
 	await access(folder).then(
 		() => {
 			throw new Error(`${folder} is still there after finishing`);
@@ -428,7 +449,7 @@ try {
 	await openProject(first.page);
 	console.log("The project's overview, search and main checkout opened.");
 	await createAndFinishWorktree(first.page, dataDir);
-	console.log("A worktree was created and finished.");
+	console.log("A worktree was created, set up, torn down and finished.");
 	await checkRailPlacement(first.page);
 	console.log("The rail opened a panel at the right edge.");
 	await runPluginCommand(first.page, logFile);
