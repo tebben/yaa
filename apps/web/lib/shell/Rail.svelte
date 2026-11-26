@@ -30,6 +30,7 @@ let {
 			label={kind.title}
 			shortcut={shortcut(id)}
 			pressed={isOpen(id)}
+			tooltipSide="left"
 			onclick={() => ontoggle(id)}
 		/>
 	{/each}
