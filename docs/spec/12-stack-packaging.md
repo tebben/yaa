@@ -12,7 +12,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | UI | Svelte 5, Bits UI, Tailwind | decided |
 | Dock grid | `dockview-core` behind our own Svelte adapter (`docs/decisions/0016-dock-grid-dockview.md`) | decided |
 | Editor | Monaco | decided |
-| Chat transcript | virtua for virtualization, marked parsing into Svelte elements, Shiki highlighting lazily, jsdiff for inline diffs (`docs/decisions/0033-chat-plugin.md`) | decided |
+| Chat transcript | virtua for virtualization, marked parsing into Svelte elements, Shiki highlighting lazily, jsdiff for inline diffs (`docs/decisions/0034-chat-plugin.md`) | decided |
 | Backend | TypeScript on Electron's Node in a `utilityProcess`, typed protocol over `MessagePort` (`docs/decisions/0018-core-transport-messageport.md`) | decided |
 | Agents | ACP first, provider-specific fallback | proposed |
 | Storage | JSON settings files (`docs/decisions/0020-settings-files-json.md`); one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | decided |

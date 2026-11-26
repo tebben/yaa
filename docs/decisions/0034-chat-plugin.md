@@ -1,4 +1,4 @@
-# 0033 The chat panel: a plugin, its libraries and the agent API
+# 0034 The chat panel: a plugin, its libraries and the agent API
 
 Status: decided, 2026-11-26.
 

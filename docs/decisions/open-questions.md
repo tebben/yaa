@@ -26,6 +26,7 @@ Each open question becomes a spike or a decision file in this folder. When one i
 - ~~Ghostty~~: `0017-terminal-xterm-first.md`
 - ~~Core transport~~: `0018-core-transport-messageport.md`
 - ~~SQLite binding~~: `0019-native-modules-node-sqlite.md`
+- ~~Terminal flow control, IME, Kitty keyboard protocol and font fallback~~: `0033-terminal-flow-and-input.md`
 
 ## Risks
 

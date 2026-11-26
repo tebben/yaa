@@ -47,7 +47,7 @@ Capabilities (whether the agent takes images, sent when the session opens), prom
 
 **Chat UI**
 
-The chat is the `chat` plugin's panel (`docs/decisions/0033-chat-plugin.md`).
+The chat is the `chat` plugin's panel (`docs/decisions/0034-chat-plugin.md`).
 
 - A virtualized transcript that renders markdown, code blocks (Shiki, highlighted when on screen and complete), collapsible thinking output, tool calls with status, inline diffs and output, and the latest plan above it. Output opens on demand, at once for a failed call. A call still open when its turn ends shows as stopped. Events that arrive between two frames render together. The transcript stays at its end while it streams, unless scrolled up.
 - File paths and links are clickable: a path in the worktree opens the file in the editor at the line, a web URL opens in the browser. A code span counts as a path when it has an extension and a folder or a line.

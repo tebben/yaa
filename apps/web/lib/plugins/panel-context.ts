@@ -9,12 +9,15 @@ import {
 } from "@yaa/contracts/protocol";
 import type { OpenFile, PanelContext, PickSource } from "@yaa/plugin-api/ui";
 import type { PanelFrame } from "@yaa/ui/dock";
+import { captureKeys } from "../commands/index.ts";
 import type { CoreClient } from "../core-connection.ts";
+import type { TerminalLinks } from "../terminals/index.ts";
 import { createPanelAgents } from "./panel-agents.ts";
 import type { PanelHandlers } from "./panel-handlers.ts";
 
 type PanelContextOptions = {
 	client: CoreClient;
+	terminals: TerminalLinks;
 	// What panels registered for their commands and for files to open.
 	commands: PanelHandlers<void>;
 	files: PanelHandlers<OpenFile>;
@@ -33,6 +36,7 @@ type PanelContextOptions = {
 // registered through it.
 export const createPanelContext = ({
 	client,
+	terminals,
 	commands,
 	files,
 	openFile,
@@ -110,6 +114,17 @@ export const createPanelContext = ({
 		handleOpenFile: (handler) =>
 			track(files.register(worktree.id, kind, handler)),
 		pick,
+		terminals: {
+			watch: (listener) => track(terminals.watch(worktree.id, listener)),
+			create: () => terminals.create(worktree.id),
+			close: terminals.close,
+			connect(id, screen) {
+				const link = terminals.connect(id, screen);
+				const { dispose } = track(link);
+				return { ...link, dispose };
+			},
+		},
+		captureKeys,
 	};
 
 	return {

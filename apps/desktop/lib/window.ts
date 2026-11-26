@@ -31,6 +31,9 @@ export const openWindow = ({ preload, url }: WindowOptions): BrowserWindow => {
 			nodeIntegration: false,
 			webviewTag: false,
 			spellcheck: false,
+			// A throttled page takes in terminal output about once a second, which
+			// would pause the program in a terminal while the window is hidden.
+			backgroundThrottling: false,
 		},
 	});
 	// The app opens no second window: a web link goes to the browser.

@@ -1,9 +1,14 @@
 {
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
-		"types": ["node"]
+		"types": ["node"],
+		"paths": {
+			"@xterm/xterm": [
+				"./packages/core/node_modules/@xterm/headless/typings/xterm-headless.d.ts"
+			]
+		}
 	},
-	"$comment": "The Node side. The renderer is in tsconfig.web.json and the preload in tsconfig.preload.json; a plugin's UI module (ui.ts and the .svelte files it imports) is renderer code too. Vite's and Vitest's configs run in Node, so they are listed under files, which exclude does not filter.",
+	"$comment": "The Node side. The renderer is in tsconfig.web.json and the preload in tsconfig.preload.json; a plugin's UI module (ui.ts and the .svelte files it imports) is renderer code too. Vite's and Vitest's configs run in Node, so they are listed under files, which exclude does not filter. The xterm addons core uses type their terminal as @xterm/xterm's, whose typings bring in the DOM; here it is the headless one's.",
 	"files": ["apps/web/vite.config.ts", "packages/ui/vitest.config.ts"],
 	"include": ["scripts", "apps", "packages", "plugins", "*.ts"],
 	"exclude": [
