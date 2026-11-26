@@ -2,9 +2,13 @@ import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
 import type { LogRecord } from "@yaa/contracts/log";
 import type { Port } from "@yaa/contracts/protocol";
+import { coreSettings } from "@yaa/contracts/settings";
 import { createCoreServer } from "./core-server.ts";
 import { openLogFile } from "./log/log-file.ts";
 import { createLogger, errorData } from "./log/logger.ts";
+import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
+import { resolveSettings } from "./settings/resolve-settings.ts";
+import { watchSettingsFile } from "./settings/watch-settings-file.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 
@@ -32,7 +36,19 @@ export const startCore = ({ dataDir, logDir, dev }: CoreOptions): Core => {
 	const db = openDatabase(join(dataDir, "yaa.db"));
 	const events = createEventLog(db, coreEvent);
 	events.append({ type: "core.started", pid: process.pid });
-	const server = createCoreServer(log);
+	const settings = watchSettingsFile({
+		dir: dataDir,
+		name: "settings.json",
+		resolve: (text) => resolveSettings(coreSettings, text),
+		log,
+	});
+	const keybindings = watchSettingsFile({
+		dir: dataDir,
+		name: "keybindings.json",
+		resolve: resolveKeybindings,
+		log,
+	});
+	const server = createCoreServer({ log, settings, keybindings });
 	log.info("core started", { pid: process.pid, dataDir });
 
 	return { connect: server.connect, log: logFile.write };

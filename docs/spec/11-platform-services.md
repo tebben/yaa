@@ -50,6 +50,11 @@ Lands in: M1 for app-level files; M6 for project and worktree layers, export and
 
 Settings and keybindings are human-editable files with a schema, layered as app, project, then worktree. Core settings and plugin settings share the mechanism, and the settings page is rendered from the same schema. A settings file can be exported and imported.
 
+- The app-level files are `settings.json` and `keybindings.json` in the app's config folder (`~/.config/yaa` on Linux, `~/.config/yaa-dev` in dev mode). They are plain JSON (`docs/decisions/0020-settings-files-json.md`). A missing or blank file means the defaults.
+- `settings.json` is one object keyed `namespace.name`. Each setting has a schema with a default in `contracts`. A value its schema rejects falls back to the default, and an unknown key is ignored; both are reported as problems, and the rest of the file applies. A file that is not a JSON object applies no settings.
+- `keybindings.json` is an array of `{ "key", "command", "when" }` entries, `when` optional. `key` is lower-case modifiers (`ctrl`, `shift`, `alt`, `meta`) and a key name joined by `+`, for example `ctrl+shift+p`. User entries are checked before the defaults, and a command starting with `-` removes the default binding with that key and command. An entry with a mistake, an unknown field included, is dropped and reported; the others apply. How a key resolves is in `01-ui-layout-theming.md`.
+- Core reads both files at start and watches them, so a save applies without a restart. When a save changes what a file resolves to, core sends the new state with its problems to every subscribed client. Problems are logged as warnings.
+
 ## Logs and debug panel
 
 Lands in: M1 for log files; M2 for the debug panel.
