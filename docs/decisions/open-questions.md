@@ -5,7 +5,6 @@ Each open question becomes a spike or a decision file in this folder. When one i
 ## Open questions
 
 - **Core transport:** `utilityProcess` with a `MessagePort` (proposed) or a token-protected local WebSocket. M0 spike, see `docs/spec/00-overview.md`.
-- **Ghostty:** is libghostty-vt stable and fast enough inside Electron, and how is it bound to Node? M0 spike, with xterm.js and node-pty as fallback.
 - **Plugin builds across Svelte versions:** prebuilt plugin UI calls Svelte's internal API, so it only runs on the Svelte version it was built with (`0015-plugin-ui-loading.md`). How third-party plugins follow app upgrades (rebuild on install, ship the compiler, or pin Svelte per API version) is decided before the M6 freeze.
 - **SQLite binding:** `node:sqlite` in Electron's Node or `better-sqlite3`. Part of the M0 native-modules spike.
 - **Jira authentication:** API token or OAuth, with the secret in the system keyring on Linux.
@@ -27,6 +26,7 @@ Each open question becomes a spike or a decision file in this folder. When one i
 - ~~ACP coverage~~: `0014-acp-coverage.md`
 - ~~Plugin UI loading~~: `0015-plugin-ui-loading.md`
 - ~~Grid~~: `0016-dock-grid-dockview.md`
+- ~~Ghostty~~: `0017-terminal-xterm-first.md`
 
 ## Risks
 
