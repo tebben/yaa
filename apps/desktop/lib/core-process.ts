@@ -17,37 +17,69 @@ export type CoreProcess = {
 	stop(): void;
 };
 
+type StartOptions = {
+	entry: string;
+	start: Extract<ToCoreMessage, { kind: "start" }>;
+	// The core exited before it was ready. Forking it again would fail the
+	// same way, so this ends the restarts.
+	onStartupFailure(code: number): void;
+};
+
 // Forks the core and forks it again whenever it exits. Main stays out of the
 // data path: it only passes ports along.
-export const startCoreProcess = (entry: string): CoreProcess => {
+export const startCoreProcess = ({
+	entry,
+	start,
+	onStartupFailure,
+}: StartOptions): CoreProcess => {
 	let child: UtilityProcess;
 	let ready = false;
 	let stopping = false;
-	const waiting: MessagePortMain[] = [];
+	// Messages wait for the core to be ready; `start` goes first, on spawn.
+	let waiting: { message: ToCoreMessage; port?: MessagePortMain }[] = [];
 	const restartListeners = new Set<() => void>();
 
-	const send = (port: MessagePortMain) => {
-		const message: ToCoreMessage = { kind: "connect" };
-		child.postMessage(message, [port]);
+	const send = (message: ToCoreMessage, port?: MessagePortMain) => {
+		if (!ready)
+			waiting.push(port === undefined ? { message } : { message, port });
+		else child.postMessage(message, port === undefined ? [] : [port]);
 	};
 
 	const fork = () => {
-		ready = false;
 		child = utilityProcess.fork(entry, [], {
 			serviceName: "yaa-core",
 			stdio: "inherit",
 		});
+		child.once("spawn", () => child.postMessage(start));
 		child.on("message", (raw) => {
 			const message = fromCoreMessage.parse(raw);
 			if (message.kind === "ready") {
 				ready = true;
-				for (const port of waiting.splice(0)) send(port);
+				for (const { message, port } of waiting.splice(0)) send(message, port);
 			}
 		});
 		child.on("exit", (code) => {
 			if (stopping) return;
-			console.error(`core exited with code ${code}, restarting`);
-			for (const port of waiting.splice(0)) port.close();
+			if (!ready) {
+				stopping = true;
+				onStartupFailure(code);
+				return;
+			}
+			ready = false;
+			// Ports meant for the dead core are useless; pages get new ones.
+			for (const { port } of waiting) port?.close();
+			waiting = waiting.filter(({ port }) => port === undefined);
+			// Logged through the next core, which flushes it once ready.
+			send({
+				kind: "log",
+				record: {
+					at: Date.now(),
+					level: "error",
+					source: "main",
+					message: "core exited, restarting",
+					data: { code },
+				},
+			});
 			fork();
 			for (const listener of restartListeners) listener();
 		});
@@ -57,8 +89,7 @@ export const startCoreProcess = (entry: string): CoreProcess => {
 
 	return {
 		connect(port) {
-			if (ready) send(port);
-			else waiting.push(port);
+			send({ kind: "connect" }, port);
 		},
 		onRestart(listener) {
 			restartListeners.add(listener);

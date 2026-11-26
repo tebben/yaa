@@ -2,9 +2,12 @@
 
 ## Sessions, persistence and recovery
 
-Lands in: M2.
+Lands in: M1 for the database, migrations and the event log; M2 for the rest.
 
-- Chat transcripts, the event log, run state, annotations and layouts are stored in one local SQLite database and restored on start. Schema changes go through numbered migrations from the first table on. Worktrees reopen with their tabs, terminals' working directories and chats.
+- Chat transcripts, the event log, run state, annotations and layouts are stored in one local SQLite database, `yaa.db` in the app's data folder (`~/.config/yaa` on Linux), and restored on start. Worktrees reopen with their tabs, terminals' working directories and chats.
+- Schema changes go through numbered migrations from the first table on, tracked in `PRAGMA user_version`. Each migration runs in its own transaction; a failed one leaves the database at the last version that applied. Shipped migrations are never edited, and the core refuses to open a database from a newer app.
+- Every event in the event log has a schema in `contracts` and is validated when written and when read.
+- Dev mode uses its own data folder (`~/.config/yaa-dev`), so a development build never migrates the installed app's database.
 - A supervisor in core watches agent and plugin-host processes. A crashed agent sets the worktree to Error with the last output kept; the user or a workflow can restart it and resume the session where the agent supports resuming.
 - A turn that was running when the app closed is marked interrupted, not silently lost.
 
@@ -52,6 +55,10 @@ Settings and keybindings are human-editable files with a schema, layered as app,
 Lands in: M1 for log files; M2 for the debug panel.
 
 Core, plugin host, agent protocol and workflow logs go to one place with levels and filters, shown in a debug panel and written to files with rotation. The same logs feed the plugin-authoring tools for agents.
+
+- The core writes the file. Main and the plugin host send their lines to it, each line tagged with its source (main, core, plugin host, agent, workflow); a line main logs while the core restarts reaches the next core.
+- One JSON object per line in `yaa.log` in the app's log folder (`~/.config/yaa/logs` on Linux), written synchronously so the lines before a crash are on disk. The file rotates at 5 MB and the last three rotated files are kept (`yaa.1.log` is the newest).
+- Levels are debug, info, warn and error. Production writes info and above; dev mode writes debug too and echoes every line to the terminal. An uncaught exception in the core is logged before the core exits and main restarts it. A core that exits before it is ready, for example on a database from a newer app, is not restarted: main shows an error naming the log file and quits.
 
 ## Plugin API versions and licence
 

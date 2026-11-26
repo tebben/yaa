@@ -5,6 +5,7 @@ import { ipcChannels } from "@yaa/contracts/process-control";
 import {
 	app,
 	BrowserWindow,
+	dialog,
 	ipcMain,
 	Menu,
 	MessageChannelMain,
@@ -23,6 +24,9 @@ import { hardenSession, openWindow } from "./lib/window.ts";
 const devServerUrl = process.env["YAA_DEV_SERVER_URL"];
 const here = import.meta.dirname;
 
+// Dev mode keeps its own settings, database and logs, so a development
+// build never migrates the database the installed app uses.
+app.setName(devServerUrl === undefined ? "yaa" : "yaa-dev");
 registerAppScheme();
 
 const givePort = (core: CoreProcess, contents: WebContents) => {
@@ -38,7 +42,23 @@ app.whenReady().then(() => {
 	hardenSession(policy);
 	if (devServerUrl === undefined) serveRenderer(join(here, "renderer"));
 
-	const core = startCoreProcess(join(here, "core.js"));
+	const core = startCoreProcess({
+		entry: join(here, "core.js"),
+		start: {
+			kind: "start",
+			dataDir: app.getPath("userData"),
+			logDir: app.getPath("logs"),
+			dev: devServerUrl !== undefined,
+		},
+		onStartupFailure: (code) => {
+			const log = join(app.getPath("logs"), "yaa.log");
+			dialog.showErrorBox(
+				"yaa could not start",
+				`The core process exited during startup (code ${code}). The reason is in ${log}.`,
+			);
+			app.quit();
+		},
+	});
 	core.onRestart(() => {
 		for (const window of BrowserWindow.getAllWindows()) {
 			givePort(core, window.webContents);

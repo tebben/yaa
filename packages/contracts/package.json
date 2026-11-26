@@ -8,7 +8,9 @@
 		"./client": "./client.ts",
 		"./server": "./server.ts",
 		"./core-protocol": "./core-protocol.ts",
-		"./process-control": "./process-control.ts"
+		"./process-control": "./process-control.ts",
+		"./log": "./log.ts",
+		"./core-events": "./core-events.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
