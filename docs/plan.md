@@ -22,7 +22,7 @@ Rules for every spike:
 - ACP with Copilot CLI and Claude Code (adapter package name may have changed): models, thinking effort, skills, MCP list, usage, resume, login, and whether a one-shot `complete()` is possible.
 - libghostty-vt inside Electron vs xterm.js + node-pty fallback.
 - Svelte plugin hot reload in dev mode only, with one shared Svelte runtime and plugin styling without the app's Tailwind build (`docs/spec/03-plugins.md`).
-- Dock grid: evaluate existing docking libraries first (for example dockview; Svelte 5 fit unverified), build custom only if none fits.
+- Dock grid: evaluate existing docking libraries first, build custom only if none fits (`docs/decisions/0016-dock-grid-dockview.md`).
 - Core transport: `utilityProcess` + `MessagePort` vs a token-protected local WebSocket (`docs/spec/00-overview.md`).
 - Electron + pnpm with native modules (node-pty, SQLite or `node:sqlite`); AppImage on Wayland.
 
