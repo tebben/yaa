@@ -1,6 +1,6 @@
 # 0025 Own dark theme and a focus edge set by tokens
 
-Status: decided, 2026-11-26.
+Status: decided, 2026-11-26. The order of the surfaces is superseded by `docs/decisions/0026-lighter-grid.md`.
 
 Context: the dark theme followed Ayu Dark. Its warm beige text clashed with the cool greys around it, and its amber accent was nearly the attention state colour, so a focused panel and one that needs attention looked alike. The window used outlines everywhere instead of a hierarchy of surfaces, and the focused panel's 1px fading line was easy to miss.
 
