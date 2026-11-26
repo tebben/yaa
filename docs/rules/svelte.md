@@ -9,7 +9,7 @@ Source: `docs/spec/13-repo-conventions.md`. Follow the `svelte-core-bestpractice
 
 ## Components
 - The composition root creates the controller and hands slices to children. Leaf components are presentational: props in, callbacks out.
-- No component imports the transport (WebSocket, `MessagePort`, IPC) or the client; only controllers do.
+- No component imports the transport (the `MessagePort` to the core) or the client; only controllers do.
 - Use `ui` primitives, never Bits UI directly. Every colour and spacing value is a token. Icons from `@lucide/svelte`.
 - Compose with snippets and `children`. Context only for app-wide things, never to skip passing a prop one level.
 - Extract on the second use, to `ui` or the feature folder. No speculative generalisation.

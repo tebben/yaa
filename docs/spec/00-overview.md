@@ -40,7 +40,8 @@ flowchart LR
   agents[Agent processes, one per chat session]
   ptys[PTYs, one per terminal]
   db[(SQLite)]
-  main -->|starts| core
+  main -->|forks, brokers ports| core
+  main -->|forks| host
   renderer <-->|typed protocol| core
   core <-->|typed RPC| host
   core <-->|ACP over stdio| agents
@@ -50,13 +51,14 @@ flowchart LR
 
 - **Renderer:** sends commands and renders events. It keeps no business state, so a reload or a second window sees the same state.
 - **Core:** owns state and the event bus. Plugin code runs in its own host process, so a crashing plugin does not stop the core or the agents.
-- **Agents and terminals:** core spawns, supervises and talks to every agent process and PTY, one agent per chat session, started in its worktree directory. A provider plugin supplies detection, spawn configuration and capability data, but never holds the process or the ACP connection. A plugin host crash therefore leaves running agents and terminals untouched. Electron's main process only creates the window and starts the backend.
+- **Agents and terminals:** core spawns, supervises and talks to every agent process and PTY, one agent per chat session, started in its worktree directory. A provider plugin supplies detection, spawn configuration and capability data, but never holds the process or the ACP connection. A plugin host crash therefore leaves running agents and terminals untouched. Electron's main process only creates the window, forks the core and plugin host, and hands out ports.
 - **Contracts:** one typed protocol package shared by the UI, the core and the plugin API. Every message, plugin manifest and settings file has a runtime schema in this package, and the core validates input from the renderer, plugins and disk against it. TypeScript types are inferred from the schemas, so there is one definition per message.
 
-**Transport security (proposed, decided in M1)**
+**Transport (decided, see `docs/decisions/0018-core-transport-messageport.md`)**
 
 The core can run shell commands, so the channel to it must not be open to other local processes or to web pages.
 
-- Preferred: run the core as an Electron `utilityProcess` and connect the renderer through a `MessagePort`. No network port is opened.
-- If a WebSocket is kept, for example for a second window or a dev browser, it binds to `127.0.0.1` only, requires a random per-launch token, and rejects any `Origin` other than the app's own.
-- The renderer runs with context isolation on, the sandbox on, `nodeIntegration` off and a strict content security policy. It only reaches the core through the preload bridge.
+- The core runs as an Electron `utilityProcess`. Each page load gets its own `MessagePort` to it, which main creates on the preload's request. No network port is opened and there is no WebSocket.
+- The plugin host is a second `utilityProcess`. The core's supervisor decides when to start or restart it; main forks it and brokers a `MessagePort` between the two.
+- Main stays out of the data path: it forks processes, hands out ports and restarts the core when it exits.
+- The renderer runs with context isolation on, the sandbox on, `nodeIntegration` off and a strict content security policy. The preload's only job is handing the page its port.

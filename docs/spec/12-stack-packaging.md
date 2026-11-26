@@ -13,7 +13,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | Dock grid | `dockview-core` behind our own Svelte adapter (`docs/decisions/0016-dock-grid-dockview.md`) | decided |
 | Editor | Monaco | decided |
 | Code in chat | Shiki, highlighted lazily | proposed |
-| Backend | TypeScript on Node, a separate process, typed protocol; transport in `00-overview.md` | proposed |
+| Backend | TypeScript on Electron's Node in a `utilityProcess`, typed protocol over `MessagePort` (`docs/decisions/0018-core-transport-messageport.md`) | decided |
 | Agents | ACP first, provider-specific fallback | proposed |
 | Storage | JSON settings files; one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | proposed |
 | Runtime validation | Zod 4 in `contracts` for protocol messages, manifests and settings (`docs/decisions/0013-zod-schemas.md`) | decided |

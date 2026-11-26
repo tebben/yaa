@@ -4,7 +4,6 @@ Each open question becomes a spike or a decision file in this folder. When one i
 
 ## Open questions
 
-- **Core transport:** `utilityProcess` with a `MessagePort` (proposed) or a token-protected local WebSocket. M0 spike, see `docs/spec/00-overview.md`.
 - **SQLite binding:** `node:sqlite` in Electron's Node or `better-sqlite3`. Part of the M0 native-modules spike.
 - **Jira authentication:** API token or OAuth, with the secret in the system keyring on Linux.
 - **Workflow format:** declarative YAML or JSON with a service-call escape hatch (proposed), or TypeScript. Decide before the workflows plugin starts.
@@ -26,6 +25,7 @@ Each open question becomes a spike or a decision file in this folder. When one i
 - ~~Plugin UI loading~~: `0015-plugin-ui-loading.md`
 - ~~Grid~~: `0016-dock-grid-dockview.md`
 - ~~Ghostty~~: `0017-terminal-xterm-first.md`
+- ~~Core transport~~: `0018-core-transport-messageport.md`
 
 ## Risks
 

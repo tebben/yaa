@@ -55,7 +55,7 @@ worktree-switcher/
 
 1. Three layers. Pure `.ts` has no runes and is tested without Svelte. `.svelte.ts` controllers own state, derived values and actions, and talk to the typed client. `.svelte` files render and bind.
 2. The composition root creates the controller and hands slices to children. Leaf components are presentational and never do IPC.
-3. Components never touch the transport (WebSocket, `MessagePort` or IPC) directly; they go through a controller and the typed client from `contracts`.
+3. Components never touch the transport (the `MessagePort` to the core) directly; they go through a controller and the typed client from `contracts`.
 4. Components use `ui` primitives, never Bits UI directly, and tokens for every color and spacing value.
 5. Size trigger: a `.svelte` file over about 150 lines, or a `<script>` block over about 40, is a prompt to split. These numbers are proposals; the check starts as a warning in CI, not a failure.
 6. Compose with snippets and `children`. Use context only for app-wide things, not to avoid passing props one level.
