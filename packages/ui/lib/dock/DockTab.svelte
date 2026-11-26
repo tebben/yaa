@@ -18,7 +18,7 @@ let {
 	{#if kind}
 		<Icon icon={kind.icon} class="size-3.5 shrink-0" />
 	{/if}
-	<span class="flex-1 truncate">{title}</span>
+	<span class="flex-1 truncate font-semibold">{title}</span>
 	<span class="yaa-tab-actions flex">
 		<IconButton icon={X} label="Close" onclick={onclose} />
 	</span>

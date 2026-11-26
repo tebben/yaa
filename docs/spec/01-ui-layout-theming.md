@@ -6,7 +6,7 @@ Lands in: M1. The vim layer: Later.
 
 This file says what the shell does. How it looks (colours, borders, focus styling) is in `docs/design/ui.md` and `docs/design/tokens.json`.
 
-The window is a fixed shell around a user-arrangeable grid: a full-height left menu, a right rail, and between them a header, a grid of panels and a footer. The header and footer belong to the selected project and worktree, so they span only the middle, not the left menu.
+The window is a fixed shell around a user-arrangeable grid: a left menu, a right rail, and between them a header and a grid of panels. A footer spans the full window below the menu, panels and rail. The header and footer show information for the selected project and worktree.
 
 **Shell**
 
@@ -17,11 +17,11 @@ The window is a fixed shell around a user-arrangeable grid: a full-height left m
 
 **Right rail and panels**
 
-- **Right rail:** one icon per panel kind (files, changes, chat, terminal, review, usage, workflows) that toggles the panel, with the active ones marked and a tooltip with the shortcut. Plugins add their own icons.
+- **Right rail:** one icon per panel kind (files, changes, chat, terminal, review, usage, workflows) that toggles the panel, with the active ones marked and a tooltip with the shortcut. Opening a closed panel places it at the right edge of the grid, spanning its height. Plugins add their own icons.
 - **Panel header:** a small header with an icon, a title, a menu and a close button, so every panel can be closed with the mouse. Panels with a single purpose, such as the editor, show tabs instead of a title.
 - **Closing by keyboard:** Ctrl W closes the focused tab, and the panel when it has none, while focus is in the grid. In a focused terminal Ctrl W goes to the shell, where it deletes a word (see Keyboard model).
 - **Focus:** exactly one panel is focused and is styled as `docs/design/ui.md` describes. The footer shows the input mode, for example NORMAL when the vim layer is on. Focus moves with directional keys.
-- **Focus regions:** keyboard focus moves between the panels of the grid and the shell's regions: left menu, header, footer and right rail. A region with focus shows the same accent line as a focused panel, and the grid's line gives way while it does. Inside the rail and the menu, J and K move between items; inside the header and footer, H and L. The focused item is marked. Coming back to a region or a panel lands on the item that had focus there last, or on its first item when none had, or on the region or panel itself when it has no items.
+- **Focus regions:** keyboard focus moves between the panels of the grid and the shell's regions: left menu, header, footer and right rail. A region with visible keyboard focus shows the same accent line as a focused panel, and the grid's line gives way while it does. Pointer focus on a button does not show the region's line. Inside the rail and the menu, J and K move between items; inside the header and footer, H and L. The focused item is marked. Coming back to a region or a panel lands on the item that had focus there last, or on its first item when none had, or on the region or panel itself when it has no items.
 - **Default keys:** Ctrl H, J, K and L focus the panel to the left, below, above and to the right: the nearest panel past that edge that shares some of its length, so a wide panel reaches either of two narrower ones above it; past the edge of the grid they go on to the left menu (skipped while hidden), the footer, the header and the rail. Shift H or K and Shift L or J go to the previous and next tab of the focused panel, wrapping around; they work in the grid only, and not while a text field has focus, where they type capitals. Ctrl Shift H and L make the focused panel narrower and wider, Ctrl Shift K and J shorter and taller, by 5% of the grid. Opening or closing a panel while focus is outside the grid, such as on the rail, leaves focus where it was. While focus is in the grid (the palette gives it back before a command runs), closing the focused panel focuses the panel that takes its place and opening one focuses it; closing a panel that is not focused leaves focus where it was.
 - **Icons over text:** settings, plugins, close, add, search and similar controls are icon buttons with a tooltip that shows the shortcut. Text labels are for content, not for chrome.
 

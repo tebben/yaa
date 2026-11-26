@@ -21,7 +21,8 @@ let {
 
 <nav
 	{@attach region}
-	class="yaa-focus-region col-start-3 row-span-3 row-start-1 flex w-rail flex-col items-center gap-1 border-l border-border bg-chrome py-1.5"
+	class="yaa-focus-region col-start-3 row-span-2 row-start-1 flex w-rail flex-col items-center gap-1 border-l border-border bg-chrome py-1.5"
+	style:--icon-button-size="var(--spacing-icon)"
 	aria-label="Panels"
 >
 	{#each kinds as [id, kind] (id)}

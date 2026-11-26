@@ -22,7 +22,7 @@ let {
 <header
 	{@attach region}
 	class={[
-		"yaa-focus-region col-start-2 flex h-header items-center gap-1.5 border-b border-border bg-chrome pr-3 text-text-muted",
+		"yaa-focus-region col-start-2 row-start-1 flex h-header items-center gap-1.5 border-b border-border bg-chrome pr-3 text-text-muted",
 		menuOpen ? "pl-3" : "pl-1.5",
 	]}
 >

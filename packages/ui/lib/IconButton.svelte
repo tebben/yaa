@@ -31,7 +31,7 @@ let {
 		aria-pressed={pressed}
 		{onclick}
 	>
-		<Icon {icon} class="size-3.5" />
+		<Icon {icon} class="yaa-icon-button-icon" />
 	</Tooltip.Trigger>
 	<Tooltip.Portal>
 		<Tooltip.Content

@@ -44,7 +44,7 @@ const shortcut = (id: string) => {
 			menuShortcut={shortcut("menu.toggle")}
 			onshowmenu={() => commands.run("menu.toggle")}
 		/>
-		<main class="col-start-2 min-h-0 bg-surface">
+		<main class="col-start-2 row-start-2 min-h-0 bg-grid p-panel-gap">
 			{#if layout.dock}
 				<Dock dock={layout.dock} />
 			{/if}

@@ -50,7 +50,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			dock()?.focusActive();
 			return;
 		}
-		memory.enter(region.element);
+		memory.enter(region.element, { focusVisible: true });
 	};
 
 	return {
@@ -94,7 +94,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			// From the region itself, down goes to the first item, up to the last.
 			const next =
 				index < 0 ? (step > 0 ? 0 : -1) : (index + step) % list.length;
-			list.at(next)?.focus();
+			list.at(next)?.focus({ focusVisible: true });
 		},
 	};
 };

@@ -1,6 +1,5 @@
-/* Maps the tokens onto dockview's variables (docs/decisions/0016). Flat
-   panels with hairlines; the focused group gets a 1px accent line on top and
-   the brightest title (docs/design/ui.md). */
+/* Maps tokens onto dockview's variables. The focused group gets a 1px accent
+   line on top and the brightest title (docs/design/ui.md). */
 .yaa-dock {
 	--dv-group-view-background-color: var(--color-surface);
 	--dv-tabs-and-actions-container-background-color: var(--color-chrome);
@@ -15,7 +14,7 @@
 	--dv-inactivegroup-visiblepanel-tab-color: var(--color-text-soft);
 	--dv-inactivegroup-hiddenpanel-tab-color: var(--color-text-muted);
 	--dv-tab-divider-color: var(--color-border);
-	--dv-separator-border: var(--color-border);
+	--dv-separator-border: transparent;
 	--dv-paneview-header-border-color: var(--color-border);
 	--dv-sash-color: transparent;
 	--dv-active-sash-color: var(--color-accent);
@@ -30,8 +29,13 @@
 	--dv-tab-close-icon-size: inherit;
 }
 
+.yaa-dock .dv-dockview {
+	background-color: var(--color-grid);
+}
+
 .yaa-dock .dv-groupview {
 	position: relative;
+	border-radius: var(--radius-panel);
 }
 
 .yaa-dock .dv-groupview.dv-active-group::before {
@@ -39,7 +43,13 @@
 	position: absolute;
 	inset: 0 0 auto;
 	height: 1px;
-	background-color: var(--color-focus);
+	background: linear-gradient(
+		to right,
+		transparent,
+		var(--color-focus) 15%,
+		var(--color-focus) 85%,
+		transparent
+	);
 	/* Above dockview's separator line, which it draws at z-index 5 over the
 	   top edge of every view after the first in a column, so the lower of
 	   two stacked panels shows the line too. */

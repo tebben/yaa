@@ -27,6 +27,11 @@
 		cursor: pointer;
 	}
 
+	.yaa-icon-button-icon {
+		width: var(--icon-button-size, var(--spacing-3_5));
+		height: var(--icon-button-size, var(--spacing-3_5));
+	}
+
 	/* A shell region with keyboard focus gets the focused panel's accent
 	   line (docs/design/ui.md); the grid's then gives way, so one place
 	   looks focused. */
@@ -35,7 +40,7 @@
 		outline: none;
 	}
 
-	.yaa-focus-region:focus-within::before {
+	.yaa-focus-region:is(:focus-visible, :has(:focus-visible))::before {
 		content: "";
 		position: absolute;
 		inset: 0 0 auto;
@@ -44,16 +49,19 @@
 		z-index: 1;
 	}
 
-	body:has(.yaa-focus-region:focus-within)
-		.yaa-dock
-		.dv-groupview.dv-active-group::before {
-		display: none;
-	}
-
 	body {
+		overflow: hidden;
 		background-color: var(--color-chrome);
 		color: var(--color-text);
 		font-size: var(--text-base);
 		line-height: var(--leading-base);
+	}
+}
+
+@layer components {
+	body:has(.yaa-focus-region:focus-visible, .yaa-focus-region :focus-visible)
+		.yaa-dock
+		.dv-groupview.dv-active-group::before {
+		display: none;
 	}
 }

@@ -18,14 +18,14 @@ let {
 </script>
 
 <nav
-	class="yaa-focus-region row-span-3 flex w-menu flex-col border-r border-border bg-chrome"
+	class="yaa-focus-region col-start-1 row-span-2 row-start-1 flex w-menu flex-col border-r border-border bg-menu"
 	aria-label="Projects"
 	{@attach region}
 >
 	<!-- The same height and bottom border as the header, so the toggle sits
 	     at the same pixel in both places. -->
 	<div
-		class="flex h-header shrink-0 items-center gap-1.5 border-b border-transparent px-1.5"
+		class="flex h-header shrink-0 items-center gap-1.5 border-b border-menu-border px-1.5"
 	>
 		<IconButton
 			icon={PanelLeftClose}
@@ -34,11 +34,8 @@ let {
 			tooltipSide="bottom"
 			onclick={onhide}
 		/>
-		<!-- The name as in the banner: Geist 600 with tight tracking. The
-		     descender of the y drops the box centre below the letters', so the
-		     nudge up centres the x-height on the icon. -->
 		<span
-			class="-translate-y-0.5 text-title leading-none font-semibold tracking-[-0.035em] text-text select-none"
+			class="text-wordmark leading-none font-semibold tracking-[-0.035em] text-text select-none"
 			>yaa</span
 		>
 	</div>
