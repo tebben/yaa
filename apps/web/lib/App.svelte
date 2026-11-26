@@ -25,11 +25,16 @@ const shortcut = (id: string) => {
 };
 </script>
 
-<svelte:window onkeydowncapture={commands.handleKey} />
+<!-- A click hides the focus edge until a key moves focus again. -->
+<svelte:window
+	onkeydowncapture={commands.handleKey}
+	onpointerdowncapture={regions.hideHighlight}
+/>
 
 <TooltipProvider>
 	<div
 		class="grid h-screen grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_minmax(0,1fr)_auto]"
+		data-focus-highlight={regions.highlighted || undefined}
 	>
 		{#if workbench.menuOpen}
 			<LeftMenu region={regions.region("menu", "vertical")} />

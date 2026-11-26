@@ -31,7 +31,7 @@ let {
 <Tooltip.Root>
 	<Tooltip.Trigger
 		class={[
-			"inline-flex shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:text-text",
+			"inline-flex shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:bg-pressed aria-pressed:text-text aria-pressed:hover:bg-hover",
 			size === "large" ? "size-control-lg" : "size-control",
 		]}
 		aria-label={label}

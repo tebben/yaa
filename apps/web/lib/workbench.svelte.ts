@@ -48,6 +48,7 @@ export const createWorkbench = (client: CoreClient) => {
 		"panel.kind": layout.dock?.activeKind,
 		"focus.region": regions.current(),
 		"focus.list": regions.list(),
+		"focus.highlight": regions.highlighted,
 		inputFocus: isTextEntry(document.activeElement),
 		"palette.open": palette.open,
 	});

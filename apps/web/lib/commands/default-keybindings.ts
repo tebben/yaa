@@ -12,6 +12,11 @@ const HORIZONTAL_LIST = "focus.list == horizontal && !inputFocus";
 export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "ctrl+shift+p", command: "palette.open" },
 	{ key: "escape", command: "palette.close", when: "palette.open" },
+	{
+		key: "escape",
+		command: "focus.hideHighlight",
+		when: "focus.highlight && !palette.open",
+	},
 	{ key: "arrowdown", command: "palette.next", when: "palette.open" },
 	{ key: "arrowup", command: "palette.previous", when: "palette.open" },
 	{ key: "ctrl+j", command: "palette.next", when: "palette.open" },
