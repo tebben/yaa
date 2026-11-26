@@ -10,4 +10,10 @@ export const migrations: Migrations = [
 		event TEXT NOT NULL
 	) STRICT;
 	CREATE INDEX events_by_type ON events (type, seq);`,
+	// 2: saved dock layouts, one per scope.
+	`CREATE TABLE layouts (
+		scope TEXT PRIMARY KEY,
+		layout TEXT NOT NULL,
+		saved_at INTEGER NOT NULL
+	) STRICT;`,
 ];

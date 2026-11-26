@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import * as z from "zod";
 import {
 	createEventLog,
+	createLayoutStore,
 	migrate,
 	openDatabase,
 	schemaVersion,
@@ -86,5 +87,17 @@ describe("event log", () => {
 		]);
 		log.append({ type: "core.started", pid: 2 });
 		expect(() => createEventLog(db, narrower).read()).toThrow();
+	});
+});
+
+describe("layout store", () => {
+	it("keeps the last layout saved for each scope", () => {
+		const layouts = createLayoutStore(openDatabase(":memory:"));
+		expect(layouts.get("app")).toBeUndefined();
+		layouts.save("app", "first");
+		layouts.save("app", "second");
+		layouts.save("other", "third");
+		expect(layouts.get("app")).toBe("second");
+		expect(layouts.get("other")).toBe("third");
 	});
 });

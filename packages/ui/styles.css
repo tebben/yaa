@@ -4,6 +4,10 @@
 @import "@fontsource-variable/geist/wght.css";
 @import "@fontsource-variable/geist-mono/wght.css";
 @import "./theme.css";
+/* dockview-core ships no stylesheet; the dockview package pinned to the same
+   version is installed for this file only (docs/decisions/0016). */
+@import "dockview/dist/styles/dockview.css" layer(components);
+@import "./lib/dock/dock.css" layer(components);
 @source "./lib";
 
 @theme {

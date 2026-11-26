@@ -1,0 +1,13 @@
+// The dock grid: dockview-core behind a Svelte adapter
+// (docs/decisions/0016-dock-grid-dockview.md). An entry of its own, so the
+// ui entry that plugins share stays free of dockview: plugins contribute
+// panel kinds, never the grid.
+export { default as Dock } from "./lib/dock/Dock.svelte";
+export {
+	createDock,
+	type DockController,
+	type DockOptions,
+	type DockPlacement,
+	type PanelKind,
+} from "./lib/dock/dock.svelte.ts";
+export { parseDockLayout } from "./lib/dock/dock-layout.ts";

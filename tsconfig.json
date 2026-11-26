@@ -3,8 +3,8 @@
 	"compilerOptions": {
 		"types": ["node"]
 	},
-	"$comment": "The Node side. The renderer is in tsconfig.web.json and the preload in tsconfig.preload.json; Vite's config runs in Node, so it is listed under files, which exclude does not filter.",
-	"files": ["apps/web/vite.config.ts"],
+	"$comment": "The Node side. The renderer is in tsconfig.web.json and the preload in tsconfig.preload.json; Vite's and Vitest's configs run in Node, so they are listed under files, which exclude does not filter.",
+	"files": ["apps/web/vite.config.ts", "packages/ui/vitest.config.ts"],
 	"include": ["scripts", "apps", "packages", "plugins", "*.ts"],
 	"exclude": [
 		"**/node_modules",

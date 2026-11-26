@@ -11,6 +11,7 @@ import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
+import { createLayoutStore } from "./storage/layout-store.ts";
 
 export type CoreOptions = { dataDir: string; logDir: string; dev: boolean };
 
@@ -48,7 +49,12 @@ export const startCore = ({ dataDir, logDir, dev }: CoreOptions): Core => {
 		resolve: resolveKeybindings,
 		log,
 	});
-	const server = createCoreServer({ log, settings, keybindings });
+	const server = createCoreServer({
+		log,
+		settings,
+		keybindings,
+		layouts: createLayoutStore(db),
+	});
 	log.info("core started", { pid: process.pid, dataDir });
 
 	return { connect: server.connect, log: logFile.write };

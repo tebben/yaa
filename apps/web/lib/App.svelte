@@ -1,23 +1,29 @@
 <script lang="ts">
 import { TooltipProvider } from "@yaa/ui";
-import type { CoreInfoController } from "./core-info.svelte.ts";
+import { Dock } from "@yaa/ui/dock";
+import type { LayoutController } from "./layout.svelte.ts";
+import { panelKinds } from "./panels/index.ts";
+import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
 
-let { coreInfo }: { coreInfo: CoreInfoController } = $props();
+let { layout }: { layout: LayoutController } = $props();
 </script>
 
 <TooltipProvider>
-	<main class="flex flex-col gap-2 p-4">
-		<h1 class="text-title">yaa</h1>
-		<p class="text-text-soft">
-			{#if coreInfo.info}
-				Core running on Electron {coreInfo.info.electron}, Node
-				{coreInfo.info.node}, since
-				{new Date(coreInfo.info.startedAt).toLocaleTimeString()}.
-			{:else if coreInfo.error}
-				Core unreachable: {coreInfo.error}
-			{:else}
-				Connecting to the core…
+	<div
+		class="grid h-screen grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_minmax(0,1fr)_auto]"
+	>
+		<LeftMenu />
+		<Header />
+		<main class="min-h-0 bg-surface">
+			{#if layout.dock}
+				<Dock dock={layout.dock} />
 			{/if}
-		</p>
-	</main>
+		</main>
+		<Footer error={layout.error} />
+		<Rail
+			kinds={panelKinds}
+			isOpen={(kind) => layout.dock?.isOpen(kind) ?? false}
+			ontoggle={(kind) => layout.dock?.toggle(kind)}
+		/>
+	</div>
 </TooltipProvider>
