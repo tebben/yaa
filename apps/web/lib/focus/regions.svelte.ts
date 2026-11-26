@@ -1,4 +1,5 @@
 import type { DockController, DockDirection } from "@yaa/ui/dock";
+import { createFocusMemory, focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
 
 // The parts of the window focus moves between: the shell's fixed regions
@@ -6,12 +7,7 @@ import type { Attachment } from "svelte/attachments";
 export type RegionName = "menu" | "header" | "dock" | "footer" | "rail";
 export type Orientation = "vertical" | "horizontal";
 
-type Region = {
-	element: HTMLElement;
-	orientation: Orientation;
-	// The item that had focus last, so coming back lands on it.
-	last: HTMLElement | undefined;
-};
+type Region = { element: HTMLElement; orientation: Orientation };
 
 // Which region lies in each direction, after the grid in App.svelte: the
 // menu runs full height on the left, the rail on the right, the header and
@@ -27,9 +23,6 @@ const neighbours: Record<
 	rail: { left: "dock" },
 };
 
-const FOCUSABLE =
-	'button:not(:disabled), a[href], input, [tabindex]:not([tabindex="-1"])';
-
 type RegionsOptions = {
 	dock(): DockController | undefined;
 	// The left menu can be hidden; focus skips it then.
@@ -39,10 +32,8 @@ type RegionsOptions = {
 export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 	// Read on key presses only, never by markup, so it need not be reactive.
 	const regions = new Map<RegionName, Region>();
-
-	const items = (region: Region) => [
-		...region.element.querySelectorAll<HTMLElement>(FOCUSABLE),
-	];
+	// Coming back to a region lands on the item that had focus there last.
+	const memory = createFocusMemory();
 
 	// The region focus is in; the dock when focus is nowhere, as at start.
 	const current = (): RegionName => {
@@ -59,8 +50,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			dock()?.focusActive();
 			return;
 		}
-		const last = region.last?.isConnected ? region.last : undefined;
-		(last ?? items(region)[0] ?? region.element).focus();
+		memory.enter(region.element);
 	};
 
 	return {
@@ -72,15 +62,11 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 				orientation: Orientation,
 			): Attachment<HTMLElement> =>
 			(element) => {
-				const region: Region = { element, orientation, last: undefined };
-				const remember = (event: FocusEvent) => {
-					if (event.target instanceof HTMLElement) region.last = event.target;
-				};
 				element.tabIndex = -1;
-				element.addEventListener("focusin", remember);
-				regions.set(name, region);
+				const untrack = memory.track(element);
+				regions.set(name, { element, orientation });
 				return () => {
-					element.removeEventListener("focusin", remember);
+					untrack();
 					regions.delete(name);
 				};
 			},
@@ -102,7 +88,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 		step(step: 1 | -1) {
 			const region = regions.get(current());
 			if (region === undefined) return;
-			const list = items(region);
+			const list = focusableItems(region.element);
 			const active = document.activeElement;
 			const index = list.findIndex((item) => item === active);
 			// From the region itself, down goes to the first item, up to the last.

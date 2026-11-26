@@ -57,6 +57,9 @@ app.whenReady().then(() => {
 			dataDir: app.getPath("userData"),
 			logDir: app.getPath("logs"),
 			pluginsDir,
+			// The fake agent is a dev-only provider (docs/spec/05-agents-chat.md).
+			fakeAgent:
+				devServerUrl === undefined ? null : join(here, "fake-agent.js"),
 			dev: devServerUrl !== undefined,
 		},
 		onStartPluginHost: () => pluginHost.start(),

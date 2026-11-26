@@ -17,7 +17,8 @@
 		"./plugin-manifest": "./plugin-manifest.ts",
 		"./plugin-host-protocol": "./plugin-host-protocol.ts",
 		"./plugin-ui": "./plugin-ui.ts",
-		"./app-urls": "./app-urls.ts"
+		"./app-urls": "./app-urls.ts",
+		"./agent-events": "./agent-events.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

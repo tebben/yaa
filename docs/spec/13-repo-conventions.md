@@ -17,6 +17,7 @@ packages/
   plugin-api/     the typed API plugins import
   plugin-host/    the plugin host process: runs backend plugin code
   plugin-build/   the yaa plugin build: esbuild plus the Svelte compiler
+  fake-agent/     the dev-only ACP agent that replays scripted turns
   ui/             design tokens and Bits UI wrappers
 plugins/          built-in plugins: git, chat, files, terminal, github, jira, pr
 docs/             architecture notes and rules

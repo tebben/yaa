@@ -40,7 +40,10 @@
 	inset: 0 0 auto;
 	height: 1px;
 	background-color: var(--color-focus);
-	z-index: 1;
+	/* Above dockview's separator line, which it draws at z-index 5 over the
+	   top edge of every view after the first in a column, so the lower of
+	   two stacked panels shows the line too. */
+	z-index: 6;
 }
 
 /* A hairline between a panel's header and its content. */

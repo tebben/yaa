@@ -4,10 +4,12 @@ import {
 	type GroupPanelPartInitParameters,
 	type IDockviewPanel,
 } from "dockview-core";
-import { type Component, untrack } from "svelte";
+import { type Component, tick, untrack } from "svelte";
 import type { Attachment } from "svelte/attachments";
+import { createFocusMemory } from "../focus/focus-memory.ts";
 import type { IconSource } from "../icon-source.ts";
 import { parseDockLayout } from "./dock-layout.ts";
+import { neighbour } from "./neighbour.ts";
 
 // What the grid passes a panel's component: the kind it renders, so one
 // component can serve several kinds, such as every plugin panel.
@@ -73,6 +75,10 @@ export const createDock = ({
 	let open = $state<ReadonlySet<string>>(new Set());
 	let activeKind = $state<string>();
 	let api: DockviewApi | undefined;
+	// The grid's element, to tell whether focus is in the grid.
+	let root: HTMLElement | undefined;
+	// Coming back to a panel lands on the item that had focus there last.
+	const memory = createFocusMemory();
 	// The latest layout, so attaching again (a remount, hot reload in dev)
 	// restores the grid as it was, not as it was loaded.
 	let latest = layout;
@@ -139,7 +145,14 @@ export const createDock = ({
 			(slot) => slot.part === "content" && slot.panelId === panel.id,
 		);
 		const content = slot?.element.firstElementChild;
-		if (content instanceof HTMLElement) content.focus();
+		if (content instanceof HTMLElement) memory.enter(content);
+	};
+
+	// Opening or closing a panel moves focus only when it was in the grid:
+	// toggling from the rail or the palette leaves it where it was.
+	const settle = (panel: IDockviewPanel | undefined, hadFocus: boolean) => {
+		if (hadFocus) activate(panel);
+		else panel?.api.setActive();
 	};
 
 	const attach: Attachment<HTMLElement> = (element) =>
@@ -155,6 +168,7 @@ export const createDock = ({
 				disableFloatingGroups: true,
 			});
 			api = dock;
+			root = element;
 			restore(dock);
 			const sync = () => {
 				open = new Set(dock.panels.map((panel) => panel.id));
@@ -174,6 +188,7 @@ export const createDock = ({
 				activeChanges.dispose();
 				dock.dispose();
 				api = undefined;
+				root = undefined;
 			};
 		});
 
@@ -182,6 +197,8 @@ export const createDock = ({
 			return slots;
 		},
 		attach,
+		// Attached to each panel's content root by Dock.svelte.
+		trackFocus: memory.track,
 		isOpen(kind: string) {
 			return open.has(kind);
 		},
@@ -197,7 +214,15 @@ export const createDock = ({
 		focus(direction: DockDirection): boolean {
 			const group = api?.activeGroup;
 			if (api === undefined || group === undefined) return false;
-			const next = api.adjacentGroupInDirection(group, direction);
+			// dockview's own lookup compares centres, so from a wide panel it
+			// misses the narrower ones beside it.
+			const others = api.groups.filter((other) => other !== group);
+			const index = neighbour(
+				group.element.getBoundingClientRect(),
+				others.map((other) => other.element.getBoundingClientRect()),
+				direction,
+			);
+			const next = index === undefined ? undefined : others[index];
 			if (next === undefined) return false;
 			activate(next.activePanel);
 			return true;
@@ -236,17 +261,21 @@ export const createDock = ({
 		// Closes the kind's panel, or opens it beside the focused group.
 		toggle(kind: string) {
 			if (api === undefined) return;
+			const hadFocus = root?.contains(document.activeElement) === true;
 			const panel = api.getPanel(kind);
 			if (panel !== undefined) {
-				// Closing a panel that is not focused would move focus to
-				// whichever group dockview picks; keep it where it was.
-				const focused = api.activePanel;
+				// Closing a panel that is not the active one would make whichever
+				// group dockview picks active; keep the one that was.
+				const active = api.activePanel;
 				panel.api.close();
-				activate(focused === panel ? api.activePanel : focused);
+				settle(active === panel ? api.activePanel : active, hadFocus);
 				return;
 			}
 			const group = api.activeGroup;
 			add(api, kind, group && { referenceGroup: group, direction: "right" });
+			// The new panel's content renders on the next tick; dockview may
+			// have moved the focused element out of the page meanwhile.
+			void tick().then(() => settle(api?.getPanel(kind), hadFocus));
 		},
 	};
 };

@@ -1,4 +1,5 @@
 import type { Context } from "@yaa/commands/when";
+import { createAgentChat } from "./agent/index.ts";
 import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
 import type { CoreClient } from "./core-connection.ts";
@@ -17,7 +18,7 @@ const isTextEntry = (element: Element | null) =>
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
 
-// The app's composition root: the plugins, the dock layout, the left menu,
+// The app's composition root: the plugins, the agent chat, the dock layout, the left menu,
 // focus across the shell's regions, the commands with their keys, and the
 // palette.
 export const createWorkbench = (client: CoreClient) => {
@@ -30,6 +31,7 @@ export const createWorkbench = (client: CoreClient) => {
 		report(`Core unreachable: ${describe(reason)}`);
 
 	const plugins = createPlugins({ client, report });
+	const agentChat = createAgentChat({ client, report });
 	// The app's kinds in rail order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.
 	const kinds = plugins
@@ -92,6 +94,7 @@ export const createWorkbench = (client: CoreClient) => {
 		commands,
 		palette,
 		plugins,
+		agentChat,
 		get menuOpen() {
 			return menuOpen;
 		},

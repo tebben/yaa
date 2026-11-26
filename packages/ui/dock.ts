@@ -13,3 +13,4 @@ export {
 	type PanelProps,
 } from "./lib/dock/dock.svelte.ts";
 export { parseDockLayout } from "./lib/dock/dock-layout.ts";
+export { type Box, neighbour } from "./lib/dock/neighbour.ts";

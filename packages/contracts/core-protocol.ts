@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { agentEvent, questionAnswer, sessionEvent } from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
 import { pluginManifest } from "./plugin-manifest.ts";
@@ -31,8 +32,50 @@ export const coreProtocol = defineProtocol({
 			params: z.object({ command: z.string() }),
 			result: z.object({}),
 		},
+		// Starts an agent session. Until providers arrive in M2 the only agent
+		// is the fake one, in dev mode only (docs/spec/05-agents-chat.md).
+		"agent.start": {
+			params: z.object({}),
+			result: z.object({ sessionId: z.string() }),
+		},
+		// Every session with the events it has sent so far; `agent.event`
+		// carries the ones that follow.
+		"agent.sessions": {
+			params: z.object({}),
+			result: z.object({
+				sessions: z.array(
+					z.object({ sessionId: z.string(), events: z.array(agentEvent) }),
+				),
+			}),
+		},
+		// Starts a turn; its events arrive as `agent.event`.
+		"agent.prompt": {
+			params: z.object({ sessionId: z.string(), text: z.string() }),
+			result: z.object({}),
+		},
+		"agent.cancel": {
+			params: z.object({ sessionId: z.string() }),
+			result: z.object({}),
+		},
+		"agent.answerPermission": {
+			params: z.object({
+				sessionId: z.string(),
+				requestId: z.string(),
+				optionId: z.string(),
+			}),
+			result: z.object({}),
+		},
+		"agent.answerQuestion": {
+			params: z.object({
+				sessionId: z.string(),
+				requestId: z.string(),
+				answer: questionAnswer,
+			}),
+			result: z.object({}),
+		},
 	},
 	events: {
+		"agent.event": sessionEvent,
 		// Sent when a save changes what the file resolves to.
 		"settings.changed": settingsState,
 		"keybindings.changed": keybindingsState,
