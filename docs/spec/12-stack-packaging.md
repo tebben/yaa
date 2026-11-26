@@ -17,7 +17,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | Storage | JSON settings files; one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | proposed |
 | Runtime validation | Zod 4 in `contracts` for protocol messages, manifests and settings (`docs/decisions/0013-zod-schemas.md`) | decided |
 | Packaging | electron-builder | proposed |
-| Lint, format, tests | Biome, `tsc`, `svelte-check`, Vitest | proposed |
+| Lint, format, tests | Biome, `tsc` (TypeScript 6, since `svelte-check` 4 does not support 7), `svelte-check`, Vitest | in use since the repo foundation |
 
 **Tooling and assets (proposed)**
 
