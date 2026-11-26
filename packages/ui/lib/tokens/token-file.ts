@@ -10,6 +10,7 @@ export const tokenFile = z.object({
 		mono: z.string(),
 		size: group,
 		lineHeight: group,
+		weight: group,
 	}),
 	radius: group,
 	space: group,

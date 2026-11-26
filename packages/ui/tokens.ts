@@ -12,6 +12,7 @@ export type TokenName =
 	| "text-title"
 	| "leading-tight"
 	| "leading-base"
+	| "font-weight-semibold"
 	| "radius-panel"
 	| "radius-control"
 	| "radius-chip"
