@@ -14,6 +14,7 @@ import { createWorktrees } from "./projects/worktrees.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
 import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
+import { createStepsRunner } from "./steps/worktree-steps.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
@@ -91,6 +92,11 @@ export const startCore = ({
 		emit: (event) => server.emit("agent.event", event),
 	});
 	const git = createGitService();
+	const steps = createStepsRunner({ git, events, log });
+	// Setup and teardown commands do not outlive the core. Main stops it with
+	// SIGTERM, which would end it without the exit handlers.
+	process.on("exit", steps.shutdown);
+	process.on("SIGTERM", () => process.exit(0));
 	const server = createCoreServer({
 		log,
 		settings,
@@ -104,6 +110,7 @@ export const startCore = ({
 			db,
 			git,
 			settings: () => settings.current().values,
+			steps,
 			home: homedir(),
 		}),
 	});

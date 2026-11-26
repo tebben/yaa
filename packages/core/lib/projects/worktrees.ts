@@ -11,6 +11,7 @@ import type {
 import type { CoreSettings } from "@yaa/contracts/settings";
 import { worktreeName } from "@yaa/contracts/worktree-name";
 import type { GitService } from "../git/git-service.ts";
+import type { StepsRunner } from "../steps/worktree-steps.ts";
 import {
 	expandHome,
 	projectRow,
@@ -44,6 +45,7 @@ type WorktreesOptions = {
 		"shared" | "status" | "branches" | "unpushed" | "upstream"
 	>;
 	settings(): CoreSettings;
+	steps: Pick<StepsRunner, "setup" | "teardown" | "stop">;
 	// What a leading ~ in a path stands for.
 	home: string;
 	exists?: (path: string) => boolean;
@@ -63,11 +65,13 @@ const freeIndex = (taken: ReadonlySet<number>) => {
 
 // Creating and finishing worktrees (docs/spec/02-worktrees.md). Git does
 // the work, through the queue for the repository's shared state; the
-// database keeps the list, with each worktree's stable index.
+// database keeps the list, with each worktree's stable index. The project's
+// steps run after create and before the folder is removed.
 export const createWorktrees = ({
 	db,
 	git,
 	settings,
+	steps,
 	home,
 	exists = existsSync,
 	newId = randomUUID,
@@ -197,6 +201,14 @@ export const createWorktrees = ({
 			};
 			insert.run(added.id, repo.id, added.branch, path, added.index, now());
 			changed();
+			// Setup may take long: the worktree is usable meanwhile, and the
+			// runner records how it went.
+			steps.setup({
+				worktree: added.id,
+				index: added.index,
+				path,
+				checkout: repo.path,
+			});
 			return { worktree: added };
 		},
 		async status(id) {
@@ -227,14 +239,31 @@ export const createWorktrees = ({
 				changed();
 			};
 			if (action === "close") {
+				await steps.stop(id);
 				forget();
 				return {};
+			}
+			const folder = exists(found.path);
+			if (folder) {
+				const { problem } = await steps.teardown({
+					worktree: id,
+					index: found.index,
+					path: found.path,
+					checkout: repo.path,
+				});
+				if (problem !== undefined) {
+					return {
+						problem: `Teardown failed, so the worktree is kept: ${problem}`,
+					};
+				}
+			} else {
+				await steps.stop(id);
 			}
 			try {
 				// A folder removed outside yaa leaves git a record to prune.
 				await git.shared(
 					repo.path,
-					exists(found.path)
+					folder
 						? ["worktree", "remove", ...(force ? ["--force"] : []), found.path]
 						: ["worktree", "prune"],
 				);

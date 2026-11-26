@@ -55,20 +55,37 @@ const setup = ({
 	failing = [] as readonly string[],
 	// The folders that exist; a test adds one after creating its worktree.
 	folders = new Set<string>(),
+	teardownProblem = undefined as string | undefined,
 } = {}) => {
 	let id = 0;
 	const newId = () => `id${++id}`;
 	const { git, shared } = fakeGit(failing);
+	const ran: string[] = [];
 	const projects = createProjects({ db, git, home: "/repo", newId });
 	const worktrees = createWorktrees({
 		db,
 		git,
 		settings,
+		steps: {
+			async setup({ worktree, index, path, checkout }) {
+				ran.push(`setup ${worktree} ${index} ${path} from ${checkout}`);
+				return {};
+			},
+			async teardown({ worktree }) {
+				ran.push(`teardown ${worktree}`);
+				return teardownProblem === undefined
+					? {}
+					: { problem: teardownProblem };
+			},
+			async stop(worktree) {
+				ran.push(`stop ${worktree}`);
+			},
+		},
 		home: "/home/me",
 		exists: (path) => folders.has(path),
 		newId,
 	});
-	return { db, projects, worktrees, shared, folders };
+	return { db, projects, worktrees, shared, folders, ran };
 };
 
 const main = { id: "id2", branch: "main", path: "/repo", index: 0 };
@@ -274,5 +291,39 @@ describe("worktrees", () => {
 			problem: "The worktree is removed, but: cannot branch",
 		});
 		expect(branchFails.projects.list()[0]?.worktrees).toEqual([main]);
+	});
+
+	it("sets a worktree up after creating it, and tears it down before removing its folder", async () => {
+		const { worktrees, folders, ran } = await withProject();
+		await worktrees.create({ project: "id1", text: "1", base: "main" });
+		await worktrees.create({ project: "id1", text: "2", base: "main" });
+		folders.add("/home/me/wt/repo/PROJ-1");
+		await worktrees.finish("id3", "remove", false);
+		await worktrees.finish("id4", "remove", false);
+		expect(ran).toEqual([
+			"setup id3 1 /home/me/wt/repo/PROJ-1 from /repo",
+			"setup id4 2 /home/me/wt/repo/PROJ-2 from /repo",
+			"teardown id3",
+			// Its folder is gone, so there is nowhere to run commands.
+			"stop id4",
+		]);
+	});
+
+	it("keeps a worktree whose teardown fails, but still closes it", async () => {
+		const { projects, worktrees, folders, shared } = await withProject({
+			teardownProblem: "make down: exit code 2",
+		});
+		await worktrees.create({ project: "id1", text: "1", base: "main" });
+		folders.add("/home/me/wt/repo/PROJ-1");
+		shared.length = 0;
+		await expect(
+			worktrees.finish("id3", "deleteBranch", true),
+		).resolves.toEqual({
+			problem: expect.stringContaining("make down: exit code 2"),
+		});
+		expect(shared).toEqual([]);
+		expect(projects.list()[0]?.worktrees).toHaveLength(2);
+		await expect(worktrees.finish("id3", "close", false)).resolves.toEqual({});
+		expect(projects.list()[0]?.worktrees).toEqual([main]);
 	});
 });

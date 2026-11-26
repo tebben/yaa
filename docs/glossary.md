@@ -20,3 +20,4 @@ One line per term. Code, specs and agents use these names; add a term when a new
 - **Trigger:** what starts a run: manual, event or sensor. A **sensor** polls a connector and emits events.
 - **Step mode:** `auto` runs without stopping; `review` waits for approval.
 - **Setup steps:** per-project files to copy and commands to run when a worktree is created.
+- **Teardown steps:** per-project commands to run before a worktree's folder is removed.
