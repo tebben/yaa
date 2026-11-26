@@ -15,7 +15,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | Backend | TypeScript on Node, a separate process, typed protocol; transport in `00-overview.md` | proposed |
 | Agents | ACP first, provider-specific fallback | proposed |
 | Storage | JSON settings files; one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | proposed |
-| Runtime validation | one schema library in `contracts` for protocol messages, manifests and settings | open, chosen in the foundation |
+| Runtime validation | Zod 4 in `contracts` for protocol messages, manifests and settings (`docs/decisions/0013-zod-schemas.md`) | decided |
 | Packaging | electron-builder | proposed |
 | Lint, format, tests | Biome, `tsc`, `svelte-check`, Vitest | proposed |
 
@@ -60,4 +60,4 @@ Linux is the first supported platform. The code carries no Linux-only assumption
 - **Desktop integration:** a desktop entry with icon and categories, and a URL scheme handler for deep links, for example opening a worktree from a link.
 - **Runtime dependencies:** `git` on the PATH is required. Agent CLIs, `gh` and `glab` are detected at runtime and never bundled, and the app says what is missing and how to install it.
 - **Display servers:** test on both Wayland and X11 from the first build. Also check recent Ubuntu releases for sandbox startup problems with the AppImage, before the first release.
-- **CI and releases:** a version tag builds the Linux artifacts on a Linux runner, writes SHA256 checksums and attaches both to a release.
+- **CI and releases:** GitHub Actions. From the repo foundation on, every push and pull request runs `pnpm run check:all` on a Linux runner, and a red check blocks merging to `main`. From M6, a version tag also builds the Linux artifacts, writes SHA256 checksums and attaches both to a GitHub release.

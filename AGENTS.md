@@ -18,7 +18,7 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 
 ## Where to look
 - What to build: docs/spec/ (index in docs/README.md)
-- How it looks: docs/design/ui.md and tokens.json. Mockups are a guide, not a spec; do not copy their markup.
+- How it looks: docs/design/ui.md and tokens.json. Mockups are a guide, not a spec: look at the PNGs in docs/design/mockups/, do not copy the .dc.html markup.
 - What next: docs/plan.md. Each spec section has a "Lands in" milestone; do not build later-milestone items early. Open questions: docs/decisions/.
 
 ## Rules: read the relevant one before editing

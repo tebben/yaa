@@ -4,14 +4,21 @@ Order matters. Each milestone ends on something usable and has an exit check: wh
 
 ## Before M0: repo foundation (do first, no feature code)
 1. Init monorepo: pnpm workspaces, Node, strict TypeScript, Biome, `svelte-check`, Vitest. pnpm and Node are decided (`docs/decisions/0002-pnpm-and-node.md`).
-2. Pick the runtime schema library for `contracts` (open question; ask before choosing).
+2. Add Zod 4 to `contracts` for runtime schemas (`docs/decisions/0013-zod-schemas.md`).
 3. Create the two structure skills: `setup-ts-deep-modules` (dependency-cruiser, entry points only, `lint:boundaries`) and our own `setup-svelte-structure` (thin `.svelte`, `.svelte.ts` controllers, pure `.ts`, `lint:svelte-size`). See `docs/spec/13-repo-conventions.md`.
 4. Write `docs/rules/*.md` (typescript, svelte, plugins, testing; `docs.md` exists) and update the commands in `AGENTS.md` once they run.
 5. `check` script: lint (with the strict rules in `docs/spec/13-repo-conventions.md`), typecheck (`tsc` and `svelte-check`), boundaries, svelte size, `check:docs`, unit tests for changed packages only. `check:all` runs everything.
+6. CI: a GitHub Actions workflow runs `pnpm run check:all` on every push and pull request (`docs/spec/12-stack-packaging.md`). Branch protection on `main` requires it.
 
-Exit: `pnpm install && pnpm run check` passes on a clean clone, and a deliberate boundary violation, an unexplained `@ts-ignore` and a spec section without `Lands in:` each make it fail.
+Exit: `pnpm install && pnpm run check` passes on a clean clone and in CI, and a deliberate boundary violation, an unexplained `@ts-ignore` and a spec section without `Lands in:` each make it fail.
 
 ## M0: spikes (answer the risky questions; write each result to `docs/decisions/`)
+Rules for every spike:
+- One spike per agent session, on its own `spike/<name>` branch. Spike code never merges; only the decision file and the spec edits it causes land on `main`.
+- Time box: half a day of agent work. When the box runs out, write down what is known and what is not, and decide from that.
+- The decision file records the question, what was tried with versions, measurements where the question is about speed, the answer, and what M1 should build. Keep the branch for reference and link it.
+- No foundation or M1 code is written during a spike, even when it looks reusable. M1 rewrites what it needs, following the rules.
+
 - ACP with Copilot CLI and Claude Code (adapter package name may have changed): models, thinking effort, skills, MCP list, usage, resume, login, and whether a one-shot `complete()` is possible.
 - libghostty-vt inside Electron vs xterm.js + node-pty fallback.
 - Svelte plugin hot reload in dev mode only, with one shared Svelte runtime and plugin styling without the app's Tailwind build (`docs/spec/03-plugins.md`).
