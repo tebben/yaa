@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { createDockview, type DockviewApi } from 'dockview-core';
-	import { getAllContexts, onMount, setContext } from 'svelte';
+	import { onMount, setContext } from 'svelte';
+	import PanelHost from './PanelHost.svelte';
 	import { renderers } from './dock.svelte';
 	import { closeActive, defaultLayout, focusDirection, movePanel, togglePanel } from './layout';
 	import { panelKinds } from './registry';
 
 	setContext('host', { name: 'yaa' });
-	const context = getAllContexts();
 	let el: HTMLDivElement;
 	let api = $state<DockviewApi>();
 	let open = $state<string[]>([]);
 
 	onMount(() => {
 		const dock = createDockview(el, {
-			...renderers(context),
+			...renderers((kind) => panelKinds[kind]?.icon ?? ''),
 			className: 'yaa-dock',
 			theme: { name: 'yaa', className: 'yaa-dock', gap: 0, colorScheme: 'dark' },
 			disableFloatingGroups: true,
@@ -42,6 +42,8 @@
 </script>
 
 <svelte:window {onkeydown} />
+
+<PanelHost />
 
 <div class="shell">
 	<div class="grid" bind:this={el}></div>

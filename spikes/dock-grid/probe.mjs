@@ -163,6 +163,11 @@ report.gaps = await page.evaluate(() => {
 	const area = r.reduce((s, b) => s + b.width * b.height, 0);
 	return { coverage: +(area / (grid.width * grid.height)).toFixed(4) };
 });
+report.orphans = await page.evaluate(() => ({
+	panelRootsInGrid: document.querySelectorAll('.grid .panel-root').length,
+	panelRootsOutside: [...document.querySelectorAll('.panel-root')].filter((e) => !e.closest('.grid')).length,
+	openPanels: globalThis.__dock.panels.length,
+}));
 report.errors = errors;
 console.log(JSON.stringify(report, null, 2));
 await browser.close();

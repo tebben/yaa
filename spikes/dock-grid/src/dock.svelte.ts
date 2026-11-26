@@ -7,60 +7,58 @@ import type {
 	TabPartInitParameters,
 } from 'dockview-core';
 import { mount, unmount } from 'svelte';
-import { panelKinds } from './registry';
 import { stats } from './stats';
 import Tab from './Tab.svelte';
 
-type Mounted = ReturnType<typeof mount>;
+/**
+ * One open panel. dockview owns `element`; PanelHost renders the panel's component inside the
+ * app's own tree and moves its root node into `element`, so contexts and boundaries flow in.
+ */
+export type PanelSlot = {
+	id: string;
+	kind: string;
+	element: HTMLElement;
+	params: Record<string, unknown>;
+	visible: boolean;
+};
 
-/** Mounts a Svelte 5 component into a dockview panel; props are a $state object so params updates flow in. */
-class SvelteContent implements IContentRenderer {
+export const slots = $state<PanelSlot[]>([]);
+
+class PortalContent implements IContentRenderer {
 	readonly element = document.createElement('div');
-	private instance?: Mounted;
-	private props = $state<{ params: Record<string, unknown>; panelId: string; visible: boolean }>({
-		params: {},
-		panelId: '',
-		visible: true,
-	});
+	private slot?: PanelSlot;
 
-	constructor(
-		private readonly kind: string,
-		private readonly context: Map<unknown, unknown>,
-	) {
+	constructor(private readonly kind: string) {
 		this.element.style.height = '100%';
 	}
-
 	init(p: GroupPanelPartInitParameters): void {
-		this.props.params = p.params;
-		this.props.panelId = p.api.id;
-		this.instance = mount(panelKinds[this.kind].component, {
-			target: this.element,
-			props: this.props,
-			context: this.context,
-		});
+		slots.push({ id: p.api.id, kind: this.kind, element: this.element, params: p.params, visible: true });
+		this.slot = slots[slots.length - 1];
 		stats.mounts++;
 	}
 	update(event: { params: Record<string, unknown> }): void {
-		this.props.params = { ...this.props.params, ...event.params };
+		if (this.slot) this.slot.params = { ...this.slot.params, ...event.params };
 	}
 	onShow(): void {
-		this.props.visible = true;
+		if (this.slot) this.slot.visible = true;
 	}
 	onHide(): void {
-		this.props.visible = false;
+		if (this.slot) this.slot.visible = false;
 	}
 	dispose(): void {
-		if (this.instance) unmount(this.instance);
+		const i = slots.indexOf(this.slot as PanelSlot);
+		if (i >= 0) slots.splice(i, 1);
 		stats.unmounts++;
 	}
 }
 
 class SvelteTab implements ITabRenderer {
 	readonly element = document.createElement('div');
-	private instance?: Mounted;
+	private instance?: ReturnType<typeof mount>;
+	constructor(private readonly icon: (kind: string) => string) {}
 	init(p: TabPartInitParameters): void {
 		this.element.style.height = '100%';
-		this.instance = mount(Tab, { target: this.element, props: { api: p.api, icon: panelKinds[p.api.component]?.icon ?? '' } });
+		this.instance = mount(Tab, { target: this.element, props: { api: p.api, icon: this.icon(p.api.component) } });
 		stats.tabMounts++;
 	}
 	dispose(): void {
@@ -69,10 +67,18 @@ class SvelteTab implements ITabRenderer {
 	}
 }
 
-export function renderers(context: Map<unknown, unknown>) {
+export function renderers(icon: (kind: string) => string) {
 	return {
-		createComponent: (o: CreateComponentOptions) => new SvelteContent(o.name, context),
-		createTabComponent: () => new SvelteTab(),
+		createComponent: (o: CreateComponentOptions) => new PortalContent(o.name),
+		createTabComponent: () => new SvelteTab(icon),
+	};
+}
+
+/** Attachment: moves the node into dockview's element and removes it when the panel goes. */
+export function portal(target: HTMLElement) {
+	return (node: HTMLElement) => {
+		target.appendChild(node);
+		return () => node.remove();
 	};
 }
 

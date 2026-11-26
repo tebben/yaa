@@ -1,6 +1,7 @@
 import type { Component } from 'svelte';
 import Counter from './panels/Counter.svelte';
 import Placeholder from './panels/Placeholder.svelte';
+import Broken from './panels/Broken.svelte';
 
 export type PanelKind = { component: Component<any>; title: string; icon: string };
 
@@ -13,5 +14,5 @@ export const panelKinds: Record<string, PanelKind> = {
 	files: { component: Placeholder, title: 'Files', icon: '▦' },
 	review: { component: Placeholder, title: 'Review', icon: '✓' },
 	usage: { component: Placeholder, title: 'Usage', icon: '$' },
-	workflows: { component: Placeholder, title: 'Workflows', icon: 'ϟ' },
+	workflows: { component: Broken, title: 'Workflows', icon: 'ϟ' },
 };
