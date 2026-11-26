@@ -2,6 +2,7 @@
 // (docs/decisions/0018-core-transport-messageport.md).
 import {
 	type FromCoreMessage,
+	type PickTarget,
 	toCoreMessage,
 } from "@yaa/contracts/process-control";
 import { fromMessagePortMain } from "@yaa/contracts/protocol";
@@ -9,17 +10,17 @@ import { type Core, startCore } from "./lib/start-core.ts";
 
 const parent = process.parentPort;
 let core: Core | undefined;
-// Folder picks waiting for main's answer, by id.
-const picks = new Map<number, (path: string | null) => void>();
+// Picks waiting for main's answer, by id.
+const picks = new Map<number, (paths: string[]) => void>();
 let nextPick = 0;
 
 const send = (message: FromCoreMessage) => parent.postMessage(message);
 
-const pickFolder = () =>
-	new Promise<string | null>((resolve) => {
+const pick = (target: PickTarget) =>
+	new Promise<string[]>((resolve) => {
 		const id = nextPick++;
 		picks.set(id, resolve);
-		send({ kind: "pick-folder", id });
+		send({ kind: "pick", id, target });
 	});
 
 const started = (): Core => {
@@ -38,7 +39,7 @@ parent.on("message", (event) => {
 				pluginsDir: message.pluginsDir,
 				dev: message.dev,
 				requestPluginHost: () => send({ kind: "start-plugin-host" }),
-				pickFolder,
+				pick,
 			});
 			send({ kind: "ready" });
 			return;
@@ -58,8 +59,8 @@ parent.on("message", (event) => {
 		case "log":
 			started().log(message.record);
 			return;
-		case "picked-folder":
-			picks.get(message.id)?.(message.path);
+		case "picked":
+			picks.get(message.id)?.(message.paths);
 			picks.delete(message.id);
 			return;
 	}

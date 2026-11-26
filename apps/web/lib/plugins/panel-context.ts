@@ -1,3 +1,4 @@
+import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
 import {
 	type Disposable,
@@ -11,6 +12,7 @@ import type { PanelFrame } from "@yaa/ui/dock";
 import { captureKeys } from "../commands/index.ts";
 import type { CoreClient } from "../core-connection.ts";
 import type { TerminalLinks } from "../terminals/index.ts";
+import { createPanelAgents } from "./panel-agents.ts";
 import type { PanelHandlers } from "./panel-handlers.ts";
 
 type PanelContextOptions = {
@@ -21,6 +23,7 @@ type PanelContextOptions = {
 	files: PanelHandlers<OpenFile>;
 	openFile(file: OpenFile): void;
 	pick(source: PickSource): void;
+	providers: Promise<readonly PluginProvider[]>;
 	frame: PanelFrame;
 	plugin: string;
 	kind: string;
@@ -38,6 +41,7 @@ export const createPanelContext = ({
 	files,
 	openFile,
 	pick,
+	providers,
 	frame,
 	plugin,
 	kind,
@@ -85,6 +89,15 @@ export const createPanelContext = ({
 			onRestart: (listener) =>
 				track(client.subscribe("plugins.reset", () => listener())),
 		}),
+		agents: createPanelAgents({
+			client,
+			worktree: worktree.id,
+			providers,
+			track,
+		}),
+		async pickFiles() {
+			return (await client.request("dialog.pickFiles", {})).paths;
+		},
 		commands: {
 			register(command, handler) {
 				if (!declared.has(command)) {

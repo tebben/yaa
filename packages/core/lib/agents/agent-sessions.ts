@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type {
 	AgentEvent,
+	PromptAttachment,
 	QuestionAnswer,
 	SessionEvent,
 } from "@yaa/contracts/agent-events";
@@ -86,7 +87,13 @@ export const createAgentSessions = ({
 						events.push(event);
 						const logged = chatEvent({ worktree, chat: sessionId }, event);
 						if (logged !== undefined) record(logged);
-						emit({ sessionId, seq: events.length - 1, event });
+						emit({
+							sessionId,
+							worktree,
+							provider,
+							seq: events.length - 1,
+							event,
+						});
 					},
 				});
 				if (!agents.has(agent)) {
@@ -126,8 +133,11 @@ export const createAgentSessions = ({
 				}),
 			);
 		},
-		prompt(sessionId: string, text: string) {
-			session(sessionId).prompt(text);
+		prompt(sessionId: string, text: string, attachments: PromptAttachment[]) {
+			session(sessionId).prompt(text, attachments);
+		},
+		setConfig(sessionId: string, configId: string, value: string) {
+			return session(sessionId).setConfig(configId, value);
 		},
 		cancel(sessionId: string) {
 			session(sessionId).cancel();

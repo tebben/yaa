@@ -16,3 +16,4 @@ export {
 	type NormalizedQuestion,
 	normalizeQuestion,
 } from "./lib/agents/normalize-question.ts";
+export { promptContent } from "./lib/agents/prompt-content.ts";

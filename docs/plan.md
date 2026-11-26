@@ -58,7 +58,7 @@ Build order, one pull request each:
 8. Permission modes per worktree, shown in the chat header.
 9. Debug panel: the logs with level, source and worktree filters.
 10. Copilot CLI provider, including how it detects a signed-out state (unverified in `docs/spec/05-agents-chat.md`).
-11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`).
+11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`), with their counts in the chat header.
 12. Exit check: the smoke test opens a worktree, measure worktree switch time and chat streaming.
 
 Exit: you build yaa's next feature inside yaa. Two worktrees run real agents in parallel; one asking a permission question shows Needs attention, and a key jumps to it. Measure worktree switch time and chat streaming.

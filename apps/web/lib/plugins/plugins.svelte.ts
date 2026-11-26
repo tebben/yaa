@@ -50,6 +50,11 @@ export const createPlugins = ({
 	const manifests = client
 		.request("plugins.list", {})
 		.then(({ plugins }) => plugins);
+	const providers = manifests.then((plugins) =>
+		plugins.flatMap(({ contributes }) => contributes.providers),
+	);
+	// A panel that asks for them reports a failure.
+	providers.catch(() => undefined);
 	// Which plugin contributes each panel; filled once core has answered,
 	// before any panel of theirs can render.
 	const owners = new Map<string, PluginManifest>();
@@ -112,6 +117,7 @@ export const createPlugins = ({
 					if (openWorktree() === found.id) pick(source);
 				},
 				frame,
+				providers,
 				plugin: plugin.id,
 				kind,
 				declared: new Set(

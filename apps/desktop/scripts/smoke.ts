@@ -8,8 +8,9 @@
 // by quick open, a command runs in the terminal, which keeps Ctrl W and is
 // still there after a reload, the palette runs the hello plugin's command, and
 // the fake agent plays a turn into the chat panel, with the worktree's state
-// following it. A restart brings the editor's tabs back and opens the terminal
-// where it was. It prints the launch and palette
+// following it, then a turn of markdown picked as a slash command, whose file
+// link opens the editor. A restart brings the editor's tabs back and opens the
+// terminal where it was. It prints the launch and palette
 // open times against the targets in docs/spec/12-stack-packaging.md and fails
 // only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
@@ -595,14 +596,14 @@ const NEXT_ATTENTION: Key = {
 	modifiers: ALT,
 };
 
+const CHAT = `(${DOCK}).querySelector('textarea[aria-label="Prompt"]')`;
+
 // The edit turn asks for a permission and a question; answering both lets
 // it end. While it waits, the worktree needs attention, and a key leads back
 // to it from the project's overview.
 const playFakeTurn = async (page: Connection) => {
 	await click(page, "Start Fake agent");
-	const composer = `document.querySelector('input[aria-label="Prompt"]')`;
-	await waitFor(page, composer);
-	await evaluate(page, `${composer}.focus()`, z.undefined());
+	await waitFor(page, `document.activeElement === ${CHAT}`);
 	await type(page, "Make the greeting friendlier");
 	await press(page, ENTER);
 	await waitFor(page, `${FOOTER}.textContent.includes("Needs attention")`);
@@ -614,8 +615,25 @@ const playFakeTurn = async (page: Connection) => {
 	await click(page, "Decline");
 	await waitFor(
 		page,
-		`document.body.textContent.includes("Turn ended: end turn")`,
+		`(${DOCK}).textContent.includes("The greeting now says")`,
 	);
+	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
+};
+
+// A slash command is picked by keys; its reply's code is highlighted, and a
+// file it names opens in the editor.
+const readMarkdownTurn = async (page: Connection, repo: string) => {
+	await mkdir(join(repo, "src"), { recursive: true });
+	await writeFile(join(repo, "src", "greeting.ts"), "export const hi = 3;\n");
+	await clickElement(page, CHAT);
+	await type(page, "/mark");
+	await waitFor(page, `(${DOCK}).querySelector('[role="option"]')`);
+	await press(page, ENTER);
+	await waitFor(page, `${CHAT}.value === "/markdown "`);
+	await press(page, ENTER);
+	await waitFor(page, `(${DOCK}).querySelector("pre code span[style]")`);
+	await click(page, "src/greeting.ts:1");
+	await waitFor(page, editorShows("hi"));
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
 
@@ -651,6 +669,8 @@ try {
 	console.log("The palette ran the hello plugin's command.");
 	await playFakeTurn(first.page);
 	console.log("The fake agent's turn played to its end.");
+	await readMarkdownTurn(first.page, join(dataDir, "repo"));
+	console.log("A slash command's markdown reply opened a file.");
 	const paletteTimes: number[] = [];
 	for (let run = 0; run < PALETTE_OPENS; run += 1) {
 		paletteTimes.push(await paletteOpenMs(first.page));
@@ -663,7 +683,7 @@ try {
 		const app = await launch(dataDir);
 		warmTimes.push(app.launchMs);
 		await waitFor(app.page, editorTab("first.ts"));
-		await waitFor(app.page, editorShows("second"));
+		await waitFor(app.page, editorShows("hi"));
 		await runInTerminal(
 			app.page,
 			'basename "$PWD"',
