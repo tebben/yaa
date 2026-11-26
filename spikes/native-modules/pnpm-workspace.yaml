@@ -1,0 +1,8 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  better-sqlite3: true
+  node-pty: true
+  electron: true
+  electron-winstaller: false

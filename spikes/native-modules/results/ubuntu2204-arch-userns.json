@@ -1,0 +1,85 @@
+{
+  "packaged": true,
+  "argv": [],
+  "env": {
+    "XDG_SESSION_TYPE": "wayland",
+    "WAYLAND_DISPLAY": "wayland-1",
+    "DISPLAY": null,
+    "APPIMAGE": "/tmp/a.AppImage"
+  },
+  "ozone": "wayland",
+  "main": {
+    "versions": {
+      "node": "24.22.3",
+      "electron": "45.5.0",
+      "modules": "150",
+      "napi": "10",
+      "sqlite": "3.54.1"
+    },
+    "nodeSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 6.6,
+      "insertMsPer100k": 82.3,
+      "groupByMs": 12.9,
+      "groups": 20
+    },
+    "betterSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 5.9,
+      "insertMsPer100k": 119.8,
+      "groupByMs": 14.7,
+      "groups": 20
+    },
+    "pty": {
+      "ok": false,
+      "error": "Error: Failed to load native module: pty.node, checked: build/Release, build/Debug, prebuilds/linux-x64: Error: Cannot find module './prebuilds/linux-x64//pty.node'\nRequire stack:\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/utils.js\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/index.js\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/@spike/core/index.cjs\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/main.cjs\n- \n    at Object.loadNativeModule (/tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/utils.js:36:11)\n    at Object.<anonymous> (/tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/unixTerminal.js:27:22)\n    at Module._compile (node:internal/modules/cjs/loader:1937:14)\n    at Object..js (node:internal/modules/cjs/loader:2070:10)\n    at Module.load (node:internal/modules/cjs/loader:1658:32)\n    at Module._load (node:internal/modules/cjs/loader:1450:12)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:268:19)\n    at Module.require (node:internal/modules/cjs/loader:1681:12)\n    at require (node:internal/modules/helpers:157:16)\n    at Object.<anonymous> (/tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/index.js:15:20)"
+    }
+  },
+  "utility": {
+    "versions": {
+      "node": "24.22.3",
+      "electron": "45.5.0",
+      "modules": "150",
+      "napi": "10",
+      "sqlite": "3.54.1"
+    },
+    "nodeSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 4.4,
+      "insertMsPer100k": 106.3,
+      "groupByMs": 13.6,
+      "groups": 20
+    },
+    "betterSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 6.1,
+      "insertMsPer100k": 118.3,
+      "groupByMs": 14,
+      "groups": 20
+    },
+    "pty": {
+      "ok": false,
+      "error": "Error: Failed to load native module: pty.node, checked: build/Release, build/Debug, prebuilds/linux-x64: Error: Cannot find module './prebuilds/linux-x64//pty.node'\nRequire stack:\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/utils.js\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/index.js\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/@spike/core/index.cjs\n- /tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/core-child.cjs\n    at Object.loadNativeModule (/tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/utils.js:36:11)\n    at Object.<anonymous> (/tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/unixTerminal.js:27:22)\n    at Module._compile (node:internal/modules/cjs/loader:1937:14)\n    at Object..js (node:internal/modules/cjs/loader:2070:10)\n    at Module.load (node:internal/modules/cjs/loader:1658:32)\n    at Module._load (node:internal/modules/cjs/loader:1450:12)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:268:19)\n    at Module.require (node:internal/modules/cjs/loader:1681:12)\n    at require (node:internal/modules/helpers:157:16)\n    at Object.<anonymous> (/tmp/appimage_extracted_c2e0188229d2e5e8bbf83b58fb6789a6/resources/app.asar/node_modules/node-pty/lib/index.js:15:20)"
+    }
+  },
+  "renderer": {
+    "sandboxed": true,
+    "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) spike-desktop/0.0.1 Chrome/156.0.8078.109 Electron/45.5.0 Safari/537.36",
+    "dpr": 1,
+    "nodeInRenderer": false
+  },
+  "windowShownMs": 588,
+  "capture": {
+    "width": 2871,
+    "height": 825
+  },
+  "totalMs": 593
+}

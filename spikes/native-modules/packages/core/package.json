@@ -1,0 +1,1 @@
+{"name":"@spike/core","version":"0.0.0","private":true,"main":"index.cjs","dependencies":{"better-sqlite3":"13.2.0","node-pty":"1.1.0"}}

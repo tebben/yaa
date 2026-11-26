@@ -1,0 +1,94 @@
+{
+  "packaged": true,
+  "argv": [],
+  "env": {
+    "XDG_SESSION_TYPE": "wayland",
+    "WAYLAND_DISPLAY": "wayland-1",
+    "DISPLAY": null,
+    "APPIMAGE": "/home/teebs/dev/yaa/.claude/worktrees/native-modules/spikes/native-modules/apps/desktop/dist-bookworm/YaaSpike-0.0.1.AppImage"
+  },
+  "ozone": "wayland",
+  "main": {
+    "versions": {
+      "node": "24.22.3",
+      "electron": "45.5.0",
+      "modules": "150",
+      "napi": "10",
+      "sqlite": "3.54.1"
+    },
+    "nodeSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 13.1,
+      "insertMsPer100k": 89.9,
+      "groupByMs": 13.7,
+      "groups": 20
+    },
+    "betterSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 20.8,
+      "insertMsPer100k": 103.1,
+      "groupByMs": 14.6,
+      "groups": 20
+    },
+    "pty": {
+      "ok": true,
+      "exitCode": 0,
+      "spawnToExitMs": 18.9,
+      "out": "cols=91\r\n/dev/pts/3"
+    }
+  },
+  "utility": {
+    "versions": {
+      "node": "24.22.3",
+      "electron": "45.5.0",
+      "modules": "150",
+      "napi": "10",
+      "sqlite": "3.54.1"
+    },
+    "nodeSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 0.5,
+      "insertMsPer100k": 67.4,
+      "groupByMs": 12.7,
+      "groups": 20
+    },
+    "betterSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 2.6,
+      "insertMsPer100k": 103.8,
+      "groupByMs": 14.9,
+      "groups": 20
+    },
+    "pty": {
+      "ok": true,
+      "exitCode": 0,
+      "spawnToExitMs": 17.2,
+      "out": "cols=91\r\n/dev/pts/3"
+    }
+  },
+  "renderer": {
+    "sandboxed": true,
+    "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) spike-desktop/0.0.1 Chrome/156.0.8078.109 Electron/45.5.0 Safari/537.36",
+    "dpr": 1,
+    "nodeInRenderer": false
+  },
+  "osSandbox": {
+    "noSandboxSwitch": false,
+    "rendererSeccomp": 2,
+    "rendererOwnUserNs": true
+  },
+  "windowShownMs": 820,
+  "capture": {
+    "width": 2871,
+    "height": 822
+  },
+  "totalMs": 856
+}

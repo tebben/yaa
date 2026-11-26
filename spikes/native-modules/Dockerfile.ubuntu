@@ -1,0 +1,9 @@
+# Ubuntu 24.04 with the runtime libraries a desktop install has, for running the spike AppImage.
+ARG BASE=ubuntu:24.04
+FROM ${BASE}
+ARG GTK=libgtk-3-0t64
+ARG ASOUND=libasound2t64
+RUN for i in 1 2 3; do apt-get -o Acquire::Retries=3 update && break; sleep 5; done \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    $GTK libnss3 $ASOUND libgbm1 libxss1 libxtst6 libsecret-1-0 libnotify4 xdg-utils util-linux fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*

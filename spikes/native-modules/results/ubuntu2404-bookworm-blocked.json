@@ -1,0 +1,96 @@
+{
+  "packaged": true,
+  "argv": [
+    "--no-sandbox"
+  ],
+  "env": {
+    "XDG_SESSION_TYPE": "wayland",
+    "WAYLAND_DISPLAY": "wayland-1",
+    "DISPLAY": null,
+    "APPIMAGE": "/tmp/a.AppImage"
+  },
+  "ozone": "wayland",
+  "main": {
+    "versions": {
+      "node": "24.22.3",
+      "electron": "45.5.0",
+      "modules": "150",
+      "napi": "10",
+      "sqlite": "3.54.1"
+    },
+    "nodeSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 8,
+      "insertMsPer100k": 85.2,
+      "groupByMs": 13,
+      "groups": 20
+    },
+    "betterSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 6,
+      "insertMsPer100k": 120.3,
+      "groupByMs": 14.7,
+      "groups": 20
+    },
+    "pty": {
+      "ok": true,
+      "exitCode": 0,
+      "spawnToExitMs": 6.1,
+      "out": "cols=91\r\n/dev/pts/0"
+    }
+  },
+  "utility": {
+    "versions": {
+      "node": "24.22.3",
+      "electron": "45.5.0",
+      "modules": "150",
+      "napi": "10",
+      "sqlite": "3.54.1"
+    },
+    "nodeSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 3.4,
+      "insertMsPer100k": 85.4,
+      "groupByMs": 13.5,
+      "groups": 20
+    },
+    "betterSqlite": {
+      "available": true,
+      "ok": true,
+      "version": "3.54.1",
+      "openMs": 6,
+      "insertMsPer100k": 121.9,
+      "groupByMs": 13.7,
+      "groups": 20
+    },
+    "pty": {
+      "ok": true,
+      "exitCode": 0,
+      "spawnToExitMs": 5,
+      "out": "cols=91\r\n/dev/pts/0"
+    }
+  },
+  "renderer": {
+    "sandboxed": true,
+    "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) spike-desktop/0.0.1 Chrome/156.0.8078.109 Electron/45.5.0 Safari/537.36",
+    "dpr": 1,
+    "nodeInRenderer": false
+  },
+  "osSandbox": {
+    "noSandboxSwitch": true,
+    "rendererSeccomp": 2,
+    "rendererOwnUserNs": false
+  },
+  "windowShownMs": 594,
+  "capture": {
+    "width": 2871,
+    "height": 825
+  },
+  "totalMs": 599
+}

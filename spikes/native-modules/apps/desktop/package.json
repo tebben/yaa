@@ -1,0 +1,39 @@
+{
+  "name": "spike-desktop",
+  "version": "0.0.1",
+  "private": true,
+  "main": "main.cjs",
+  "description": "native modules spike",
+  "author": "spike",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --linux AppImage deb"
+  },
+  "dependencies": {
+    "@spike/core": "workspace:*"
+  },
+  "devDependencies": {
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "dev.yaa.spike",
+    "productName": "YaaSpike",
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "index.html",
+      "core-child.cjs"
+    ],
+    "linux": {
+      "category": "Development",
+      "maintainer": "spike",
+      "syncDesktopName": true
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "homepage": "https://example.invalid/spike",
+  "desktopName": "yaa-spike.desktop"
+}
