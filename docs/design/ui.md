@@ -14,14 +14,14 @@ Authority: this file and `tokens.json` win over the mockups. Mockups are a guide
 - **Cursor**: anything that acts on a click shows the pointer; sashes show the resize cursor.
 
 ## Surfaces
-Each part of the window has its own colour token, so a theme can tune it alone. The frame (header, footer and menu) is darkest. The grid, the workspace between the menu and the rail, is lighter, so it reads as the content area; the panels and the rail are darker cards on it, each panel with a lighter header strip (`docs/decisions/0026-lighter-grid.md`). Overlays and controls are lightest.
+Each part of the window has its own colour token, so a theme can tune it alone. The frame (header, footer and menu) is darkest. The grid, the workspace between the menu and the rail, is lighter, so it reads as the content area; the panels and the rail are darker cards on it, each panel with a header strip in the menu's colour (`docs/decisions/0026-lighter-grid.md`). Overlays and controls are lightest.
 
 | Part | Token |
 | --- | --- |
 | Header and footer | `chrome` |
-| Left menu | `menu` |
+| Left menu, and the panel header strip in the same colour | `menu`, `panelHeader` |
 | Panel content and the right rail, the cards on the grid | `surface`, `rail` |
-| Panel header, a strip above the content, and on hover | `panelHeader`, `panelHeaderHover` |
+| Panel header on hover | `panelHeaderHover` |
 | The workspace behind the panels and rail | `grid` |
 | Inputs, buttons and key caps | `raised` |
 | Palette and tooltips | `overlay`, with the `overlay` shadow and radius |
@@ -38,7 +38,7 @@ Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and
 - The header spans the window. It leads with the button that hides and shows the left menu and the name "yaa"; these keep their place whether the menu is open or not. While the menu is open they take its width, so the project starts in line with the leftmost panel's content. The header is bound to the **selected project**.
 - The left menu, the grid and the right rail sit between the header and the footer, which also spans the window.
 - The right rail is a card on the grid, rounded like the panels and as tall as its buttons. Open panels have a bright icon on a quiet `pressed` tint, closed panels a muted icon with no background; hover and keyboard focus add the hover tint. The icon stroke stays the same in both states.
-- Panel header: icon, medium title, menu, close (x), on its own surface, a step lighter than the content, with a hairline under it and lighter again while hovered. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
+- Panel header: icon, medium title, menu, close (x), on a strip in the left menu's colour, darker than the content, with a hairline under it and lighter while hovered. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
 - Closing: small x button; Ctrl+W closes the tab, then the panel. No hint text about it.
 - **Focus must be obvious**: the focused panel has a brighter title. After a key moves focus, it also shows the focus edge, a border in the `focus` colour; a click or Escape hides the edge until a key moves focus again. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0. A setting to choose between the two lands with the settings page (proposed).
 - Shortcuts are shown as key caps, one per key (`Kbd` in `packages/ui`), in tooltips and the palette.
