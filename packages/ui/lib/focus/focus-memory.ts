@@ -1,7 +1,17 @@
 import type { Attachment } from "svelte/attachments";
 
-const FOCUSABLE =
-	'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
+// An element with tabindex -1 is for the mouse only, such as a tree's
+// chevron: keys skip it.
+const FOCUSABLE = [
+	"button:not(:disabled)",
+	"a[href]",
+	"input:not(:disabled)",
+	"select:not(:disabled)",
+	"textarea:not(:disabled)",
+	"[tabindex]",
+]
+	.map((selector) => `${selector}:not([tabindex="-1"])`)
+	.join(", ");
 
 // The items keyboard focus can land on inside the container, in page order.
 export const focusableItems = (container: HTMLElement): HTMLElement[] => [

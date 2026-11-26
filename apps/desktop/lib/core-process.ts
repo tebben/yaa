@@ -30,6 +30,9 @@ type StartOptions = {
 	onStartupFailure(code: number): void;
 	// The core asked for a plugin host.
 	onStartPluginHost(): void;
+	// The core asked for the system's folder picker: the folder chosen, or
+	// null when cancelled.
+	onPickFolder(): Promise<string | null>;
 };
 
 // Forks the core and forks it again whenever it exits. Main stays out of the
@@ -39,6 +42,7 @@ export const startCoreProcess = ({
 	start,
 	onStartupFailure,
 	onStartPluginHost,
+	onPickFolder,
 }: StartOptions): CoreProcess => {
 	let child: UtilityProcess;
 	let ready = false;
@@ -70,6 +74,11 @@ export const startCoreProcess = ({
 					return;
 				case "start-plugin-host":
 					onStartPluginHost();
+					return;
+				case "pick-folder":
+					void onPickFolder().then((path) =>
+						send({ kind: "picked-folder", id: message.id, path }),
+					);
 					return;
 			}
 		});

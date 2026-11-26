@@ -14,6 +14,11 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "escape", command: "palette.close", when: "palette.open" },
 	{
 		key: "escape",
+		command: "menu.leaveSearch",
+		when: "focus.region == menu && inputFocus && !palette.open",
+	},
+	{
+		key: "escape",
 		command: "focus.hideHighlight",
 		when: "focus.highlight && !palette.open",
 	},
@@ -25,6 +30,7 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "ctrl+p", command: "palette.previous", when: "palette.open" },
 	{ key: "enter", command: "palette.run", when: "palette.open" },
 	{ key: "ctrl+b", command: "menu.toggle", when: NOT_IN_PALETTE },
+	{ key: "/", command: "menu.search", when: "!inputFocus && !palette.open" },
 	{ key: "ctrl+h", command: "focus.left", when: NOT_IN_PALETTE },
 	{ key: "ctrl+j", command: "focus.down", when: NOT_IN_PALETTE },
 	{ key: "ctrl+k", command: "focus.up", when: NOT_IN_PALETTE },

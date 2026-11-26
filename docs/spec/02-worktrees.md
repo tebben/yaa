@@ -4,7 +4,7 @@
 
 Lands in: M2. Creating from a ticket, Done on PR merge and the project overview: M4.
 
-A project is a git repository added by folder. A worktree is the unit of work: it owns a branch, a working directory, open tabs, a panel layout, terminals, chat sessions and a usage ledger. Switching worktrees swaps all of that at once; agents in other worktrees keep running in the background.
+A project is a git repository added by folder, chosen with the system's folder picker, which Electron main shows for the core. Any folder in the repository adds the repository by its main checkout; a folder outside a repository, a bare repository or a project already in the list is refused with the reason. The project list lives in the database, in the order added; removing a project takes it off the list and leaves its folder alone. The default branch is the one `origin/HEAD` points at, or, without it, the branch checked out in the main checkout when the project is added. A worktree is the unit of work: it owns a branch, a working directory, open tabs, a panel layout, terminals, chat sessions and a usage ledger. Switching worktrees swaps all of that at once; agents in other worktrees keep running in the background.
 
 **Lifecycle**
 
@@ -37,4 +37,4 @@ All worktrees of a project share one `.git` directory. The core git service queu
 
 **Project overview**
 
-Each project has an overview page that shows the worktree list with state, branch, changes and cost, plus issue-tracker stats and the issue list when a connector is configured. Each issue row can start a new worktree.
+Each project has an overview page, opened by selecting the project in the left menu. Until M4 it is a placeholder with the project's folder, its default branch and a button that opens it. In M4 it shows the worktree list with state, branch, changes and cost, plus issue-tracker stats and the issue list when a connector is configured. Each issue row can start a new worktree.

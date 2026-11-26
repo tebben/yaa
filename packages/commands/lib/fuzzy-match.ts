@@ -1,5 +1,3 @@
-type Matchable = { title: string; category?: string };
-
 const isWordStart = (text: string, at: number) =>
 	at === 0 || /[\s:./-]/.test(text.charAt(at - 1));
 
@@ -31,20 +29,24 @@ const score = (query: string, text: string): number | undefined => {
 	return total;
 };
 
-// The commands whose category and title match `query` (case and spaces
-// ignored), best first; ties keep their order. An empty query keeps all.
-export const matchCommands = <T extends Matchable>(
+const normalize = (text: string) => text.toLowerCase().replaceAll(/\s+/g, "");
+
+// How well `text` matches `query`, case and spaces in the query ignored:
+// lower is better, 0 for an empty query, undefined for no match.
+export const fuzzyScore = (query: string, text: string): number | undefined =>
+	score(normalize(query), text.toLowerCase());
+
+// The items whose label matches `query`, best first; ties keep their order.
+// An empty query keeps all.
+export const fuzzyMatch = <T>(
 	query: string,
-	commands: readonly T[],
-): T[] => {
-	const needle = query.toLowerCase().replaceAll(/\s+/g, "");
-	if (needle === "") return [...commands];
-	return commands
-		.flatMap((command) => {
-			const label = `${command.category ?? ""} ${command.title}`;
-			const value = score(needle, label.toLowerCase());
-			return value === undefined ? [] : [{ command, value }];
+	items: readonly T[],
+	label: (item: T) => string,
+): T[] =>
+	items
+		.flatMap((item) => {
+			const value = fuzzyScore(query, label(item));
+			return value === undefined ? [] : [{ item, value }];
 		})
 		.sort((a, b) => a.value - b.value)
-		.map((entry) => entry.command);
-};
+		.map((entry) => entry.item);

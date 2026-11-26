@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
 import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
@@ -5,8 +6,10 @@ import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
 import { createCoreServer } from "./core-server.ts";
+import { createGitService } from "./git/git-service.ts";
 import { openLogFile } from "./log/log-file.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
+import { createProjects } from "./projects/projects.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
 import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
@@ -24,6 +27,8 @@ export type CoreOptions = {
 	// Asks main to fork a plugin host; its port arrives through
 	// `attachPluginHost`.
 	requestPluginHost(): void;
+	// Shows the system's folder picker through main.
+	pickFolder(): Promise<string | null>;
 };
 
 export type Core = {
@@ -40,6 +45,7 @@ export const startCore = ({
 	fakeAgent,
 	dev,
 	requestPluginHost,
+	pickFolder,
 }: CoreOptions): Core => {
 	const logFile = openLogFile({
 		dir: logDir,
@@ -90,6 +96,12 @@ export const startCore = ({
 		layouts: createLayoutStore(db),
 		plugins,
 		agents,
+		pickFolder,
+		projects: createProjects({
+			db,
+			git: createGitService(),
+			home: homedir(),
+		}),
 	});
 	log.info("core started", { pid: process.pid, dataDir });
 

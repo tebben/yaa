@@ -9,8 +9,18 @@ import { type Core, startCore } from "./lib/start-core.ts";
 
 const parent = process.parentPort;
 let core: Core | undefined;
+// Folder picks waiting for main's answer, by id.
+const picks = new Map<number, (path: string | null) => void>();
+let nextPick = 0;
 
 const send = (message: FromCoreMessage) => parent.postMessage(message);
+
+const pickFolder = () =>
+	new Promise<string | null>((resolve) => {
+		const id = nextPick++;
+		picks.set(id, resolve);
+		send({ kind: "pick-folder", id });
+	});
 
 const started = (): Core => {
 	if (core === undefined) throw new Error("Message before start");
@@ -29,6 +39,7 @@ parent.on("message", (event) => {
 				fakeAgent: message.fakeAgent,
 				dev: message.dev,
 				requestPluginHost: () => send({ kind: "start-plugin-host" }),
+				pickFolder,
 			});
 			send({ kind: "ready" });
 			return;
@@ -47,6 +58,10 @@ parent.on("message", (event) => {
 		}
 		case "log":
 			started().log(message.record);
+			return;
+		case "picked-folder":
+			picks.get(message.id)?.(message.path);
+			picks.delete(message.id);
 			return;
 	}
 });

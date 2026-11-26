@@ -1,5 +1,6 @@
-// Electron main: creates the window, forks the core and hands out ports. No
-// business logic lives here (docs/spec/00-overview.md).
+// Electron main: creates the window, forks the core, hands out ports and
+// shows the system dialogs the core asks for. No business logic lives here
+// (docs/spec/00-overview.md).
 import { join } from "node:path";
 import { appOrigin } from "@yaa/contracts/app-urls";
 import { ipcChannels } from "@yaa/contracts/process-control";
@@ -10,6 +11,7 @@ import {
 	ipcMain,
 	Menu,
 	MessageChannelMain,
+	type OpenDialogOptions,
 	type WebContents,
 } from "electron";
 import { registerAppScheme, serveAppScheme } from "./lib/app-protocol.ts";
@@ -65,6 +67,14 @@ app.whenReady().then(() => {
 			dev,
 		},
 		onStartPluginHost: () => pluginHost.start(),
+		onPickFolder: async () => {
+			const options: OpenDialogOptions = { properties: ["openDirectory"] };
+			const window = BrowserWindow.getFocusedWindow();
+			const { canceled, filePaths } = await (window === null
+				? dialog.showOpenDialog(options)
+				: dialog.showOpenDialog(window, options));
+			return canceled ? null : (filePaths[0] ?? null);
+		},
 		onStartupFailure: (code) => {
 			const log = join(app.getPath("logs"), "yaa.log");
 			dialog.showErrorBox(

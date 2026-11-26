@@ -10,7 +10,9 @@ import { logRecord } from "./log.ts";
 // (docs/spec/05-agents-chat.md); the core answers `ready` once its database
 // is open. A `connect` message carries one MessagePort: a new client.
 // `plugin-host` carries the port to a plugin host main forked on the core's
-// request. `log` forwards a line from main.
+// request. `log` forwards a line from main. `picked-folder` answers the
+// core's `pick-folder` with the same id: the folder chosen, or null when the
+// dialog was cancelled.
 export const toCoreMessage = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("start"),
@@ -23,14 +25,21 @@ export const toCoreMessage = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("connect") }),
 	z.object({ kind: z.literal("plugin-host") }),
 	z.object({ kind: z.literal("log"), record: logRecord }),
+	z.object({
+		kind: z.literal("picked-folder"),
+		id: z.number().int(),
+		path: z.string().nullable(),
+	}),
 ]);
 
 // Core to main. The core's supervisor decides when the plugin host starts
 // and restarts; `start-plugin-host` asks main to fork a new one, replacing
-// any host still running.
+// any host still running. `pick-folder` asks main for the system's folder
+// picker, which only main can show.
 export const fromCoreMessage = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("ready") }),
 	z.object({ kind: z.literal("start-plugin-host") }),
+	z.object({ kind: z.literal("pick-folder"), id: z.number().int() }),
 ]);
 
 // Main to the plugin host: the one message, carrying its port to the core.

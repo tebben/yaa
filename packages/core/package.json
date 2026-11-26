@@ -9,7 +9,9 @@
 		"./log": "./log.ts",
 		"./settings": "./settings.ts",
 		"./plugins": "./plugins.ts",
-		"./agents": "./agents.ts"
+		"./agents": "./agents.ts",
+		"./git": "./git.ts",
+		"./projects": "./projects.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
