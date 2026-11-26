@@ -30,4 +30,4 @@ Drawn as a **branch graph**: main is the trunk, each worktree a node on a branch
 Idle (muted), Running (blue), Needs attention (amber), Error (red), Done (green). State is derived from events, never stored by hand.
 
 ## Brand
-The mark is a lowercase **y** drawn as a git merge: a filled node (main) and an open ring (a worktree), the same size, joining into the stem. The ring's line runs on as the stem, like the long stroke of a y, and starts on the ring instead of under it. Source: `docs/design/brand/mark.svg`. Wordmark "yaa" in Geist 600. Pronounced "ja". Name meaning: yet another ADE, but this one is mine.
+The mark is a lowercase **y** drawn as a git merge: a small filled node (main) and a larger open ring (a worktree), each on a branch line, joining at a point from which the stem bends down to the left. The ring's line starts on the ring instead of under it, so the ring stays open. Source: `docs/design/brand/mark.svg`. Wordmark "yaa" in Geist 600. Pronounced "ja". Name meaning: yet another ADE, but this one is mine.
