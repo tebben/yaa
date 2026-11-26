@@ -6,8 +6,7 @@ import { logRecord } from "./log.ts";
 // out ports (docs/decisions/0018-core-transport-messageport.md).
 
 // Main to core. `start` comes first and says where the core keeps its data
-// and finds the built-in plugins and, in dev mode, the fake agent's script
-// (docs/spec/05-agents-chat.md); the core answers `ready` once its database
+// and finds the built-in plugins; the core answers `ready` once its database
 // is open. A `connect` message carries one MessagePort: a new client.
 // `plugin-host` carries the port to a plugin host main forked on the core's
 // request. `log` forwards a line from main. `picked-folder` answers the
@@ -19,7 +18,6 @@ export const toCoreMessage = z.discriminatedUnion("kind", [
 		dataDir: z.string(),
 		logDir: z.string(),
 		pluginsDir: z.string(),
-		fakeAgent: z.string().nullable(),
 		dev: z.boolean(),
 	}),
 	z.object({ kind: z.literal("connect") }),

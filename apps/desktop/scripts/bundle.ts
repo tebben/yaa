@@ -1,7 +1,7 @@
 // esbuild settings for the Node-side bundles: Electron main, the preload
-// (CommonJS, because sandboxed preloads cannot be ES modules), the
-// utilityProcess entries of the core and the plugin host, and the fake
-// agent, which core runs in dev mode only. Shared by build.ts and dev.ts.
+// (CommonJS, because sandboxed preloads cannot be ES modules) and the
+// utilityProcess entries of the core and the plugin host. Shared by build.ts
+// and dev.ts.
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,14 +38,6 @@ export const bundles: BuildOptions[] = [
 			"plugin-host": fileURLToPath(
 				import.meta.resolve("@yaa/plugin-host/main"),
 			),
-		},
-		format: "esm",
-		outdir: outDir,
-	},
-	{
-		...common,
-		entryPoints: {
-			"fake-agent": fileURLToPath(import.meta.resolve("@yaa/fake-agent/main")),
 		},
 		format: "esm",
 		outdir: outDir,

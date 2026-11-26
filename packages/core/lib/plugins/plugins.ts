@@ -3,6 +3,7 @@ import { errorData, type Logger, type LogRecord } from "@yaa/contracts/log";
 import type { PluginEvent } from "@yaa/contracts/plugin-host-protocol";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
 import type { Port } from "@yaa/contracts/protocol";
+import { type AgentLaunch, nodeLaunch } from "../agents/agent-launch.ts";
 import { createPluginHostSupervisor } from "./plugin-host-supervisor.ts";
 import { readPluginFolders } from "./read-plugin-folders.ts";
 import { resolvePlugins } from "./resolve-plugins.ts";
@@ -10,6 +11,8 @@ import { resolvePlugins } from "./resolve-plugins.ts";
 export type PluginManagerOptions = {
 	// The folder of built-in plugins, one folder per plugin.
 	dir: string;
+	// Whether the plugins for dev mode only are loaded.
+	dev: boolean;
 	log: Logger;
 	// Asks main to fork a plugin host.
 	requestHost(): void;
@@ -28,6 +31,7 @@ export type PluginManagerOptions = {
 // its first activation event.
 export const createPluginManager = ({
 	dir,
+	dev,
 	log,
 	requestHost,
 	write,
@@ -35,7 +39,8 @@ export const createPluginManager = ({
 	onEvent,
 	onLost,
 }: PluginManagerOptions) => {
-	const { plugins, refused } = resolvePlugins(readPluginFolders(dir));
+	const { plugins: found, refused } = resolvePlugins(readPluginFolders(dir));
+	const plugins = found.filter(({ devOnly }) => dev || !devOnly);
 	for (const { folder, problems } of refused) {
 		log.warn(`plugin ${folder} was not loaded`, { dir, problems });
 	}
@@ -48,6 +53,11 @@ export const createPluginManager = ({
 			if (panel === undefined) owners.set(id, plugin);
 		}
 	}
+	const providers = new Map(
+		plugins.flatMap((plugin) =>
+			plugin.contributes.providers.map(({ id }) => [id, plugin] as const),
+		),
+	);
 	// One activation per plugin per host, kept when it failed: a plugin whose
 	// activate threw stays failed until the host restarts.
 	const activations = new Map<string, Promise<void>>();
@@ -78,6 +88,7 @@ export const createPluginManager = ({
 					commands: plugin.contributes.commands.flatMap(({ id, panel }) =>
 						panel === undefined ? [id] : [],
 					),
+					providers: plugin.contributes.providers.map(({ id }) => id),
 				});
 				log.info(`plugin ${plugin.id} activated`);
 			})();
@@ -95,6 +106,16 @@ export const createPluginManager = ({
 		}
 	};
 
+	// The plugin that contributes a provider, activated.
+	const providing = async (provider: string) => {
+		const owner = providers.get(provider);
+		if (owner === undefined) {
+			throw new Error(`No plugin contributes the provider ${provider}`);
+		}
+		await activate(owner);
+		return owner;
+	};
+
 	activateStartup();
 
 	return {
@@ -108,6 +129,25 @@ export const createPluginManager = ({
 			}
 			await activate(plugin);
 			return host.client().request("plugin.call", { id, method, params });
+		},
+		async providerStatus(provider: string) {
+			await providing(provider);
+			return host.client().request("provider.status", { provider });
+		},
+		// The command that starts a provider's agent in the folder.
+		async launchAgent(provider: string, cwd: string): Promise<AgentLaunch> {
+			const owner = await providing(provider);
+			const spawn = await host
+				.client()
+				.request("provider.spawn", { provider, cwd });
+			const { args = [], env = {} } = spawn;
+			if (spawn.run === "command") {
+				return { command: spawn.command, args, env };
+			}
+			if (owner.agent === undefined) {
+				throw new Error(`Plugin ${owner.id} declares no agent module`);
+			}
+			return nodeLaunch(join(dir, owner.id, owner.agent), args, env);
 		},
 		async runCommand(command: string) {
 			const owner = owners.get(command);

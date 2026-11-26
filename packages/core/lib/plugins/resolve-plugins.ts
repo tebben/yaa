@@ -20,7 +20,12 @@ export type ResolvedPlugins = {
 
 const manifestProblems = (
 	{ folder, manifest }: PluginFolder,
-	taken: { commands: Set<string>; panels: Set<string>; ids: Set<string> },
+	taken: {
+		commands: Set<string>;
+		panels: Set<string>;
+		providers: Set<string>;
+		ids: Set<string>;
+	},
 ): { manifest: PluginManifest } | { problems: FileProblem[] } => {
 	const json = parseJson(manifest);
 	if (json.kind === "empty") {
@@ -73,12 +78,20 @@ const manifestProblems = (
 			});
 		}
 	});
+	plugin.contributes.providers.forEach(({ id }, index) => {
+		if (taken.providers.has(id)) {
+			problems.push({
+				path: ["contributes", "providers", index, "id"],
+				message: `Another plugin contributes ${id}`,
+			});
+		}
+	});
 	return problems.length > 0 ? { problems } : { manifest: plugin };
 };
 
 // Plugin folders to the plugins core loads. A plugin with any problem is
 // refused whole, so nothing half-loaded reaches the renderer; the first of
-// two plugins that claim the same id, command or panel wins.
+// two plugins that claim the same id, command, panel or provider wins.
 export const resolvePlugins = (
 	folders: readonly PluginFolder[],
 ): ResolvedPlugins => {
@@ -86,6 +99,7 @@ export const resolvePlugins = (
 		ids: new Set<string>(),
 		commands: new Set<string>(),
 		panels: new Set<string>(),
+		providers: new Set<string>(),
 	};
 	const plugins: PluginManifest[] = [];
 	const refused: PluginProblems[] = [];
@@ -99,6 +113,9 @@ export const resolvePlugins = (
 		taken.ids.add(manifest.id);
 		for (const { id } of manifest.contributes.commands) taken.commands.add(id);
 		for (const { id } of manifest.contributes.panels) taken.panels.add(id);
+		for (const { id } of manifest.contributes.providers) {
+			taken.providers.add(id);
+		}
 		plugins.push(manifest);
 	}
 	return { plugins, refused };

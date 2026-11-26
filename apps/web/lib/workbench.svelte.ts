@@ -53,7 +53,13 @@ export const createWorkbench = (client: CoreClient) => {
 		dock: (id) => layouts.docks.get(id),
 		pick: (source) => palette.pick(source),
 	});
-	const agentChat = createAgentChat({ client, report });
+	const agentChat = createAgentChat({
+		client,
+		report,
+		providers: plugins.manifests.then((manifests) =>
+			manifests.flatMap(({ contributes }) => contributes.providers),
+		),
+	});
 	// The app's kinds in rail order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.
 	const kinds = plugins

@@ -1,0 +1,23 @@
+{
+	"name": "@yaa/plugin-claude",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./main": "./main.ts",
+		"./cli": "./cli.ts",
+		"./plugin.json": "./plugin.json"
+	},
+	"scripts": {
+		"build": "yaa-plugin-build .",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@agentclientprotocol/claude-agent-acp": "0.112.0",
+		"@yaa/plugin-api": "workspace:*",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@yaa/plugin-build": "workspace:*"
+	}
+}

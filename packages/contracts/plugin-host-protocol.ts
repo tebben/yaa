@@ -3,6 +3,7 @@ import { defineProtocol } from "./lib/define.ts";
 import { logRecord } from "./log.ts";
 import { pluginId } from "./plugin-manifest.ts";
 import { worktree } from "./projects.ts";
+import { agentSpawn, providerStatus } from "./providers.ts";
 import {
 	dirEntry,
 	fileContent,
@@ -25,19 +26,31 @@ export const pluginEvent = z.object({
 export const pluginHostProtocol = defineProtocol({
 	requests: {
 		// Imports the backend module, an absolute path, and runs its activate.
-		// `commands` are the ones the manifest contributes: the only ones the
-		// plugin may register handlers for.
+		// `commands` and `providers` are the ones the manifest contributes: the
+		// only ones the plugin may register.
 		"plugin.activate": {
 			params: z.object({
 				id: pluginId,
 				main: z.string(),
 				commands: z.array(z.string()),
+				providers: z.array(z.string()),
 			}),
 			result: z.object({}),
 		},
 		"command.run": {
 			params: z.object({ command: z.string() }),
 			result: z.object({}),
+		},
+		// Detects a provider's agent and reads its sign-in state, anew on each
+		// call.
+		"provider.status": {
+			params: z.object({ provider: z.string() }),
+			result: providerStatus,
+		},
+		// How to start the provider's agent for a session in the folder.
+		"provider.spawn": {
+			params: z.object({ provider: z.string(), cwd: z.string() }),
+			result: agentSpawn,
 		},
 		// A request from a plugin's UI to what its backend serves. The
 		// plugin's own protocol types `params` and `result`.

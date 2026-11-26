@@ -7,3 +7,7 @@ allowBuilds:
   esbuild: true
 patchedDependencies:
   monaco-vim@0.4.4: patches/monaco-vim@0.4.4.patch
+# The Claude CLI is the user's own: the SDK's platform binaries are never
+# used (docs/decisions/0032-agent-providers.md).
+ignoredOptionalDependencies:
+  - "@anthropic-ai/claude-agent-sdk-*"

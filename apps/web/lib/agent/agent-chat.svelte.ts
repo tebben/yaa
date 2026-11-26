@@ -1,10 +1,14 @@
 import type { AgentEvent, QuestionAnswer } from "@yaa/contracts/agent-events";
+import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import { createContext } from "svelte";
 import type { CoreClient } from "../core-connection.ts";
+import { createProviders } from "./providers.svelte.ts";
 
 type AgentChatOptions = {
 	client: CoreClient;
 	report(message: string): void;
+	// The providers the loaded plugins contribute.
+	providers: Promise<PluginProvider[]>;
 };
 
 const describe = (reason: unknown) =>
@@ -14,13 +18,19 @@ const describe = (reason: unknown) =>
 // history read once, then each event as it arrives. Core numbers a
 // session's events, so one that arrives before the history, or twice, is
 // placed by its number (docs/spec/05-agents-chat.md).
-export const createAgentChat = ({ client, report }: AgentChatOptions) => {
+export const createAgentChat = ({
+	client,
+	report,
+	providers: contributed,
+}: AgentChatOptions) => {
 	let sessions = $state.raw<ReadonlyMap<string, readonly AgentEvent[]>>(
 		new Map(),
 	);
 	// The session each worktree's chat shows: the one it started, or the
 	// latest.
 	let shown = $state.raw<ReadonlyMap<string, string>>(new Map());
+	// The provider of each session.
+	let providerOf = $state.raw<ReadonlyMap<string, string>>(new Map());
 
 	const fail = (reason: unknown) => report(`Agent: ${describe(reason)}`);
 
@@ -37,6 +47,12 @@ export const createAgentChat = ({ client, report }: AgentChatOptions) => {
 			}
 		}
 		sessions = next;
+		providerOf = new Map([
+			...providerOf,
+			...history.map(
+				({ sessionId, provider }) => [sessionId, provider] as const,
+			),
+		]);
 		shown = new Map([
 			...history.map(
 				({ worktree, sessionId }) => [worktree, sessionId] as const,
@@ -45,7 +61,10 @@ export const createAgentChat = ({ client, report }: AgentChatOptions) => {
 		]);
 	}, fail);
 
+	const providers = createProviders({ client, contributed, fail });
+
 	return {
+		providers,
 		// The chat of one worktree.
 		in(worktree: string) {
 			// Sends to the session shown.
@@ -58,13 +77,21 @@ export const createAgentChat = ({ client, report }: AgentChatOptions) => {
 				get started() {
 					return shown.has(worktree);
 				},
+				// The title of the shown session's provider.
+				get provider() {
+					const id = providerOf.get(shown.get(worktree) ?? "");
+					return providers.listed.find((provider) => provider.id === id)?.title;
+				},
 				get events(): readonly AgentEvent[] {
 					return sessions.get(shown.get(worktree) ?? "") ?? [];
 				},
-				start() {
-					client.request("agent.start", { worktree }).then(({ sessionId }) => {
-						shown = new Map(shown).set(worktree, sessionId);
-					}, fail);
+				start(provider: string) {
+					client
+						.request("agent.start", { worktree, provider })
+						.then(({ sessionId }) => {
+							providerOf = new Map(providerOf).set(sessionId, provider);
+							shown = new Map(shown).set(worktree, sessionId);
+						}, fail);
 				},
 				prompt(text: string) {
 					send((sessionId) =>
