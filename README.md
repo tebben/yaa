@@ -1,8 +1,8 @@
-<p align="center"><img src="docs/design/brand/banner.png" alt="yaa: parallel coding agents in git worktrees, run from the keyboard" width="100%"></p>
+<p align="center"><img src="docs/design/brand/banner.png" alt="yaa: parallel coding agents in git worktrees" width="100%"></p>
 
 # yaa
 
-Parallel coding agents in git worktrees, run from the keyboard. A worktree-first, keyboard-first agentic IDE for desktop (Linux x64 first). The name stands for "yet another ADE, but mine" and is pronounced "ja".
+Parallel coding agents in git worktrees. A worktree-first, keyboard-first agentic IDE for desktop (Linux x64 first). The name stands for "yet another ADE, but this one is mine".
 
 Run many agents in parallel git worktrees, see which need attention, review diffs with annotations, and automate flows from issues to PRs, with a full IDE feel (editor, files, terminal) instead of a chat wrapper.
 
