@@ -3,11 +3,11 @@
 // project (added beforehand: the system's folder picker cannot be driven),
 // its overview opens, search finds it, its main checkout opens, a worktree
 // is created and finished, the rail opens the files panel at the right edge,
-// which follows the folder and makes and deletes a file, a file opens from it
-// in the editor, is edited and saved, and another by quick open, the palette
-// runs the hello plugin's command, and the fake agent plays a turn into the chat
-// panel, with the worktree's state following it. A restart brings the editor's
-// tabs back. It prints the launch and palette
+// which filters on /, follows the folder and makes and deletes a file, a file
+// opens from it in the editor, is edited and saved with vim keys, and another
+// by quick open, the palette runs the hello plugin's command, and the fake
+// agent plays a turn into the chat panel, with the worktree's state following
+// it. A restart brings the editor's tabs back. It prints the launch and palette
 // open times against the targets in docs/spec/12-stack-packaging.md and fails
 // only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
@@ -274,6 +274,13 @@ const useFilesPanel = async (page: Connection, repo: string) => {
 	await waitFor(page, `(${DOCK}).querySelector('[aria-label="Files"]')`);
 	await writeFile(join(repo, "outside.txt"), "");
 	await clickElement(page, fileRow("outside.txt"));
+	await press(page, SLASH);
+	await waitFor(
+		page,
+		`document.activeElement?.getAttribute("aria-label") === "Filter files"`,
+	);
+	await press(page, ESCAPE);
+	await clickElement(page, fileRow("outside.txt"));
 	await press(page, NEW_FILE);
 	await waitFor(
 		page,
@@ -303,7 +310,6 @@ const useFilesPanel = async (page: Connection, repo: string) => {
 };
 
 const CTRL = 2;
-const SAVE: Key = { key: "s", code: "KeyS", keyCode: 83, modifiers: CTRL };
 const QUICK_OPEN: Key = {
 	key: "p",
 	code: "KeyP",
@@ -317,8 +323,19 @@ const editorTab = (path: string) =>
 const editorShows = (text: string) =>
 	`(${DOCK}).querySelector(".monaco-editor .view-lines")?.textContent.includes(${JSON.stringify(text)})`;
 
+const VIM_INSERT: Key = { key: "i", code: "KeyI", keyCode: 73, text: "i" };
+const VIM_COMMAND: Key = {
+	key: ":",
+	code: "Semicolon",
+	keyCode: 186,
+	modifiers: 8,
+	text: ":",
+};
+const VIM_PROMPT = `document.activeElement?.closest(".vim")`;
+
 // A click in the files panel previews a file; Enter moves into the editor,
-// where it is typed into and saved by keys; quick open opens another.
+// where / searches in the file and vim keys type into it and save it; quick
+// open opens another.
 const useEditor = async (page: Connection, repo: string) => {
 	const first = join(repo, "first.ts");
 	await writeFile(first, "export const first = 1;\n");
@@ -328,8 +345,17 @@ const useEditor = async (page: Connection, repo: string) => {
 	await waitFor(page, `document.activeElement === ${fileRow("first.ts")}`);
 	await press(page, ENTER);
 	await waitFor(page, `document.activeElement?.closest(".monaco-editor")`);
+	await press(page, SLASH);
+	await waitFor(page, VIM_PROMPT);
+	await press(page, ESCAPE);
+	await waitFor(page, `document.activeElement?.closest(".monaco-editor")`);
+	await press(page, VIM_INSERT);
 	await type(page, "typed");
-	await press(page, SAVE);
+	await press(page, ESCAPE);
+	await press(page, VIM_COMMAND);
+	await waitFor(page, VIM_PROMPT);
+	await type(page, "w");
+	await press(page, ENTER);
 	await poll("the saved file", async () =>
 		(await readFile(first, "utf8")).startsWith("typedexport")
 			? true

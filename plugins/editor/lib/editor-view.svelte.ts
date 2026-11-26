@@ -1,12 +1,13 @@
 import type { editor } from "monaco-editor/editor";
 import type { Attachment } from "svelte/attachments";
 import { createEditor } from "./monaco.svelte.ts";
+import { attachVim } from "./vim.svelte.ts";
 
 type GoTo = { line?: number | undefined; focus?: boolean | undefined };
 
 // The panel's one Monaco editor, showing one file's model at a time and
-// coming back to each where it was left.
-export const createEditorView = () => {
+// coming back to each where it was left, with vim keys whose `:w` calls `save`.
+export const createEditorView = (save: () => void) => {
 	let view = $state.raw<editor.IStandaloneCodeEditor>();
 	const places = new Map<string, editor.ICodeEditorViewState | null>();
 	let shown: string | undefined;
@@ -30,11 +31,19 @@ export const createEditorView = () => {
 
 	return {
 		attach: ((element) => {
-			const created = createEditor(element);
+			// Monaco and the vim status line each fill an element of their own.
+			const text = document.createElement("div");
+			text.className = "text";
+			const status = document.createElement("div");
+			status.className = "vim";
+			element.replaceChildren(text, status);
+			const created = createEditor(text);
+			const vim = attachVim(created, status, save);
 			view = created;
 			return () => {
 				view = undefined;
 				shown = undefined;
+				vim.dispose();
 				created.dispose();
 			};
 		}) satisfies Attachment<HTMLElement>,

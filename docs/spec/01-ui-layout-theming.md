@@ -2,7 +2,7 @@
 
 ## Layout, panels and keyboard model
 
-Lands in: M1. The vim layer: Later.
+Lands in: M1. The vim layer: Later; the editor's vim keys: M3.
 
 This file says what the shell does. How it looks (colours, borders, focus styling) is in `docs/design/ui.md` and `docs/design/tokens.json`.
 
@@ -10,7 +10,7 @@ The window is a fixed shell around a user-arrangeable grid: a header across the 
 
 **Shell**
 
-- **Left menu:** the project list, hidden and shown again with Ctrl B or the button that leads the header. Each project expands to its main checkout, marked as the default branch, and its worktrees, each with a state badge (see `02-worktrees.md`); a collapsed project shows how many worktrees it has. Selecting a project opens its overview; selecting a worktree opens its grid, and the right rail shows only then. A search field above the list, focused with /, filters it as you type with the palette's matching: a project whose name matches keeps all its worktrees, otherwise only the worktrees whose branch matches show. Enter moves to the first result, Escape clears the search and moves to the list. The add button opens the system's folder picker. A hovered project shows a new worktree button and a remove button, which takes it off the list as the palette's Remove project does; a hovered worktree shows a finish button. These buttons take no tab stop: keys reach the same through the palette.
+- **Left menu:** the project list, hidden and shown again with Ctrl B or the button that leads the header. Each project expands to its main checkout, marked as the default branch, and its worktrees, each with a state badge (see `02-worktrees.md`); a collapsed project shows how many worktrees it has. Selecting a project opens its overview; selecting a worktree opens its grid, and the right rail shows only then. A search field above the list, focused with / while focus is outside the grid or no panel is open, filters it as you type with the palette's matching: a project whose name matches keeps all its worktrees, otherwise only the worktrees whose branch matches show. Enter moves to the first result, Escape clears the search and moves to the list. The add button opens the system's folder picker. A hovered project shows a new worktree button and a remove button, which takes it off the list as the palette's Remove project does; a hovered worktree shows a finish button. These buttons take no tab stop: keys reach the same through the palette.
 - **Header:** leads with a button that hides and shows the left menu and the name "yaa" in the wordmark's Geist (`docs/design/ui.md`), both in the same place whether the menu is open or not. Then the current project and worktree, with slots on the left, centre and right that plugins can fill.
 - **Footer:** slots for plugins, plus core info for the selected project: branch, uncommitted change count, ahead/behind. Plugins add chips for agent state, cost and PR status.
 - **Centre grid:** every panel is a view contributed by core or a plugin (id, title, icon, component). Users drag panels to rearrange, split, tab and resize them. A layout is saved per project, with a default layout for new projects (changes on the left, the editor with the terminal under it, chat on the right) and a reset action. A saved layout that no longer reads as one (from an older dock version, for example) gives way to the default. A panel whose kind nothing provides any more, such as one from a removed plugin, keeps its place and says so.
@@ -37,7 +37,7 @@ The window is a fixed shell around a user-arrangeable grid: a header across the 
 - **Passthrough:** Monaco and the terminal receive keys first. Each declares the keys it gives up to the app, for example the palette key and panel-focus keys. Every other key, Ctrl W and Ctrl C in a terminal included, stays with the widget. The list is a setting, so a user can take a key back.
 - Electron's default application menu is replaced, so its accelerators do not take app keys.
 - Focus moves between panels with directional keys, and within a panel by the panel's own navigation (lists, trees and tabs share one navigation helper).
-- An optional vim layer adds modal navigation in lists and trees. In the editor, vim keys come from a Monaco vim-mode extension, which needs a quick check against the Monaco version used.
+- An optional vim layer adds modal navigation in lists and trees. The editor's vim keys are separate (see `07-editor-files-terminal.md`).
 - Anything reachable with the mouse is reachable with the keyboard; this is a release criterion for each panel.
 
 ## Theming

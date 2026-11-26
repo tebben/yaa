@@ -162,6 +162,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  monaco-vim@0.4.4: 6cd9f5ac792c601999f8a151581550b1ca63cf6c2e53f20e499bb84155867968
+
 importers:
 
   .:
@@ -387,6 +390,9 @@ importers:
       monaco-editor:
         specifier: 0.58.0
         version: 0.58.0
+      monaco-vim:
+        specifier: 0.4.4
+        version: 0.4.4(patch_hash=6cd9f5ac792c601999f8a151581550b1ca63cf6c2e53f20e499bb84155867968)(monaco-editor@0.58.0)
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -1319,6 +1325,11 @@ packages:
 
   monaco-editor@0.58.0:
     resolution: {integrity: sha512-Lj5hlfT4zdM5GSG9VxTHslWnwibGBvO6d9Mq/+9zmb1CkTZnib4+uAZUKl1zg+tMHRgY2OGax6hHKZNBtldR1g==}
+
+  monaco-vim@0.4.4:
+    resolution: {integrity: sha512-LNChAb//WEm/W+eyeHG/0+pdVEHotk2hLTN+M3sQZx5E8cAlSWSgqcxpcRuQnxDybSln7pfHF9i63HmbIQvrWw==}
+    peerDependencies:
+      monaco-editor: '*'
 
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
@@ -2267,6 +2278,10 @@ snapshots:
       '@vscode/diff': 0.0.2-145
       dompurify: 3.4.17
       marked: 14.0.0
+
+  monaco-vim@0.4.4(patch_hash=6cd9f5ac792c601999f8a151581550b1ca63cf6c2e53f20e499bb84155867968)(monaco-editor@0.58.0):
+    dependencies:
+      monaco-editor: 0.58.0
 
   mri@1.2.0: {}
 
