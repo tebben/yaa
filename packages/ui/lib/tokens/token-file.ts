@@ -13,6 +13,7 @@ export const tokenFile = z.object({
 		weight: group,
 	}),
 	radius: group,
+	shadow: group,
 	space: group,
 	size: group,
 	color: z.record(z.string(), z.union([z.string(), group])),

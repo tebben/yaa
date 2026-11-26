@@ -70,7 +70,7 @@ let values = $state<FieldValues>({});
 				{:else}
 					<input
 						type={field.kind === "number" ? "number" : "text"}
-						class="h-control rounded-control border border-border-input bg-raised px-2 text-text outline-focus focus-visible:outline-1"
+						class="h-control rounded-control border border-border-strong bg-raised px-2 text-text outline-focus focus-visible:outline-1"
 						bind:value={
 							() => String(values[field.name] ?? ""),
 							(text) => (values[field.name] = text)

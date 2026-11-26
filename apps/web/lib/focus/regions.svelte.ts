@@ -10,17 +10,17 @@ export type Orientation = "vertical" | "horizontal";
 type Region = { element: HTMLElement; orientation: Orientation };
 
 // Which region lies in each direction, after the grid in App.svelte: the
-// menu runs full height on the left, the rail on the right, the header and
-// footer between them above and below the dock.
+// header runs across the top and the footer across the bottom; between them
+// are the menu, the dock and the rail.
 const neighbours: Record<
 	RegionName,
 	Partial<Record<DockDirection, RegionName>>
 > = {
-	menu: { right: "dock" },
-	header: { left: "menu", right: "rail", down: "dock" },
+	menu: { right: "dock", up: "header", down: "footer" },
+	header: { down: "dock" },
 	dock: { left: "menu", right: "rail", up: "header", down: "footer" },
-	footer: { left: "menu", right: "rail", up: "dock" },
-	rail: { left: "dock" },
+	footer: { up: "dock" },
+	rail: { left: "dock", up: "header", down: "footer" },
 };
 
 type RegionsOptions = {

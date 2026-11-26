@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatKey, keyFromEvent } from "../key-chord.ts";
+import { keyFromEvent, keyParts } from "../key-chord.ts";
 
 const event = (key: string, code: string, held: string[] = []) => ({
 	key,
@@ -33,8 +33,8 @@ describe("keyFromEvent", () => {
 	});
 });
 
-describe("formatKey", () => {
-	it("capitalizes each part", () => {
-		expect(formatKey("ctrl+shift+p")).toBe("Ctrl+Shift+P");
+describe("keyParts", () => {
+	it("splits the key and capitalizes each part", () => {
+		expect(keyParts("ctrl+shift+p")).toEqual(["Ctrl", "Shift", "P"]);
 	});
 });

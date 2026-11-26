@@ -32,7 +32,7 @@ const hint = $derived(
 	}}
 >
 	<input
-		class="h-control min-w-0 flex-1 rounded-control border border-border-input bg-raised px-2 text-text outline-focus placeholder:text-text-muted focus-visible:outline-1"
+		class="h-control min-w-0 flex-1 rounded-control border border-border-strong bg-raised px-2 text-text outline-focus placeholder:text-text-muted focus-visible:outline-1"
 		placeholder={hint}
 		aria-label="Prompt"
 		bind:value={text}

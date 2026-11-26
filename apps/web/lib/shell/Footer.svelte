@@ -12,7 +12,7 @@ let {
 
 <footer
 	{@attach region}
-	class="yaa-focus-region col-span-3 col-start-1 row-start-3 flex h-footer items-center bg-chrome px-3 text-sm"
+	class="yaa-focus-region col-span-3 col-start-1 row-start-3 flex h-footer items-center border-t border-border bg-chrome px-3 text-sm"
 >
 	{#if message}
 		<span class="truncate text-state-error">{message}</span>

@@ -1,14 +1,15 @@
-/* Maps tokens onto dockview's variables. The focused group gets a 1px accent
-   line on top and the brightest title (docs/design/ui.md). */
+/* Maps tokens onto dockview's variables. Panel headers have their own
+   surface, lighter on hover; the focus edge is drawn in styles.css
+   (docs/design/ui.md). */
 .yaa-dock {
 	--dv-group-view-background-color: var(--color-surface);
-	--dv-tabs-and-actions-container-background-color: var(--color-chrome);
+	--dv-tabs-and-actions-container-background-color: var(--color-panel-header);
 	--dv-tabs-and-actions-container-height: var(--spacing-panel-header);
 	--dv-tabs-and-actions-container-font-size: var(--text-base);
-	--dv-activegroup-visiblepanel-tab-background-color: var(--color-surface);
-	--dv-activegroup-hiddenpanel-tab-background-color: var(--color-chrome);
-	--dv-inactivegroup-visiblepanel-tab-background-color: var(--color-surface);
-	--dv-inactivegroup-hiddenpanel-tab-background-color: var(--color-chrome);
+	--dv-activegroup-visiblepanel-tab-background-color: transparent;
+	--dv-activegroup-hiddenpanel-tab-background-color: transparent;
+	--dv-inactivegroup-visiblepanel-tab-background-color: transparent;
+	--dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
 	--dv-activegroup-visiblepanel-tab-color: var(--color-text);
 	--dv-activegroup-hiddenpanel-tab-color: var(--color-text-muted);
 	--dv-inactivegroup-visiblepanel-tab-color: var(--color-text-soft);
@@ -20,9 +21,9 @@
 	--dv-active-sash-color: var(--color-accent);
 	--dv-drag-over-background-color: var(--color-accent-soft);
 	--dv-drag-over-border-color: var(--color-accent);
-	--dv-icon-hover-background-color: var(--color-selection);
-	--dv-tabs-container-scrollbar-color: var(--color-border-input);
-	--dv-scrollbar-background-color: var(--color-border-input);
+	--dv-icon-hover-background-color: var(--color-hover);
+	--dv-tabs-container-scrollbar-color: var(--color-border-strong);
+	--dv-scrollbar-background-color: var(--color-border-strong);
 	--dv-border-radius: var(--radius-panel);
 	--dv-tab-margin: 0;
 	--dv-tab-font-size: inherit;
@@ -38,28 +39,20 @@
 	border-radius: var(--radius-panel);
 }
 
-.yaa-dock .dv-groupview.dv-active-group::before {
-	content: "";
-	position: absolute;
-	inset: 0 0 auto;
-	height: 1px;
-	background: linear-gradient(
-		to right,
-		transparent,
-		var(--color-focus) 15%,
-		var(--color-focus) 85%,
-		transparent
-	);
-	/* Above dockview's separator line, which it draws at z-index 5 over the
-	   top edge of every view after the first in a column, so the lower of
-	   two stacked panels shows the line too. */
-	z-index: 6;
-}
-
 /* A hairline between a panel's header and its content. */
 .yaa-dock .dv-tabs-and-actions-container {
 	box-sizing: border-box;
 	border-bottom: 1px solid var(--color-border);
+}
+
+.yaa-dock .dv-tabs-and-actions-container:hover {
+	background-color: var(--color-panel-header-hover);
+}
+
+/* DockTab sets the header's padding, so the icon lines up with the panel's
+   content. */
+.yaa-dock .dv-tab {
+	padding: 0;
 }
 
 /* Panel actions stay out of sight until the header is hovered; Ctrl W

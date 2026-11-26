@@ -17,7 +17,7 @@ let {
 </script>
 
 <Button.Root
-	class="inline-flex h-control items-center gap-1.5 rounded-control border border-border-input bg-raised px-2.5 text-text outline-focus hover:bg-selection focus-visible:outline-1 disabled:text-text-muted disabled:hover:bg-raised"
+	class="inline-flex h-control items-center gap-1.5 rounded-control border border-border-strong bg-raised px-2.5 text-text outline-focus hover:bg-selection focus-visible:outline-1 disabled:text-text-muted disabled:hover:bg-raised"
 	{type}
 	{onclick}
 	{disabled}
