@@ -1,5 +1,6 @@
 import type { BranchStatus } from "@yaa/contracts/projects";
 import { createKeyedQueue } from "./keyed-queue.ts";
+import { parseBranches } from "./parse-branches.ts";
 import { parseStatus } from "./parse-status.ts";
 import { mainWorktree } from "./parse-worktree-list.ts";
 import { type RunGit, runGit } from "./run-git.ts";
@@ -18,6 +19,14 @@ export type GitService = {
 	// out in `repo`.
 	defaultBranch(repo: string): Promise<string>;
 	status(dir: string): Promise<BranchStatus>;
+	branches(repo: string): Promise<{ local: string[]; remote: string[] }>;
+	// How many commits of `branch` are neither on `base` nor on a remote.
+	unpushed(repo: string, branch: string, base: string): Promise<number>;
+	// The remote and the branch there that `branch` tracks, if any.
+	upstream(
+		repo: string,
+		branch: string,
+	): Promise<{ remote: string; branch: string } | undefined>;
 };
 
 export const createGitService = (run: RunGit = runGit): GitService => {
@@ -51,5 +60,41 @@ export const createGitService = (run: RunGit = runGit): GitService => {
 		},
 		status: async (dir) =>
 			parseStatus(await run(dir, ["status", "--porcelain=v2", "--branch"])),
+		branches: async (repo) =>
+			parseBranches(
+				await run(repo, [
+					"for-each-ref",
+					"--format=%(refname)",
+					"refs/heads",
+					"refs/remotes",
+				]),
+			),
+		unpushed: async (repo, branch, base) =>
+			Number(
+				(
+					await run(repo, [
+						"rev-list",
+						"--count",
+						`refs/heads/${branch}`,
+						"--not",
+						`refs/heads/${base}`,
+						"--remotes",
+					])
+				).trim(),
+			),
+		async upstream(repo, branch) {
+			const [remote = "", ref = ""] = (
+				await run(repo, [
+					"for-each-ref",
+					"--format=%(upstream:remotename)%00%(upstream:remoteref)",
+					`refs/heads/${branch}`,
+				])
+			)
+				.trim()
+				.split("\0");
+			return remote === "" || !ref.startsWith("refs/heads/")
+				? undefined
+				: { remote, branch: ref.slice(11) };
+		},
 	};
 };

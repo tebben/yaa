@@ -10,14 +10,15 @@ import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
 import type { Workbench } from "./workbench.svelte.ts";
 
 let { workbench }: { workbench: Workbench } = $props();
-const { layout, regions, commands, palette, projects } = $derived(workbench);
+const { layouts, regions, commands, palette, projects, worktrees } =
+	$derived(workbench);
 setPluginPanels({ load: (kind) => workbench.plugins.panels.load(kind) });
 setAgentChat(() => workbench.agentChat);
 
-// The window is interactive once the dock is on screen: the launch time the
+// The window is interactive once a dock is on screen: the launch time the
 // smoke test measures (docs/spec/12-stack-packaging.md).
 $effect(() => {
-	if (layout.dock) performance.mark("yaa:interactive");
+	if (workbench.dock) performance.mark("yaa:interactive");
 });
 
 const shortcut = (id: string) => {
@@ -41,6 +42,7 @@ const shortcut = (id: string) => {
 			<LeftMenu region={regions.region("menu", "vertical")}>
 				<ProjectMenu
 					{projects}
+					{worktrees}
 					addShortcut={shortcut("project.add")}
 					searchShortcut={shortcut("menu.search")}
 				/>
@@ -55,37 +57,39 @@ const shortcut = (id: string) => {
 		/>
 		<main class="col-start-2 row-start-2 min-h-0 bg-grid p-panel-gap">
 			{#if projects.selected && projects.view === "overview"}
-				{@const { id } = projects.selected}
+				{@const project = projects.selected}
 				<ProjectOverview
-					project={projects.selected}
-					onopenbranch={() => projects.select(id, "branch")}
+					{project}
+					onopenbranch={(worktree) =>
+						projects.go({ project: project.id, worktree })}
 				/>
 			{:else if projects.view === undefined}
 				<p class="p-3 text-text-muted">
 					Add a project, or pick one in the left menu.
 				</p>
 			{/if}
-			<!-- Kept while hidden, so panels keep their state. -->
-			{#if layout.dock}
-				<div class={["size-full", projects.view !== "branch" && "hidden"]}>
-					<Dock dock={layout.dock} />
+			<!-- Every opened worktree keeps its dock while hidden, so its panels
+			     keep their state. -->
+			{#each layouts.docks as [id, dock] (id)}
+				<div class={["size-full", projects.worktree?.id !== id && "hidden"]}>
+					<Dock {dock} />
 				</div>
-			{/if}
+			{/each}
 		</main>
 		<Footer
 			status={projects.status}
 			message={workbench.failure}
 			region={regions.region("footer", "horizontal")}
 		/>
-		{#if projects.view === "branch"}
+		{#if projects.view === "worktree"}
 			<Rail
-				kinds={layout.kinds}
-				isOpen={(kind) => layout.dock?.isOpen(kind) ?? false}
+				kinds={layouts.kinds}
+				isOpen={(kind) => workbench.dock?.isOpen(kind) ?? false}
 				shortcut={(kind) => shortcut(`panel.toggle.${kind}`)}
 				ontoggle={(kind) => commands.run(`panel.toggle.${kind}`)}
 				region={regions.region("rail", "vertical")}
 			/>
 		{/if}
 	</div>
-	<Palette {palette} keysFor={commands.keysFor} />
+	<Palette {palette} />
 </TooltipProvider>

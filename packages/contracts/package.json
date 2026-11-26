@@ -19,7 +19,8 @@
 		"./plugin-ui": "./plugin-ui.ts",
 		"./app-urls": "./app-urls.ts",
 		"./agent-events": "./agent-events.ts",
-		"./projects": "./projects.ts"
+		"./projects": "./projects.ts",
+		"./worktree-name": "./worktree-name.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

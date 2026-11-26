@@ -3,7 +3,14 @@ import { agentEvent, questionAnswer, sessionEvent } from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
 import { pluginManifest } from "./plugin-manifest.ts";
-import { addProjectResult, branchStatus, project } from "./projects.ts";
+import {
+	addProjectResult,
+	branchStatus,
+	createWorktreeResult,
+	finishAction,
+	finishCheck,
+	project,
+} from "./projects.ts";
 import { settingsState } from "./settings.ts";
 
 // Requests and events between the core and the renderer. The plugin host
@@ -12,15 +19,14 @@ export const coreProtocol = defineProtocol({
 	requests: {
 		"settings.get": { params: z.object({}), result: settingsState },
 		"keybindings.get": { params: z.object({}), result: keybindingsState },
-		// The dock layout as the renderer serialized it. Core stores it as
-		// opaque text; the renderer validates it before restoring it. One
-		// layout until worktrees arrive (M2), which gives each its own.
+		// A worktree's dock layout as the renderer serialized it. Core stores
+		// it as opaque text; the renderer validates it before restoring it.
 		"layout.get": {
-			params: z.object({}),
+			params: z.object({ worktree: z.string() }),
 			result: z.object({ layout: z.string().nullable() }),
 		},
 		"layout.save": {
-			params: z.object({ layout: z.string() }),
+			params: z.object({ worktree: z.string(), layout: z.string() }),
 			result: z.object({}),
 		},
 		// The project list in the order projects were added;
@@ -46,10 +52,42 @@ export const coreProtocol = defineProtocol({
 			params: z.object({ id: z.string() }),
 			result: z.object({}),
 		},
-		// The status of the project's main checkout.
-		"projects.status": {
+		// The project's local branches, then its remote ones as
+		// `<remote>/<branch>`, each in name order.
+		"projects.branches": {
+			params: z.object({ id: z.string() }),
+			result: z.object({ branches: z.array(z.string()) }),
+		},
+		// Creates a worktree from `base`. With a name, `text` goes through the
+		// naming strategy into a new branch; empty, the worktree checks out
+		// `base` itself, a remote branch as a local one that tracks it.
+		"worktrees.create": {
+			params: z.object({
+				project: z.string(),
+				text: z.string(),
+				base: z.string(),
+			}),
+			result: createWorktreeResult,
+		},
+		"worktrees.status": {
 			params: z.object({ id: z.string() }),
 			result: branchStatus,
+		},
+		// What finishing would lose, for the warnings before it.
+		"worktrees.finishCheck": {
+			params: z.object({ id: z.string() }),
+			result: finishCheck,
+		},
+		// `force` removes a folder with uncommitted changes and deletes a
+		// branch with unpushed commits. Once the folder is gone the worktree
+		// is off the list, even when deleting a branch then fails.
+		"worktrees.finish": {
+			params: z.object({
+				id: z.string(),
+				action: finishAction,
+				force: z.boolean(),
+			}),
+			result: z.object({ problem: z.string().optional() }),
 		},
 		// The plugins core loaded, with what they contribute.
 		"plugins.list": {

@@ -91,13 +91,20 @@ describe("event log", () => {
 });
 
 describe("layout store", () => {
-	it("keeps the last layout saved for each scope", () => {
-		const layouts = createLayoutStore(openDatabase(":memory:"));
-		expect(layouts.get("app")).toBeUndefined();
-		layouts.save("app", "first");
-		layouts.save("app", "second");
-		layouts.save("other", "third");
-		expect(layouts.get("app")).toBe("second");
-		expect(layouts.get("other")).toBe("third");
+	it("keeps the last layout saved for each worktree, and drops it with the worktree", () => {
+		const db = openDatabase(":memory:");
+		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0);
+			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0);`);
+		const layouts = createLayoutStore(db);
+		expect(layouts.get("a")).toBeUndefined();
+		layouts.save("a", "first");
+		layouts.save("a", "second");
+		layouts.save("b", "third");
+		expect(layouts.get("a")).toBe("second");
+		expect(layouts.get("b")).toBe("third");
+		db.exec("DELETE FROM worktrees WHERE id = 'b'");
+		expect(layouts.get("b")).toBeUndefined();
+		expect(() => layouts.save("gone", "x")).toThrow();
 	});
 });

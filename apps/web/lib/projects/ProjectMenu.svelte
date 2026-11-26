@@ -4,15 +4,18 @@ import Search from "@lucide/svelte/icons/search";
 import { Icon, IconButton, Kbd } from "@yaa/ui";
 import ProjectTree from "./ProjectTree.svelte";
 import type { ProjectsController } from "./projects.svelte.ts";
+import type { WorktreesController } from "./worktrees.svelte.ts";
 
 // The left menu's content: the add button, the search field, and the
 // project tree it filters.
 let {
 	projects,
+	worktrees,
 	addShortcut,
 	searchShortcut,
 }: {
 	projects: ProjectsController;
+	worktrees: WorktreesController;
 	addShortcut: readonly string[] | undefined;
 	searchShortcut: readonly string[] | undefined;
 } = $props();
@@ -52,12 +55,16 @@ let {
 <div class="min-h-0 flex-1 overflow-y-auto">
 	<ProjectTree
 		tree={projects.tree}
-		selected={projects.selection}
+		place={projects.place}
+		creating={worktrees.creating}
+		isFinishing={worktrees.isFinishing}
 		isExpanded={projects.isExpanded}
 		list={projects.treeList}
-		onselect={projects.select}
+		onselect={projects.go}
 		ontoggle={projects.toggle}
 		onremove={projects.remove}
+		oncreate={worktrees.create}
+		onfinish={worktrees.finish}
 	/>
 	{#if projects.projects.length === 0}
 		<p class="px-3 py-1 text-text-muted">No projects yet.</p>
