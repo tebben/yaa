@@ -6,7 +6,6 @@ Each open question becomes a spike or a decision file in this folder. When one i
 
 - **Core transport:** `utilityProcess` with a `MessagePort` (proposed) or a token-protected local WebSocket. M0 spike, see `docs/spec/00-overview.md`.
 - **Grid:** adopt a docking library or build a small custom grid. M0 spike; evaluate existing libraries first, for example dockview, which has a framework-agnostic core (its fit with Svelte 5 is unverified). Build custom only if none fits.
-- **ACP coverage:** do Copilot CLI and Claude Code expose models, thinking effort, loaded skills, the MCP list, usage, resume and a one-shot call over ACP? The M0 spike decides what the chat header shows and which providers can serve generated text.
 - **Ghostty:** is libghostty-vt stable and fast enough inside Electron, and how is it bound to Node? M0 spike, with xterm.js and node-pty as fallback.
 - **Plugin UI loading:** how plugin UI shares the app's Svelte runtime and how it gets styles the app's Tailwind build does not contain. Part of the M0 hot-reload spike.
 - **SQLite binding:** `node:sqlite` in Electron's Node or `better-sqlite3`. Part of the M0 native-modules spike.
@@ -26,6 +25,7 @@ Each open question becomes a spike or a decision file in this folder. When one i
 - ~~Plugin API stability~~: `0011-plugin-api-unstable-until-m6.md`
 - ~~Team sharing~~: `0012-no-team-sharing.md`
 - ~~Runtime schema library~~: `0013-zod-schemas.md`
+- ~~ACP coverage~~: `0014-acp-coverage.md`
 
 ## Risks
 
