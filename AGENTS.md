@@ -9,6 +9,7 @@ Read `docs/README.md` first; it says which doc wins and where each topic lives.
 - Format: `pnpm run format`
 - Everything, as CI runs it: `pnpm run check:all`
 - Run the app in dev mode: `pnpm run dev` (Vite for the renderer, esbuild watchers for main, preload and core; arguments go to Electron). Linux packaging (`pnpm run package:linux`) arrives in M6.
+- See what the running app shows: `pnpm run dev --remote-debugging-port=9222`, then evaluate in the page over the DevTools protocol (`http://127.0.0.1:9222/json` lists targets). DevTools code is exempt from the CSP, so test the policy with an injected `<script>`, not `eval`.
 
 ## Architecture
 - Backend owns agents, git and plugins; the UI only subscribes. See docs/spec/00-overview.md.
