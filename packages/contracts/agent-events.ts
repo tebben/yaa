@@ -97,9 +97,33 @@ export const stopReason = z.enum([
 	"cancelled",
 ]);
 
+// What a prompt carries besides its text: a file on this machine, which the
+// agent reads itself, or an image sent with the prompt, in base64.
+export const promptAttachment = z.discriminatedUnion("type", [
+	z.object({ type: z.literal("file"), path: z.string() }),
+	z.object({
+		type: z.literal("image"),
+		name: z.string(),
+		mimeType: z.string(),
+		data: z.string(),
+	}),
+]);
+
+// An attachment as the prompt event keeps it, without an image's data.
+const sentAttachment = z.discriminatedUnion("type", [
+	z.object({ type: z.literal("file"), path: z.string() }),
+	z.object({ type: z.literal("image"), name: z.string() }),
+]);
+
 export const agentEvent = z.discriminatedUnion("type", [
+	// What the agent takes in a prompt, sent once when the session opens.
+	z.object({ type: z.literal("capabilities"), images: z.boolean() }),
 	// What the user sent, which starts a turn.
-	z.object({ type: z.literal("prompt"), text: z.string() }),
+	z.object({
+		type: z.literal("prompt"),
+		text: z.string(),
+		attachments: z.array(sentAttachment),
+	}),
 	z.object({ type: z.literal("message"), text: z.string() }),
 	z.object({ type: z.literal("thinking"), text: z.string() }),
 	z.object({
@@ -219,12 +243,16 @@ export const agentEvent = z.discriminatedUnion("type", [
 // read the session's history can skip events it already has.
 export const sessionEvent = z.object({
 	sessionId: z.string(),
+	worktree: z.string(),
+	provider: z.string(),
 	seq: z.number().int(),
 	event: agentEvent,
 });
 
 export type AgentEvent = z.infer<typeof agentEvent>;
 export type SessionEvent = z.infer<typeof sessionEvent>;
+export type PromptAttachment = z.infer<typeof promptAttachment>;
+export type ToolKind = z.infer<typeof toolKind>;
 export type QuestionField = z.infer<typeof questionField>;
 export type QuestionAnswer = z.infer<typeof questionAnswer>;
 export type StopReason = z.infer<typeof stopReason>;

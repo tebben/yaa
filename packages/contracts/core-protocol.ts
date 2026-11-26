@@ -1,5 +1,10 @@
 import * as z from "zod";
-import { agentEvent, questionAnswer, sessionEvent } from "./agent-events.ts";
+import {
+	agentEvent,
+	promptAttachment,
+	questionAnswer,
+	sessionEvent,
+} from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
 import { pluginEvent } from "./plugin-host-protocol.ts";
@@ -54,6 +59,11 @@ export const coreProtocol = defineProtocol({
 		"dialog.pickFolder": {
 			params: z.object({}),
 			result: z.object({ path: z.string().nullable() }),
+		},
+		// The same dialog for files, any number of them; none when cancelled.
+		"dialog.pickFiles": {
+			params: z.object({}),
+			result: z.object({ paths: z.array(z.string()) }),
 		},
 		// Takes the project off the list; its folder stays as it is.
 		"projects.remove": {
@@ -152,7 +162,21 @@ export const coreProtocol = defineProtocol({
 		},
 		// Starts a turn; its events arrive as `agent.event`.
 		"agent.prompt": {
-			params: z.object({ sessionId: z.string(), text: z.string() }),
+			params: z.object({
+				sessionId: z.string(),
+				text: z.string(),
+				attachments: z.array(promptAttachment),
+			}),
+			result: z.object({}),
+		},
+		// Sets one of the session's config options, such as its model; the
+		// options as they are then arrive as a `config` event.
+		"agent.setConfig": {
+			params: z.object({
+				sessionId: z.string(),
+				configId: z.string(),
+				value: z.string(),
+			}),
 			result: z.object({}),
 		},
 		"agent.cancel": {

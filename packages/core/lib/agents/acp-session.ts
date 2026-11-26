@@ -5,7 +5,11 @@ import {
 	type RequestPermissionResponse,
 	type Stream,
 } from "@agentclientprotocol/sdk/unstable";
-import type { AgentEvent, QuestionAnswer } from "@yaa/contracts/agent-events";
+import type {
+	AgentEvent,
+	PromptAttachment,
+	QuestionAnswer,
+} from "@yaa/contracts/agent-events";
 import type { Logger } from "@yaa/contracts/log";
 import { normalizeQuestion } from "./normalize-question.ts";
 import {
@@ -13,6 +17,7 @@ import {
 	normalizeUpdate,
 	turnTokens,
 } from "./normalize-update.ts";
+import { promptContent } from "./prompt-content.ts";
 
 export type AgentConnection = {
 	// The agent's stdio, or an in-process agent in tests.
@@ -29,7 +34,9 @@ export type AcpSessionOptions = {
 };
 
 export type AcpSession = {
-	prompt(text: string): void;
+	// Starts a turn.
+	prompt(text: string, attachments: readonly PromptAttachment[]): void;
+	setConfig(configId: string, value: string): Promise<void>;
 	cancel(): void;
 	answerPermission(requestId: string, optionId: string): void;
 	answerQuestion(requestId: string, answer: QuestionAnswer): void;
@@ -154,12 +161,17 @@ export const openAcpSession = async ({
 	const connection = app.connect(stream);
 	const { agent } = connection;
 	const open = async () => {
-		await agent.request("initialize", {
+		const { agentCapabilities } = await agent.request("initialize", {
 			protocolVersion: PROTOCOL_VERSION,
 			clientCapabilities: { elicitation: { form: {} } },
 			clientInfo: { name: "yaa", version: "0.0.0" },
 		});
-		return agent.request("session/new", { cwd, mcpServers: [] });
+		const session = await agent.request("session/new", {
+			cwd,
+			mcpServers: [],
+		});
+		const images = agentCapabilities?.promptCapabilities?.image === true;
+		return { ...session, images };
 	};
 	const created = await open().catch(async (error: unknown) => {
 		if (!connection.signal.aborted) throw error;
@@ -167,7 +179,8 @@ export const openAcpSession = async ({
 		// why.
 		throw new Error(`The agent ${await exited}`);
 	});
-	const { sessionId } = created;
+	const { sessionId, images } = created;
+	emit({ type: "capabilities", images });
 	if (created.configOptions != null) emit(configEvent(created.configOptions));
 
 	const cancelPending = () => {
@@ -190,16 +203,14 @@ export const openAcpSession = async ({
 	});
 
 	return {
-		prompt(text) {
+		prompt(text, attachments) {
 			if (gone) throw new Error("The agent has exited");
 			if (running) throw new Error("A turn is already running");
+			const { blocks, sent } = promptContent(text, attachments, { images });
 			running = true;
-			emit({ type: "prompt", text });
+			emit({ type: "prompt", text, attachments: sent });
 			agent
-				.request("session/prompt", {
-					sessionId,
-					prompt: [{ type: "text", text }],
-				})
+				.request("session/prompt", { sessionId, prompt: blocks })
 				.then(
 					({ stopReason, usage }) =>
 						emit({ type: "turn.end", stopReason, tokens: turnTokens(usage) }),
@@ -211,6 +222,14 @@ export const openAcpSession = async ({
 				.finally(() => {
 					running = false;
 				});
+		},
+		async setConfig(configId, value) {
+			if (gone) throw new Error("The agent has exited");
+			const { configOptions } = await agent.request(
+				"session/set_config_option",
+				{ sessionId, configId, value },
+			);
+			emit(configEvent(configOptions));
 		},
 		// ACP has the client answer what is still waiting as cancelled.
 		cancel() {

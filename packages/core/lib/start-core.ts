@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
 import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
+import type { PickTarget } from "@yaa/contracts/process-control";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
@@ -32,7 +33,7 @@ export type CoreOptions = {
 	// `attachPluginHost`.
 	requestPluginHost(): void;
 	// Shows the system's folder picker through main.
-	pickFolder(): Promise<string | null>;
+	pick(target: PickTarget): Promise<string[]>;
 };
 
 export type Core = {
@@ -48,7 +49,7 @@ export const startCore = ({
 	pluginsDir,
 	dev,
 	requestPluginHost,
-	pickFolder,
+	pick,
 }: CoreOptions): Core => {
 	const logFile = openLogFile({
 		dir: logDir,
@@ -151,7 +152,7 @@ export const startCore = ({
 		layouts: createLayoutStore(db),
 		plugins,
 		agents,
-		pickFolder,
+		pick,
 		projects,
 		worktrees,
 		states,

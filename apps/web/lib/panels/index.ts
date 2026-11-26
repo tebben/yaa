@@ -8,16 +8,14 @@ import {
 	Zap,
 } from "@lucide/svelte";
 import type { DockPlacement, PanelKind } from "@yaa/ui/dock";
-import { AgentPanel } from "../agent/index.ts";
 import Placeholder from "./Placeholder.svelte";
 
 // The app's panel kinds, in rail order: placeholders until the plugins that
-// own them arrive, and the chat's until the chat arrives in M2. A plugin's
-// panel with the same id takes its place.
+// own them arrive. A plugin's panel with the same id takes its place.
 export const panelKinds: ReadonlyMap<string, PanelKind> = new Map([
 	["files", { title: "Files", icon: ListTree, component: Placeholder }],
 	["changes", { title: "Changes", icon: Diff, component: Placeholder }],
-	["chat", { title: "Chat", icon: MessageCircle, component: AgentPanel }],
+	["chat", { title: "Chat", icon: MessageCircle, component: Placeholder }],
 	["terminal", { title: "Terminal", icon: Terminal, component: Placeholder }],
 	["review", { title: "Review", icon: ListChecks, component: Placeholder }],
 	["usage", { title: "Usage", icon: DollarSign, component: Placeholder }],

@@ -65,13 +65,18 @@ app.whenReady().then(() => {
 			dev,
 		},
 		onStartPluginHost: () => pluginHost.start(),
-		onPickFolder: async () => {
-			const options: OpenDialogOptions = { properties: ["openDirectory"] };
+		onPick: async (target) => {
+			const options: OpenDialogOptions = {
+				properties:
+					target === "folder"
+						? ["openDirectory"]
+						: ["openFile", "multiSelections"],
+			};
 			const window = BrowserWindow.getFocusedWindow();
 			const { canceled, filePaths } = await (window === null
 				? dialog.showOpenDialog(options)
 				: dialog.showOpenDialog(window, options));
-			return canceled ? null : (filePaths[0] ?? null);
+			return canceled ? [] : filePaths;
 		},
 		onStartupFailure: (code) => {
 			const log = join(app.getPath("logs"), "yaa.log");

@@ -14,6 +14,7 @@ import {
 } from "@agentclientprotocol/sdk/unstable";
 import { editTurn } from "../turns/edit.ts";
 import { failingTurn } from "../turns/failing.ts";
+import { markdownTurn } from "../turns/markdown.ts";
 import type { TurnScript, TurnStep } from "./turn-script.ts";
 
 export type FakeAgentOptions = {
@@ -22,7 +23,7 @@ export type FakeAgentOptions = {
 	delayScale?: number;
 };
 
-const scripts: readonly TurnScript[] = [editTurn, failingTurn];
+const scripts: readonly TurnScript[] = [editTurn, markdownTurn, failingTurn];
 
 // A prompt that is a script's slash command plays that script.
 const scriptFor = (prompt: PromptRequest["prompt"]): TurnScript => {
@@ -31,32 +32,54 @@ const scriptFor = (prompt: PromptRequest["prompt"]): TurnScript => {
 	return scripts.find(({ name }) => text === `/${name}`) ?? editTurn;
 };
 
-// The options a real agent reports, so pickers have something to show.
-const configOptions: SessionConfigOption[] = [
-	{
-		id: "model",
-		name: "Model",
-		category: "model",
-		type: "select",
-		currentValue: "fake-large",
-		options: [
-			{ value: "fake-large", name: "Fake Large" },
-			{ value: "fake-small", name: "Fake Small" },
-		],
-	},
-	{
-		id: "effort",
-		name: "Effort",
-		category: "thought_level",
-		type: "select",
-		currentValue: "medium",
-		options: [
-			{ value: "low", name: "Low" },
-			{ value: "medium", name: "Medium" },
-			{ value: "high", name: "High" },
-		],
-	},
+type Choice = { value: string; name: string };
+
+const select = (
+	id: string,
+	name: string,
+	category: string,
+	currentValue: string,
+	options: Choice[],
+): SessionConfigOption => ({
+	id,
+	name,
+	category,
+	type: "select",
+	currentValue,
+	options,
+});
+
+type Config = { model: string; effort: string; mode: string };
+
+// The options a real agent reports, so pickers have something to show. As
+// with real agents, the effort levels depend on the model: the small one has
+// none.
+const configOptions = ({
+	model,
+	effort,
+	mode,
+}: Config): SessionConfigOption[] => [
+	select("model", "Model", "model", model, [
+		{ value: "fake-large", name: "Fake Large" },
+		{ value: "fake-small", name: "Fake Small" },
+	]),
+	...(model === "fake-small"
+		? []
+		: [
+				select("effort", "Effort", "thought_level", effort, [
+					{ value: "low", name: "Low" },
+					{ value: "medium", name: "Medium" },
+					{ value: "high", name: "High" },
+				]),
+			]),
+	select("mode", "Mode", "mode", mode, [
+		{ value: "default", name: "Ask first" },
+		{ value: "plan", name: "Plan" },
+	]),
 ];
+
+const isConfigId = (config: Config, id: string): id is keyof Config =>
+	Object.hasOwn(config, id);
 
 class Cancelled extends Error {}
 
@@ -89,6 +112,7 @@ export const createFakeAgent = ({
 	// The turn each session is playing, so `session/cancel` can stop it.
 	const turns = new Map<string, AbortController>();
 	let capabilities: ClientCapabilities = {};
+	const configs = new Map<string, Config>();
 
 	const play = async (
 		client: AgentContext,
@@ -129,16 +153,6 @@ export const createFakeAgent = ({
 		turns.set(sessionId, turn);
 		const script = scriptFor(prompt);
 		try {
-			await client.notify("session/update", {
-				sessionId,
-				update: {
-					sessionUpdate: "available_commands_update",
-					availableCommands: scripts.map(({ name, description }) => ({
-						name,
-						description,
-					})),
-				},
-			});
 			for (const step of script.steps) {
 				await play(client, sessionId, step, turn.signal);
 			}
@@ -159,7 +173,7 @@ export const createFakeAgent = ({
 			capabilities = params.clientCapabilities ?? {};
 			return {
 				protocolVersion: PROTOCOL_VERSION,
-				agentCapabilities: {},
+				agentCapabilities: { promptCapabilities: { image: true } },
 				agentInfo: {
 					name: "yaa-fake-agent",
 					title: "Fake agent",
@@ -167,10 +181,35 @@ export const createFakeAgent = ({
 				},
 			};
 		})
-		.onRequest("session/new", () => ({
-			sessionId: randomUUID(),
-			configOptions,
-		}))
+		.onRequest("session/new", async ({ client }) => {
+			const sessionId = randomUUID();
+			const config = { model: "fake-large", effort: "medium", mode: "default" };
+			configs.set(sessionId, config);
+			await client.notify("session/update", {
+				sessionId,
+				update: {
+					sessionUpdate: "available_commands_update",
+					availableCommands: scripts.map(({ name, description }) => ({
+						name,
+						description,
+					})),
+				},
+			});
+			return { sessionId, configOptions: configOptions(config) };
+		})
+		.onRequest("session/set_config_option", ({ params }) => {
+			const { sessionId, configId, value } = params;
+			const config = configs.get(sessionId);
+			if (
+				config === undefined ||
+				!isConfigId(config, configId) ||
+				typeof value !== "string"
+			) {
+				throw RequestError.invalidParams(undefined, `No option ${configId}`);
+			}
+			config[configId] = value;
+			return { configOptions: configOptions(config) };
+		})
 		.onRequest("session/prompt", ({ client, params }) => prompt(client, params))
 		.onNotification("session/cancel", ({ params }) => {
 			turns.get(params.sessionId)?.abort();

@@ -24,7 +24,7 @@ Core logs what an agent writes to stderr. An agent that ends while its session i
 
 **Fake agent**
 
-A fake ACP agent ships as a dev-only provider (the `fake-agent` plugin over `packages/fake-agent`). It replays scripted turn files (message and thinking chunks, a plan, tool calls with output and a diff, a permission request, a question, the session title, usage, and a turn that fails), each step with its own delay. The scripts are TypeScript typed against the ACP SDK's types, and each is a slash command: a prompt naming one plays it, any other prompt plays the default. Core runs it as a process over stdio, as a real agent runs; tests connect to it in-process with the delays scaled to zero. Developers use it to build the chat, state and workflow UI without a login or token cost. Until the chat UI (M2) the chat panel is a placeholder: it lists the providers with their state, starts a session with one in its worktree and streams its turns.
+A fake ACP agent ships as a dev-only provider (the `fake-agent` plugin over `packages/fake-agent`). It replays scripted turn files (message and thinking chunks, markdown with code split across chunks, a plan, tool calls with output and a diff, a permission request, a question, the session title, usage, and a turn that fails), offers a model, effort and mode to pick, of which the small model has no effort levels, and takes images, each step with its own delay. The scripts are TypeScript typed against the ACP SDK's types, and each is a slash command: a prompt naming one plays it, any other prompt plays the default. Core runs it as a process over stdio, as a real agent runs; tests connect to it in-process with the delays scaled to zero. Developers use it to build the chat, state and workflow UI without a login or token cost.
 
 **Transport**
 
@@ -43,15 +43,18 @@ Commit messages, PR descriptions and branch names come from a model the user pic
 
 **Normalized events**
 
-Prompt (the user's message, which starts a turn), message chunk, thinking chunk, tool call (start, update, end, kind, file locations, output), plan, permission request and its answer, question and its answer, available commands (slash commands and skills), session title, config options, usage (context used and size, cost when the agent reports it), turn end (stop reason, tokens for the turn), error. A permission request or question waits until it is answered or the turn is cancelled, which answers it as cancelled. Questions are ACP form elicitations: core advertises `elicitation.form` and turns the requested JSON Schema into text, number, yes-or-no and single or multiple choice fields. Core keeps every event of a session, numbered, so a client that connects later reads the history first. These are also the events plugins subscribe to.
+Capabilities (whether the agent takes images, sent when the session opens), prompt (the user's message with its attachments, which starts a turn), message chunk, thinking chunk, tool call (start, update, end, kind, file locations, output), plan, permission request and its answer, question and its answer, available commands (slash commands and skills), session title, config options, usage (context used and size, cost when the agent reports it), turn end (stop reason, tokens for the turn), error. A permission request or question waits until it is answered or the turn is cancelled, which answers it as cancelled. Questions are ACP form elicitations: core advertises `elicitation.form` and turns the requested JSON Schema into text, number, yes-or-no and single or multiple choice fields. Core keeps every event of a session, numbered, so a client that connects later reads the history first. These are also the events plugins subscribe to.
 
 **Chat UI**
 
-- A virtualized transcript that renders markdown, code blocks (Shiki, highlighted lazily), collapsible thinking output, tool calls with status, inline diffs and output, and plans.
-- File paths and links are clickable: a path opens the file in the editor at the line, a URL opens in the browser.
-- A composer with model picker, thinking-effort selector, mode, slash commands and skills list, and attachments.
-- A header that always shows the active agent, model, effort, and counts of loaded skills and MCP servers, so hidden state is never a surprise.
-- Several chats per worktree. Chat events drive the worktree state badge (Running, Needs attention, Error).
+The chat is the `chat` plugin's panel (`docs/decisions/0033-chat-plugin.md`).
+
+- A virtualized transcript that renders markdown, code blocks (Shiki, highlighted when on screen and complete), collapsible thinking output, tool calls with status, inline diffs and output, and the latest plan above it. Output opens on demand, at once for a failed call. A call still open when its turn ends shows as stopped. Events that arrive between two frames render together. The transcript stays at its end while it streams, unless scrolled up.
+- File paths and links are clickable: a path in the worktree opens the file in the editor at the line, a web URL opens in the browser. A code span counts as a path when it has an extension and a folder or a line.
+- A composer with model picker, thinking-effort selector, mode, slash commands and skills list, attachments and a context meter, whose tooltip shows the cost. The pickers open in the palette and show only the options the agent reports. Typing `/` suggests commands. Attachments are files, sent as links the agent reads, and pasted images, for an agent that takes them. Each chat keeps its own draft, also across worktree switches; while a turn runs the draft waits, and send is stop.
+- A header that always shows the active agent, model, effort and mode, and counts of loaded skills and MCP servers, so hidden state is never a surprise. The counts arrive with MCP and skills per worktree.
+- Several chats per worktree. The panel header names the chat on screen, switches between them and starts a new one, which asks for the provider. Chat events drive the worktree state badge (Running, Needs attention, Error).
+- Keys, while the chat panel is focused: Enter sends and Shift Enter breaks the line; Escape stops the turn; I writes a message and / a command; Alt H switches chat, Alt M, Alt E and Alt P pick model, effort and mode, Alt F attaches files, and Page Up and Page Down scroll. Suggestions move with the arrows or Ctrl N and P, Enter or Tab takes one and Escape dismisses them. Alt N starts a new chat from anywhere.
 
 **Chat view: our interface or the agent's CLI**
 

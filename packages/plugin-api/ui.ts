@@ -1,9 +1,16 @@
 // What a plugin's UI module exports (docs/spec/03-plugins.md). Components
 // run on the app's Svelte runtime and use @yaa/ui; build them with the yaa
 // plugin build (docs/decisions/0015-plugin-ui-loading.md).
+import type {
+	AgentEvent,
+	PromptAttachment,
+	QuestionAnswer,
+} from "@yaa/contracts/agent-events";
 import type { Client } from "@yaa/contracts/client";
+import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
 import type { Disposable, ProtocolDefinition } from "@yaa/contracts/protocol";
+import type { ProviderStatus } from "@yaa/contracts/providers";
 import type { Component } from "svelte";
 import type { Attachment } from "svelte/attachments";
 
@@ -48,12 +55,60 @@ export type PickSource = {
 	accept(item: PickItem): void;
 };
 
+// Events of one of the worktree's agent sessions that are new to the panel.
+export type SessionNews = {
+	sessionId: string;
+	// The id of the provider whose agent runs it.
+	provider: string;
+	events: readonly AgentEvent[];
+};
+
+// The agent sessions of the panel's worktree, which core holds
+// (docs/spec/05-agents-chat.md). The calls reject with core's reason.
+export type PanelAgents = {
+	// The providers the loaded plugins contribute.
+	providers(): Promise<readonly PluginProvider[]>;
+	// Whether a chat can start with the provider, checked anew on each call.
+	status(provider: string): Promise<ProviderStatus>;
+	// Calls the listener first with every session, oldest first, and the
+	// events each has so far, an empty list when there is none, and then with
+	// each event as it arrives; none twice and none left out. `failed` is
+	// called when the sessions cannot be read.
+	subscribe(
+		listener: (news: readonly SessionNews[]) => void,
+		failed: (reason: unknown) => void,
+	): Disposable;
+	// Starts the provider's agent in the worktree; the new session's id.
+	start(provider: string): Promise<string>;
+	prompt(
+		sessionId: string,
+		text: string,
+		attachments: readonly PromptAttachment[],
+	): Promise<void>;
+	cancel(sessionId: string): Promise<void>;
+	setConfig(sessionId: string, configId: string, value: string): Promise<void>;
+	answerPermission(
+		sessionId: string,
+		requestId: string,
+		optionId: string,
+	): Promise<void>;
+	answerQuestion(
+		sessionId: string,
+		requestId: string,
+		answer: QuestionAnswer,
+	): Promise<void>;
+};
+
 // What one panel gets. Everything registered through it is disposed when the
 // panel closes.
 export type PanelContext = {
 	// The worktree whose grid the panel is in.
 	readonly worktree: Worktree;
 	backend<P extends ProtocolDefinition>(protocol: P): PluginBackendClient<P>;
+	readonly agents: PanelAgents;
+	// The system's picker for files: their absolute paths, none when
+	// cancelled.
+	pickFiles(): Promise<readonly string[]>;
 	readonly commands: {
 		// Runs `handler` for a command the manifest contributes to this panel,
 		// while the panel's worktree is the open one.

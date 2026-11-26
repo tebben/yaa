@@ -1,6 +1,5 @@
 import type { Context } from "@yaa/commands/when";
 import { tick } from "svelte";
-import { createAgentChat } from "./agent/index.ts";
 import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
 import type { CoreClient } from "./core-connection.ts";
@@ -27,9 +26,9 @@ const isTextEntry = (element: Element | null) =>
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
 
-// The app's composition root: the plugins, the agent chat, the projects
-// and their worktrees, a dock grid per worktree, the left menu, focus across the shell's regions, the
-// commands with their keys, and the palette.
+// The app's composition root: the plugins, the projects and their
+// worktrees, a dock grid per worktree, the left menu, focus across the
+// shell's regions, the commands with their keys, and the palette.
 export const createWorkbench = (client: CoreClient) => {
 	// The last failure the footer shows.
 	let failure = $state<string>();
@@ -52,13 +51,6 @@ export const createWorkbench = (client: CoreClient) => {
 		// panel or command runs.
 		dock: (id) => layouts.docks.get(id),
 		pick: (source) => palette.pick(source),
-	});
-	const agentChat = createAgentChat({
-		client,
-		report,
-		providers: plugins.manifests.then((manifests) =>
-			manifests.flatMap(({ contributes }) => contributes.providers),
-		),
 	});
 	// The app's kinds in rail order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.
@@ -156,7 +148,6 @@ export const createWorkbench = (client: CoreClient) => {
 		commands,
 		palette,
 		plugins,
-		agentChat,
 		get menuOpen() {
 			return menuOpen;
 		},

@@ -1,6 +1,7 @@
 import { coreProtocol } from "@yaa/contracts/core-protocol";
 import type { KeybindingsState } from "@yaa/contracts/keybindings";
 import { errorData, type Logger } from "@yaa/contracts/log";
+import type { PickTarget } from "@yaa/contracts/process-control";
 import { createServer, type Server } from "@yaa/contracts/server";
 import type { SettingsState } from "@yaa/contracts/settings";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
@@ -21,7 +22,7 @@ export type CoreServerOptions = {
 	projects: Projects;
 	worktrees: Worktrees;
 	states: StateTracker;
-	pickFolder(): Promise<string | null>;
+	pick(target: PickTarget): Promise<string[]>;
 };
 
 export const createCoreServer = ({
@@ -34,7 +35,7 @@ export const createCoreServer = ({
 	projects,
 	worktrees,
 	states,
-	pickFolder,
+	pick,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
 		coreProtocol,
@@ -50,7 +51,10 @@ export const createCoreServer = ({
 			},
 			"projects.list": () => ({ projects: projects.list() }),
 			"projects.add": ({ path }) => projects.add(path),
-			"dialog.pickFolder": async () => ({ path: await pickFolder() }),
+			"dialog.pickFolder": async () => ({
+				path: (await pick("folder"))[0] ?? null,
+			}),
+			"dialog.pickFiles": async () => ({ paths: await pick("files") }),
 			"projects.remove": ({ id }) => {
 				projects.remove(id);
 				return {};
@@ -80,8 +84,12 @@ export const createCoreServer = ({
 				sessionId: await agents.start(worktree, provider),
 			}),
 			"agent.sessions": () => ({ sessions: agents.list() }),
-			"agent.prompt": ({ sessionId, text }) => {
-				agents.prompt(sessionId, text);
+			"agent.prompt": ({ sessionId, text, attachments }) => {
+				agents.prompt(sessionId, text, attachments);
+				return {};
+			},
+			"agent.setConfig": async ({ sessionId, configId, value }) => {
+				await agents.setConfig(sessionId, configId, value);
 				return {};
 			},
 			"agent.cancel": ({ sessionId }) => {
