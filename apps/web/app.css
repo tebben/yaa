@@ -1,0 +1,7 @@
+/* The renderer's Tailwind entry. Tailwind's default theme is left out, so
+   the only theme values, and the only colour and size utilities, are the
+   tokens that @yaa/ui/styles.css brings. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "@yaa/ui/styles.css";

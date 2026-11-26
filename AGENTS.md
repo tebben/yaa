@@ -4,9 +4,10 @@ Read `docs/README.md` first; it says which doc wins and where each topic lives.
 
 ## Commands
 - Install: `pnpm install` (Node 24, pnpm from `packageManager`)
-- Full check, run before finishing: `pnpm run check` (lint, typecheck, boundaries, Svelte size, docs, tests of changed packages; `git add` new files first)
+- Full check, run before finishing: `pnpm run check` (lint, typecheck, boundaries, Svelte size, docs, tokens, tests of changed packages; `git add` new files first)
 - One package's tests: `pnpm --filter @yaa/<name> test`
 - Format: `pnpm run format`
+- After editing `docs/design/tokens.json`: `pnpm run tokens` regenerates the CSS variables and token types in `packages/ui`
 - Everything, as CI runs it: `pnpm run check:all`
 - Run the app in dev mode: `pnpm run dev` (Vite for the renderer, esbuild watchers for main, preload and core; arguments go to Electron). Linux packaging (`pnpm run package:linux`) arrives in M6.
 - See what the running app shows: `pnpm run dev --remote-debugging-port=9222`, then evaluate in the page over the DevTools protocol (`http://127.0.0.1:9222/json` lists targets). DevTools code is exempt from the CSP, so test the policy with an injected `<script>`, not `eval`.

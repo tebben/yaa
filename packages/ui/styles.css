@@ -1,0 +1,25 @@
+/* The design system's stylesheet: bundled fonts, the tokens as Tailwind's
+   theme, and the classes ui components use. The app's Tailwind entry imports
+   it after Tailwind's preflight and utilities. */
+@import "@fontsource-variable/geist/wght.css";
+@import "@fontsource-variable/geist-mono/wght.css";
+@import "./theme.css";
+@source "./lib";
+
+@theme {
+	--default-font-family: var(--font-sans);
+	--default-mono-font-family: var(--font-mono);
+}
+
+@layer base {
+	html {
+		color-scheme: dark;
+	}
+
+	body {
+		background-color: var(--color-chrome);
+		color: var(--color-text);
+		font-size: var(--text-base);
+		line-height: var(--leading-base);
+	}
+}
