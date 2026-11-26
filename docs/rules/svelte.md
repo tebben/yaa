@@ -26,7 +26,9 @@ A `.svelte` file over about 150 lines, or a `<script>` over about 40, is a promp
 | Size trigger | `lint:svelte-size` (warning) |
 | Types in `.svelte` | `svelte-check` in `typecheck` |
 | No `any`, no `!`, unexplained suppressions | Biome in `lint`, inside `.svelte` too |
-| Thin markup, snippets, tokens, `ui` only | review only; tokens and Bits UI get checks in M1 |
+| No Bits UI outside `packages/ui` | `lint` (Biome `noRestrictedImports`) |
+| No colour literals in `.svelte`, `.svelte.ts` and `.css` | `check:tokens` |
+| Thin markup, snippets, spacing from tokens | review only |
 
 ## Biome and Svelte
 Biome 2.6 runs with `html.experimentalFullSupportEnabled`, so it parses the whole `.svelte` file: it lints the script with markup usage in view and formats markup and script (style formatting not checked). Without the flag it lints only the script and reports variables used only in markup as unused. The flag is experimental: if it formats a file badly, report it and exclude that file in `biome.json` with a reason rather than reformatting by hand.

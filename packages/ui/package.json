@@ -3,10 +3,21 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"exports": {
+		".": "./index.ts",
+		"./styles.css": "./styles.css",
+		"./tokens": "./tokens.ts",
+		"./token-codegen": "./token-codegen.ts"
+	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
 	},
 	"dependencies": {
-		"svelte": "~5.59.1"
+		"@fontsource-variable/geist": "^5.3.0",
+		"@fontsource-variable/geist-mono": "^5.3.0",
+		"@lucide/svelte": "~1.79.0",
+		"bits-ui": "^2.22.0",
+		"svelte": "~5.59.1",
+		"zod": "^4.6.7"
 	}
 }

@@ -8,10 +8,13 @@
 	},
 	"dependencies": {
 		"@yaa/contracts": "workspace:*",
+		"@yaa/ui": "workspace:*",
 		"svelte": "~5.59.1"
 	},
 	"devDependencies": {
 		"@sveltejs/vite-plugin-svelte": "^7.3.2",
+		"@tailwindcss/vite": "^4.3.5",
+		"tailwindcss": "^4.3.5",
 		"vite": "^8.3.8"
 	}
 }

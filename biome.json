@@ -17,7 +17,15 @@
 				"noTsIgnore": "error"
 			},
 			"style": {
-				"noNonNullAssertion": "error"
+				"noNonNullAssertion": "error",
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"bits-ui": "Use the ui primitives from @yaa/ui; only packages/ui wraps Bits UI."
+						}
+					}
+				}
 			},
 			"complexity": {
 				"useLiteralKeys": "off"
@@ -27,6 +35,18 @@
 			}
 		}
 	},
+	"overrides": [
+		{
+			"includes": ["packages/ui/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": "off"
+					}
+				}
+			}
+		}
+	],
 	"javascript": {
 		"formatter": {
 			"quoteStyle": "double"
@@ -38,6 +58,11 @@
 			"source": {
 				"organizeImports": "on"
 			}
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
 		}
 	},
 	"html": {
