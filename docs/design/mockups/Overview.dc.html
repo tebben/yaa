@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project overview: worktrees, issues and cost</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.k{border:1px solid #2c2f35;border-radius:4px;padding:0 5px;font-size:11px;color:#868c97}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.cap{font-size:11px;letter-spacing:.06em;color:#868c97;text-transform:uppercase}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;display:flex;background:#101113;color:#d4d7dd;font:13px/1.45 Geist,system-ui,sans-serif;overflow:hidden">
+
+<dc-import name="Menu" view="overview" hint-size="232px,900px"></dc-import>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:34px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px;background:#101113;border-bottom:1px solid #23252a">
+<span style="color:#868c97"><dc-import name="Icon" icon="folder" size="15" hint-size="15px,15px"></dc-import></span><span style="color:#868c97">geo-viewer</span><span style="color:#4b515c">/</span>
+<span style="color:#868c97"><dc-import name="Icon" icon="layout" size="15" hint-size="15px,15px"></dc-import></span><span>Overview</span>
+<span style="flex:1"></span>
+<span style="width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="bell" size="16" hint-size="16px,16px"></dc-import></span><span style="width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="split" size="16" hint-size="16px,16px"></dc-import></span>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;min-width:0;padding:22px 28px;display:flex;flex-direction:column;gap:18px;overflow:hidden">
+
+<div style="display:flex;gap:14px">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div style="flex:1;border:1px solid #23252a;border-radius:4px;background:#101113;padding:12px 14px">
+<div class="cap">{{s.k}}</div>
+<div style="font-size:26px;font-weight:600;line-height:34px;color:{{s.c}}">{{s.v}}</div>
+<div style="color:#868c97;font-size:12px">{{s.sub}}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="border:1px solid #23252a;border-radius:4px;background:#101113">
+<div style="display:flex;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #23252a"><span style="font-weight:600">Worktrees</span><span style="color:#868c97">Range: last 7 days</span></div>
+<div class="cap" style="display:flex;padding:8px 14px;border-bottom:1px solid #1b1d21"><span style="flex:3">Worktree</span><span style="flex:1.2">State</span><span style="flex:1">PR</span><span style="flex:1">Changes</span><span style="flex:1">Agent</span><span style="flex:1;text-align:right">Cost</span></div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid #1b1d21">
+<span class="m" style="flex:3;font-size:12px">{{r.name}}</span>
+<span style="flex:1.2;display:flex;align-items:center;gap:8px"><span class="dot" style="background:{{r.c}}"></span><span style="color:{{r.c}}">{{r.state}}</span></span>
+<span style="flex:1;color:#a9afba">{{r.pr}}</span><span class="m" style="flex:1;font-size:12px;color:#a9afba">{{r.ch}}</span><span style="flex:1;color:#868c97">{{r.agent}}</span><span class="m" style="flex:1;text-align:right">{{r.cost}}</span>
+</div>
+</sc-for>
+<div style="display:flex;justify-content:space-between;padding:9px 14px"><span style="color:#868c97">Project total</span><span class="m" style="font-weight:500">$12.40</span></div>
+</div>
+
+<div style="border:1px solid #23252a;border-radius:4px;background:#101113;flex:1;min-height:0;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #23252a"><span style="font-weight:600">Issues</span><span style="display:flex;gap:8px;color:#868c97"><span class="k">Project GEO</span><span class="k">Epic GEO-90</span><span class="k">Assignee: me</span></span></div>
+<sc-for list="{{issues}}" as="i" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid #1b1d21">
+<span class="m" style="width:76px;font-size:12px;color:#8fa0e8">{{i.id}}</span><span style="flex:1">{{i.t}}</span><span style="color:#868c97;width:100px">{{i.st}}</span>
+<span style="border:1px solid #2c2f35;border-radius:6px;padding:2px 10px;color:#a9afba">Start worktree</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="height:24px;flex:none;display:flex;align-items:center;gap:14px;padding:0 14px;background:#101113;border-top:1px solid #23252a;font-size:12px;color:#868c97"><span style="display:flex;align-items:center;gap:5px"><dc-import name="Icon" icon="branch" size="13" hint-size="13px,13px"></dc-import><span style="font-family:Geist Mono,monospace">main</span></span><span>4 worktrees</span><span style="flex:1"></span><span style="color:#d4ae6a">1 needs you</span><span style="display:flex;align-items:center;gap:5px"><dc-import name="Icon" icon="dollar" size="13" hint-size="13px,13px"></dc-import><span style="font-family:Geist Mono,monospace">12.40 this week</span></span></div>
+</div>
+<dc-import name="Rail" on="" hint-size="40px,900px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const wts = [
+{ name: 'PROJ-482-fix-tile-cache', color: '#78aedd' },
+{ name: 'PROJ-455-export-dxf', color: '#d4ae6a' },
+{ name: 'PROJ-460-crs-detect', color: '#d98080' },
+{ name: 'PROJ-431-sentry-noise', color: '#74b996' }
+];
+const stats = [
+{ k: 'Open issues', v: '18', c: '#d4d7dd', sub: '7 in progress, 4 in review' },
+{ k: 'Done this week', v: '9', c: '#74b996', sub: '31 in the epic overall' },
+{ k: 'Agents running', v: '2', c: '#78aedd', sub: '1 waiting for you' },
+{ k: 'Spend, 7 days', v: '$12.40', c: '#d4d7dd', sub: '3.1M tokens across 6 worktrees' }
+];
+const rows = [
+{ name: 'PROJ-482-fix-tile-cache', state: 'Running', c: '#78aedd', pr: '!212 draft', ch: '4 files', agent: 'Claude Code', cost: '$1.84' },
+{ name: 'PROJ-455-export-dxf', state: 'Needs attention', c: '#d4ae6a', pr: '!208 open', ch: '9 files', agent: 'Copilot CLI', cost: '$3.10' },
+{ name: 'PROJ-460-crs-detect', state: 'Error', c: '#d98080', pr: 'none', ch: '2 files', agent: 'Pi', cost: '$0.42' },
+{ name: 'PROJ-431-sentry-noise', state: 'Done', c: '#74b996', pr: '!199 merged', ch: 'clean', agent: 'Claude Code', cost: '$2.76' }
+];
+const issues = [
+{ id: 'GEO-512', t: 'Tile cache grows without bound after zoom changes', st: 'To do' },
+{ id: 'GEO-508', t: 'Add EPSG:3857 fallback when the CRS header is missing', st: 'To do' },
+{ id: 'GEO-501', t: 'Export selection to DXF keeps layer names', st: 'In review' },
+{ id: 'GEO-497', t: 'Measure tool snaps to the wrong vertex on touch', st: 'To do' }
+];
+return { wts, stats, rows, issues };
+}
+}
+</script>
+</body>
+</html>

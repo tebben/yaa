@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Left menu: projects and worktrees</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.r{height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;white-space:nowrap}
+</style>
+</helmet>
+<div style="width:232px;height:900px;box-sizing:border-box;flex:none;background:#101113;border-right:1px solid #23252a;padding:6px 0;display:flex;flex-direction:column;color:#d4d7dd;font:12.5px/1.4 Geist,system-ui,sans-serif">
+
+<div class="r" style="height:30px;justify-content:space-between;color:#868c97"><span style="font-size:11px;letter-spacing:.06em">WORKTREES</span><dc-import name="Icon" icon="plus" size="15" hint-size="15px,15px"></dc-import></div>
+
+<div class="r" style="background:{{ovBg}};color:{{ovC}}"><dc-import name="Icon" icon="layout" size="15" hint-size="15px,15px"></dc-import><span>Overview</span></div>
+
+<div class="r" style="margin-top:6px"><span style="color:#868c97"><dc-import name="Icon" icon="chevD" size="14" hint-size="14px,14px"></dc-import></span><span style="color:#868c97"><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import></span><span style="font-weight:500">geo-viewer</span></div>
+
+<div style="position:relative">
+<span style="position:absolute;left:25px;top:0;bottom:13px;width:1px;background:#2c2f35"></span>
+<div class="r" style="padding-left:50px;position:relative;color:#868c97">
+<span style="position:absolute;left:25px;top:13px;width:9px;height:1px;background:#2c2f35"></span>
+<span style="position:absolute;left:34px;top:8px;width:9px;height:9px;border-radius:50%;background:#868c97"></span>
+<span class="m" style="flex:1">main</span><span style="font-size:11px">default</span>
+</div>
+<sc-for list="{{wts}}" as="w" hint-placeholder-count="4">
+<div class="r" style="padding-left:50px;position:relative;background:{{w.bg}}">
+<span style="position:absolute;left:25px;top:13px;width:9px;height:1px;background:#2c2f35"></span>
+<span style="position:absolute;left:34px;top:8px;width:9px;height:9px;box-sizing:border-box;border-radius:50%;border:1.5px solid {{w.color}};background:{{w.fill}}"></span>
+<span class="m" style="flex:1;overflow:hidden;text-overflow:ellipsis;color:{{w.tc}}">{{w.name}}</span>
+<span class="m" style="font-size:11px;color:#868c97">{{w.cost}}</span>
+</div>
+</sc-for>
+</div>
+
+<div class="r" style="margin-top:6px;color:#868c97"><dc-import name="Icon" icon="chevR" size="14" hint-size="14px,14px"></dc-import><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import><span style="flex:1">haku-platform</span><span style="font-size:11px">3</span></div>
+<div class="r" style="color:#868c97"><dc-import name="Icon" icon="chevR" size="14" hint-size="14px,14px"></dc-import><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import><span style="flex:1">yak</span><span style="font-size:11px">1</span></div>
+
+<div style="flex:1"></div>
+<div style="display:flex;padding:6px 8px 0;gap:2px;border-top:1px solid #23252a">
+<span style="width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;background:{{wfBg}};color:{{wfC}};position:relative"><dc-import name="Icon" icon="zap" size="15" hint-size="15px,15px"></dc-import><span style="position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;background:#d4ae6a"></span></span>
+<span style="width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="plugin" size="15" hint-size="15px,15px"></dc-import></span>
+<span style="width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="sliders" size="15" hint-size="15px,15px"></dc-import></span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"view":{"editor":"enum","options":["worktree","overview","workflows"],"default":"worktree"},"$preview":{"width":232,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const view = this.props.view ?? 'worktree';
+const sel = this.props.selected ?? 'PROJ-482-fix-tile-cache';
+const defs = [
+{ name: 'PROJ-482-fix-tile-cache', color: '#78aedd', cost: '$1.84', fill: '#101113' },
+{ name: 'PROJ-455-export-dxf', color: '#d4ae6a', cost: '$3.10', fill: '#101113' },
+{ name: 'PROJ-460-crs-detect', color: '#d98080', cost: '$0.42', fill: '#101113' },
+{ name: 'PROJ-431-sentry-noise', color: '#74b996', cost: '$2.76', fill: '#74b996' }
+];
+const wts = defs.map((w) => {
+const on = view === 'worktree' && w.name === sel;
+return { ...w, bg: on ? '#1b1d22' : 'transparent', tc: on ? '#d4d7dd' : '#a9afba' };
+});
+return {
+wts,
+ovBg: view === 'overview' ? '#1b1d22' : 'transparent',
+ovC: view === 'overview' ? '#d4d7dd' : '#a9afba',
+wfBg: view === 'workflows' ? '#1b1d22' : 'transparent',
+wfC: view === 'workflows' ? '#d4d7dd' : '#868c97'
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>yaa branding: mark, wordmark and app icon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.cap{font-size:10.5px;letter-spacing:.06em;color:#868c97}
+</style>
+</helmet>
+<div style="width:1200px;height:760px;box-sizing:border-box;padding:24px;background:#101113;color:#d4d7dd;font:13px/1.45 Geist,system-ui,sans-serif;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+
+<div style="display:flex;gap:16px;flex:1;min-height:0">
+<div style="flex:1;background:#131417;border:1px solid #23252a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px">
+<dc-import name="Mark" size="168" color="#d4d7dd" accent="#8fa0e8" ground="#131417" hint-size="168px,168px"></dc-import>
+<div style="display:flex;align-items:baseline;gap:14px"><span style="font-size:44px;font-weight:600;letter-spacing:-.02em">yaa</span><span class="m" style="font-size:12px;color:#868c97">pronounced “ja”</span></div>
+<div style="color:#868c97">yet another ADE, but mine</div>
+</div>
+<div style="flex:1;background:#f3f3f0;border:1px solid #d9d9d4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#1c1e24">
+<dc-import name="Mark" size="168" color="#1c1e24" accent="#5468d4" ground="#f3f3f0" hint-size="168px,168px"></dc-import>
+<div style="display:flex;align-items:baseline;gap:14px"><span style="font-size:44px;font-weight:600;letter-spacing:-.02em">yaa</span></div>
+<div style="color:#5c6270">light version</div>
+</div>
+</div>
+
+<div style="display:flex;gap:16px;height:250px;flex:none">
+<div style="width:300px;background:#131417;border:1px solid #23252a;padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+<div class="cap">APP ICON</div>
+<div style="display:flex;gap:16px;align-items:flex-end">
+<span style="width:96px;height:96px;border-radius:22px;background:#181a1e;border:1px solid #2c2f35;display:flex;align-items:center;justify-content:center"><dc-import name="Mark" size="60" color="#d4d7dd" accent="#8fa0e8" ground="#181a1e" hint-size="60px,60px"></dc-import></span>
+<span style="width:56px;height:56px;border-radius:13px;background:#f3f3f0;display:flex;align-items:center;justify-content:center"><dc-import name="Mark" size="34" color="#1c1e24" accent="#5468d4" ground="#f3f3f0" hint-size="34px,34px"></dc-import></span>
+<span style="width:32px;height:32px;border-radius:8px;background:#181a1e;border:1px solid #2c2f35;display:flex;align-items:center;justify-content:center"><dc-import name="Mark" size="20" color="#d4d7dd" accent="#8fa0e8" ground="#181a1e" hint-size="20px,20px"></dc-import></span>
+</div>
+</div>
+
+<div style="width:300px;background:#131417;border:1px solid #23252a;padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+<div class="cap">SMALL SIZES</div>
+<div style="display:flex;gap:22px;align-items:flex-end">
+<dc-import name="Mark" size="48" color="#d4d7dd" accent="#8fa0e8" ground="#131417" hint-size="48px,48px"></dc-import>
+<dc-import name="Mark" size="32" color="#d4d7dd" accent="#8fa0e8" ground="#131417" hint-size="32px,32px"></dc-import>
+<dc-import name="Mark" size="24" color="#d4d7dd" accent="#8fa0e8" ground="#131417" hint-size="24px,24px"></dc-import>
+<dc-import name="Mark" size="16" color="#d4d7dd" accent="#8fa0e8" ground="#131417" hint-size="16px,16px"></dc-import>
+</div>
+<div style="color:#868c97;font-size:12px">One colour plus one accent node. Holds at 16 px.</div>
+</div>
+
+<div style="flex:1;background:#131417;border:1px solid #23252a;padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+<div class="cap">IN THE APP: LEFT MENU HEADER</div>
+<div style="width:232px;background:#101113;border:1px solid #23252a;padding:6px 0">
+<div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;color:#868c97"><dc-import name="Mark" size="16" color="#d4d7dd" accent="#8fa0e8" ground="#101113" hint-size="16px,16px"></dc-import><span style="font-weight:600;color:#d4d7dd">yaa</span><span style="flex:1"></span><dc-import name="Icon" icon="plus" size="15" hint-size="15px,15px"></dc-import></div>
+<div style="height:26px;display:flex;align-items:center;gap:8px;padding:0 12px;background:#1b1d22"><dc-import name="Icon" icon="layout" size="15" hint-size="15px,15px"></dc-import><span>Overview</span></div>
+</div>
+<div style="color:#868c97;font-size:12px">The mark is a git merge: a filled node (main) and an open ring (a worktree) joining into one stem. It reuses the node vocabulary of the tree.</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":760}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

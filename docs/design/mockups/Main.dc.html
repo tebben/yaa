@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Workspace: worktree with chat, changes and editor</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.k{border:1px solid #2c2f35;border-radius:3px;padding:0 4px;font-size:10.5px;color:#868c97;white-space:nowrap}
+.ib{width:22px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:#868c97;flex:none}
+.ph{height:28px;flex:none;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;border-bottom:1px solid #23252a;color:#868c97}
+.t{height:100%;display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;border-right:1px solid #23252a;white-space:nowrap;flex:none}
+.cap{font-size:10.5px;letter-spacing:.06em;color:#868c97;padding:6px 10px 3px}
+.row{display:flex;align-items:center;gap:8px;padding:0 10px;height:24px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border:1px solid #2c2f35;border-radius:3px;font-size:11.5px;color:#a9afba;white-space:nowrap}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;display:flex;background:#101113;color:#d4d7dd;font:12.5px/1.45 Geist,system-ui,sans-serif;overflow:hidden">
+
+<dc-import name="Menu" view="worktree" hint-size="232px,900px"></dc-import>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+<!-- header, bound to the worktree -->
+<div style="height:34px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #23252a">
+<span style="color:#868c97"><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import></span><span style="color:#868c97">geo-viewer</span><span style="color:#4b4f58">/</span>
+<span style="color:#78aedd"><dc-import name="Icon" icon="branch" size="14" hint-size="14px,14px"></dc-import></span><span class="m" style="font-size:12px">PROJ-482-fix-tile-cache</span>
+<span style="color:#78aedd;font-size:12px;margin-left:6px">Running</span>
+<span style="flex:1"></span>
+<span class="chip"><dc-import name="Icon" icon="pr" size="12" hint-size="12px,12px"></dc-import>!212 draft</span>
+<span class="ib"><dc-import name="Icon" icon="bell" size="15" hint-size="15px,15px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="split" size="15" hint-size="15px,15px"></dc-import></span>
+</div>
+
+<!-- panels: flat, separated by hairlines -->
+<div style="flex:1;min-height:0;display:flex">
+
+<div style="width:250px;flex:none;background:#131417;border-right:1px solid #23252a;display:flex;flex-direction:column">
+<div class="ph"><dc-import name="Icon" icon="changes" size="14" hint-size="14px,14px"></dc-import><span style="font-weight:500;flex:1">Changes</span><span class="ib"><dc-import name="Icon" icon="x" size="13" hint-size="13px,13px"></dc-import></span></div>
+<div style="flex:1;overflow:hidden;padding-top:2px">
+<div class="cap">STAGED 2</div>
+<sc-for list="{{staged}}" as="f" hint-placeholder-count="2"><div class="row"><span class="m" style="color:{{f.c}};width:10px">{{f.s}}</span><span class="m" style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis">{{f.p}}</span><span class="m" style="font-size:11px;color:#868c97">{{f.d}}</span></div></sc-for>
+<div class="cap" style="padding-top:10px">UNSTAGED 2</div>
+<sc-for list="{{unstaged}}" as="f" hint-placeholder-count="2"><div class="row"><span class="m" style="color:{{f.c}};width:10px">{{f.s}}</span><span class="m" style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis">{{f.p}}</span><span class="m" style="font-size:11px;color:#868c97">{{f.d}}</span></div></sc-for>
+</div>
+<div style="padding:8px 10px;border-top:1px solid #23252a;display:flex;flex-direction:column;gap:6px">
+<div style="border:1px solid #2c2f35;border-radius:4px;background:#101113;padding:6px 8px;min-height:34px">fix(tiles): evict entries from other zoom levels</div>
+<div style="display:flex;gap:6px"><span class="chip" style="flex:1;justify-content:center;height:24px"><dc-import name="Icon" icon="sparkle" size="13" hint-size="13px,13px"></dc-import>Generate</span><span style="flex:1;display:flex;align-items:center;justify-content:center;height:24px;border-radius:3px;background:#8fa0e8;color:#101113;font-weight:600">Commit</span></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid #23252a">
+<div style="flex:1;min-height:0;background:#131417;display:flex;flex-direction:column;box-shadow:inset 0 1px 0 #8fa0e8">
+<div style="height:30px;flex:none;display:flex;background:#101113;border-bottom:1px solid #23252a">
+<div class="t" style="background:#131417;color:#d4d7dd"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import><span class="m" style="font-size:12px">tile-cache.ts</span><span class="ib" style="width:18px;height:18px"><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></span></div>
+<div class="t" style="color:#868c97"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import><span class="m" style="font-size:12px">tile-cache.test.ts</span><span class="ib" style="width:18px;height:18px"><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></span></div>
+<div class="t" style="color:#868c97"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import><span class="m" style="font-size:12px;font-style:italic">lru.ts</span><span class="ib" style="width:18px;height:18px"><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></span></div>
+</div>
+<div style="flex:1;overflow:hidden;padding:6px 0;font-size:12.5px;line-height:20px">
+<sc-for list="{{code}}" as="l" hint-placeholder-count="12">
+<div>
+<div style="display:flex;background:{{l.bg}}"><span class="m" style="width:44px;text-align:right;padding-right:14px;color:#6a707c;flex:none">{{l.n}}</span><span class="m" style="white-space:pre"><sc-for list="{{l.segs}}" as="s" hint-placeholder-count="3"><span style="color:{{s.c}}">{{s.t}}</span></sc-for></span></div>
+<sc-if value="{{l.note}}" hint-placeholder-val="{{ false }}">
+<div style="margin:4px 16px 4px 58px;border:1px solid #4a3f26;background:#1a1710;border-radius:3px;padding:6px 10px;line-height:18px"><span style="color:#d4ae6a;font-weight:600">Annotation</span><span> {{l.note}}</span></div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="height:132px;flex:none;border-top:1px solid #23252a;background:#131417;display:flex;flex-direction:column">
+<div class="ph"><dc-import name="Icon" icon="terminal" size="14" hint-size="14px,14px"></dc-import><span style="font-weight:500;flex:1">Terminal</span><span class="ib"><dc-import name="Icon" icon="plus" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="x" size="13" hint-size="13px,13px"></dc-import></span></div>
+<div class="m" style="padding:6px 12px;font-size:12px;line-height:18px;color:#a9afba"><div>$ pnpm run check</div><div style="color:#74b996">lint ok · types ok · boundaries ok · 14 tests passed</div><div>$ <span style="background:#a9afba;color:#101113"> </span></div></div>
+</div>
+</div>
+
+<!-- chat -->
+<div style="width:400px;flex:none;background:#131417;display:flex;flex-direction:column;position:relative">
+<div class="ph"><dc-import name="Icon" icon="chat" size="14" hint-size="14px,14px"></dc-import><span style="font-weight:500;flex:1">Chat 1</span>
+<span style="display:flex;border:1px solid #2c2f35;border-radius:4px;overflow:hidden"><span class="ib" style="width:24px;height:20px;border-radius:0;background:#1b1d22;color:#d4d7dd"><dc-import name="Icon" icon="chat" size="13" hint-size="13px,13px"></dc-import></span><span class="ib" style="width:24px;height:20px;border-radius:0"><dc-import name="Icon" icon="terminal" size="13" hint-size="13px,13px"></dc-import></span></span>
+<span class="ib"><dc-import name="Icon" icon="history" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="plus" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="x" size="13" hint-size="13px,13px"></dc-import></span></div>
+<div style="padding:4px 12px;border-bottom:1px solid #23252a;color:#868c97;font-size:11.5px">Claude Code · 4 skills · 2 MCP servers</div>
+
+<div style="flex:1;overflow:hidden;padding:12px;display:flex;flex-direction:column;gap:10px">
+<div style="background:#1b1d22;border-radius:4px;padding:6px 10px">Evict tiles from other zoom levels when the zoom changes. Ticket PROJ-482.</div>
+<div style="color:#868c97;font-size:12px;display:flex;align-items:center;gap:4px"><dc-import name="Icon" icon="chevR" size="12" hint-size="12px,12px"></dc-import>Thought for 4 s</div>
+<div style="display:flex;flex-direction:column;gap:1px">
+<sc-for list="{{tools}}" as="t" hint-placeholder-count="4"><div style="display:flex;gap:8px;align-items:center;height:22px"><span style="color:#868c97"><dc-import name="Icon" icon="{{t.icon}}" size="13" hint-size="13px,13px"></dc-import></span><span style="color:#868c97">{{t.k}}</span><span class="m" style="font-size:12px;color:{{t.pc}};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{t.p}}</span><span class="m" style="font-size:11px;color:{{t.dc}}">{{t.d}}</span></div></sc-for>
+</div>
+<div>Added <span class="m" style="font-size:12px;color:#8fa0e8">removeWhere</span> in <span class="m" style="font-size:12px;color:#8fa0e8;text-decoration:underline">src/tiles/lru.ts:41</span> and call it from <span class="m" style="font-size:12px">setZoom</span>. Running the check now; a regression test is next.</div>
+</div>
+
+<!-- @ autocomplete -->
+<div style="position:absolute;left:12px;right:12px;bottom:112px;border:1px solid #2c2f35;border-radius:4px;background:#181a1e;box-shadow:0 8px 24px rgba(0,0,0,0.4)">
+<sc-for list="{{mentions}}" as="x" hint-placeholder-count="4"><div class="row" style="background:{{x.bg}}"><span style="color:#868c97"><dc-import name="Icon" icon="{{x.icon}}" size="13" hint-size="13px,13px"></dc-import></span><span class="m" style="font-size:12px;flex:1">{{x.t}}</span><span style="font-size:11px;color:#868c97">{{x.r}}</span></div></sc-for>
+<div style="display:flex;gap:12px;padding:4px 10px;border-top:1px solid #23252a;font-size:11px;color:#868c97"><span>↑↓ move</span><span>Tab insert</span><span>Esc close</span></div>
+</div>
+
+<!-- composer -->
+<div style="padding:0 10px 8px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;height:22px;padding:0 4px;color:#868c97;font-size:12px"><dc-import name="Icon" icon="chevR" size="12" hint-size="12px,12px"></dc-import><span>3 files edited</span><span class="m" style="color:#74b996">+61</span><span class="m" style="color:#d98080">−3</span><span style="flex:1"></span><span style="color:#8fa0e8">Review</span></div>
+<div style="display:flex;align-items:center;gap:8px;height:24px;padding:0 8px;background:#1b1d22;border-radius:4px;font-size:12px;color:#a9afba"><span style="color:#868c97">Queued</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">add a regression test for setZoom</span><span style="color:#8fa0e8">Steer</span><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></div>
+<div style="border:1px solid #2c2f35;border-radius:6px;background:#101113;display:flex;flex-direction:column">
+<div style="display:flex;gap:4px;padding:6px 8px 0;flex-wrap:wrap">
+<span class="chip"><dc-import name="Icon" icon="file" size="12" hint-size="12px,12px"></dc-import><span class="m">tile-cache.ts</span><dc-import name="Icon" icon="x" size="11" hint-size="11px,11px"></dc-import></span>
+<span class="chip"><dc-import name="Icon" icon="list" size="12" hint-size="12px,12px"></dc-import><span class="m">lru.ts:38-52</span><dc-import name="Icon" icon="x" size="11" hint-size="11px,11px"></dc-import></span>
+<span class="chip"><dc-import name="Icon" icon="image" size="12" hint-size="12px,12px"></dc-import>screenshot.png<dc-import name="Icon" icon="x" size="11" hint-size="11px,11px"></dc-import></span>
+</div>
+<div style="padding:6px 10px 4px;min-height:38px">Also handle the layer manager, see <span class="m" style="font-size:12px;color:#8fa0e8;background:#1a1d2b;border-radius:3px;padding:0 3px">@lay</span><span style="border-left:1.5px solid #d4d7dd"></span></div>
+<div style="display:flex;align-items:center;gap:2px;padding:4px 6px 6px">
+<span class="ib"><dc-import name="Icon" icon="clip" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="at" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="slash" size="14" hint-size="14px,14px"></dc-import></span>
+<span style="width:6px"></span>
+<span class="chip" style="border-color:transparent"><dc-import name="Icon" icon="shield" size="12" hint-size="12px,12px"></dc-import>Ask first</span>
+<span class="chip" style="border-color:transparent">Sonnet<dc-import name="Icon" icon="chevD" size="11" hint-size="11px,11px"></dc-import></span>
+<span class="chip" style="border-color:transparent">High<dc-import name="Icon" icon="chevD" size="11" hint-size="11px,11px"></dc-import></span>
+<span style="flex:1"></span>
+<span title="Context" style="display:inline-flex;align-items:center;gap:5px;color:#868c97;font-size:11px;margin-right:6px"><span style="width:14px;height:14px;border-radius:50%;background:conic-gradient(#8fa0e8 0 42%,#2c2f35 0);display:inline-flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:#101113"></span></span>42%</span>
+<span style="width:26px;height:26px;border-radius:5px;background:#d4d7dd;color:#101113;display:inline-flex;align-items:center;justify-content:center"><dc-import name="Icon" icon="stop" size="13" hint-size="13px,13px"></dc-import></span>
+</div>
+</div>
+<div style="display:flex;gap:12px;font-size:11px;color:#6a707c;padding:0 4px"><span>Enter queues</span><span>Ctrl Enter steers</span><span>Esc stops</span></div>
+</div>
+</div>
+</div>
+
+<!-- footer -->
+<div style="height:24px;flex:none;display:flex;align-items:center;gap:14px;padding:0 12px;border-top:1px solid #23252a;font-size:11.5px;color:#868c97">
+<span style="display:flex;align-items:center;gap:4px"><dc-import name="Icon" icon="branch" size="12" hint-size="12px,12px"></dc-import><span class="m">PROJ-482-fix-tile-cache</span></span><span>↑2 ↓0</span>
+<span style="display:flex;align-items:center;gap:4px"><dc-import name="Icon" icon="changes" size="12" hint-size="12px,12px"></dc-import>4</span>
+<span style="display:flex;align-items:center;gap:4px"><dc-import name="Icon" icon="pr" size="12" hint-size="12px,12px"></dc-import>checks passing</span>
+<span style="flex:1"></span>
+<span class="k m">NORMAL</span><span style="color:#78aedd">Running 1m 12s</span>
+<span style="display:flex;align-items:center;gap:4px"><dc-import name="Icon" icon="dollar" size="12" hint-size="12px,12px"></dc-import><span class="m">1.84 · 142k</span></span>
+</div>
+</div>
+
+<dc-import name="Rail" on="changes,chat,terminal" hint-size="40px,900px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const KW = /^(export|const|let|function|return|if|else|for|of|new|class|import|from|type|async|await|private|readonly)$/;
+const tok = (s) => s.split(/(\/\/.*|'[^']*'|[A-Za-z_]+|\d+)/).filter((x) => x !== '').map((x) => ({
+t: x,
+c: x.startsWith('//') ? '#767d8a' : x[0] === "'" ? '#9fcf9f' : KW.test(x) ? '#b99be0' : /^\d+$/.test(x) ? '#dc9f7e' : '#cdd1d8'
+}));
+const src = [
+"import { LRUCache } from './lru';",
+"import type { TileKey, Tile } from './types';",
+"",
+"const MAX_TILES = 512;",
+"",
+"export class TileCache {",
+"  private cache = new LRUCache<string, Tile>(MAX_TILES);",
+"  private zoom = 0;",
+"",
+"  // Drop entries from other zoom levels",
+"  setZoom(next: number) {",
+"    if (next === this.zoom) return;",
+"    this.cache.removeWhere((key) => key.z !== next);",
+"    this.zoom = next;",
+"  }",
+"",
+"  get(key: TileKey) { return this.cache.get(id(key)); }"
+];
+const added = [10, 11, 12, 13, 14, 15];
+const code = src.map((t, i) => ({
+n: i + 1,
+bg: added.includes(i + 1) ? 'rgba(116,185,150,0.10)' : 'transparent',
+segs: tok(t.length ? t : ' '),
+note: i + 1 === 13 ? 'Should this also cancel in-flight fetches for the old zoom?' : ''
+}));
+const staged = [
+{ s: 'M', c: '#d4ae6a', p: 'src/tiles/lru.ts', d: '+14' },
+{ s: 'M', c: '#d4ae6a', p: 'src/tiles/tile-cache.ts', d: '+9 −2' }
+];
+const unstaged = [
+{ s: 'A', c: '#74b996', p: 'src/tiles/tile-cache.test.ts', d: '+38' },
+{ s: 'M', c: '#d4ae6a', p: 'src/map/layer-manager.ts', d: '+3 −1' }
+];
+const tools = [
+{ icon: 'file', k: 'Read', p: 'src/tiles/tile-cache.ts', pc: '#a9afba', d: '', dc: '#868c97' },
+{ icon: 'changes', k: 'Edit', p: 'src/tiles/lru.ts', pc: '#a9afba', d: '+14', dc: '#74b996' },
+{ icon: 'changes', k: 'Edit', p: 'src/tiles/tile-cache.ts', pc: '#a9afba', d: '+9 −2', dc: '#74b996' },
+{ icon: 'terminal', k: 'Run', p: 'pnpm run check', pc: '#d4d7dd', d: 'running', dc: '#78aedd' }
+];
+const mentions = [
+{ icon: 'file', t: 'src/map/layer-manager.ts', r: 'file', bg: '#1f2127' },
+{ icon: 'file', t: 'src/map/layer-manager.test.ts', r: 'file', bg: 'transparent' },
+{ icon: 'folder', t: 'src/map/layers/', r: 'folder', bg: 'transparent' },
+{ icon: 'chat', t: 'Chat: layer ordering bug', r: 'thread', bg: 'transparent' }
+];
+return { code, staged, unstaged, tools, mentions };
+}
+}
+</script>
+</body>
+</html>

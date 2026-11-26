@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>yaa mark: the y as a merge graph</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<span style="display:inline-flex;width:{{px}}px;height:{{px}}px"><svg viewBox="0 0 24 24" width="{{px}}" height="{{px}}" fill="none" role="img" aria-label="yaa mark"><path d="M5 5L12 13L8.5 21M19 5L12 13" stroke="{{fg}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="5" r="2.4" fill="{{fg}}"/><circle cx="19" cy="5" r="2.4" fill="{{bg}}" stroke="{{accent}}" stroke-width="1.8"/></svg></span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"int","default":24},"color":{"editor":"color","default":"#d4d7dd"},"accent":{"editor":"color","default":"#8fa0e8"},"ground":{"editor":"color","default":"#101113"},"$preview":{"width":24,"height":24}}'>
+class Component extends DCLogic {
+renderVals() {
+return { px: Number(this.props.size) || 24, fg: this.props.color ?? '#d4d7dd', accent: this.props.accent ?? '#8fa0e8', bg: this.props.ground ?? '#101113' };
+}
+}
+</script>
+</body>
+</html>

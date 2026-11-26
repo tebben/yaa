@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Component library: buttons, badges, tree, panels, icons</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.k{border:1px solid #2c2f35;border-radius:3px;padding:0 4px;font-size:10.5px;color:#868c97;white-space:nowrap}
+.cap{font-size:10.5px;letter-spacing:.06em;color:#868c97;padding-bottom:8px}
+.card{border:1px solid #23252a;background:#131417;padding:12px 14px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ib{width:24px;height:24px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;color:#868c97}
+.btn{height:26px;padding:0 12px;border-radius:4px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 6px;border:1px solid #2c2f35;border-radius:3px;font-size:11.5px;color:#a9afba;white-space:nowrap}
+.r{height:24px;display:flex;align-items:center;gap:8px;padding:0 8px;white-space:nowrap;position:relative}
+</style>
+</helmet>
+<div style="width:1440px;height:1020px;box-sizing:border-box;padding:24px;background:#101113;color:#d4d7dd;font:12.5px/1.45 Geist,system-ui,sans-serif;display:flex;gap:16px;overflow:hidden">
+
+<!-- column 1 -->
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+<div class="card">
+<div class="cap">BUTTONS</div>
+<div class="row" style="padding-bottom:10px">
+<span class="btn" style="background:#8fa0e8;color:#101113;font-weight:600">Primary</span>
+<span class="btn" style="border:1px solid #2c2f35">Secondary</span>
+<span class="btn" style="color:#a9afba">Ghost</span>
+<span class="btn" style="border:1px solid #4a2d2f;color:#d98080">Danger</span>
+<span class="btn" style="border:1px solid #2c2f35"><dc-import name="Icon" icon="sparkle" size="14" hint-size="14px,14px"></dc-import>With icon</span>
+</div>
+<div class="row">
+<sc-for list="{{iconButtons}}" as="b" hint-placeholder-count="5"><span class="ib" style="background:{{b.bg}};color:{{b.c}}"><dc-import name="Icon" icon="{{b.icon}}" size="15" hint-size="15px,15px"></dc-import></span></sc-for>
+<span style="color:#868c97;font-size:11.5px">icon buttons: default, hover, active</span>
+</div>
+</div>
+
+<div class="card">
+<div class="cap">BADGES AND CHIPS</div>
+<div class="row" style="padding-bottom:10px">
+<sc-for list="{{states}}" as="s" hint-placeholder-count="5"><span style="display:inline-flex;align-items:center;gap:5px;color:{{s.c}}"><span style="width:9px;height:9px;box-sizing:border-box;border-radius:50%;border:1.5px solid {{s.c}};background:{{s.fill}}"></span>{{s.t}}</span></sc-for>
+</div>
+<div class="row"><span class="k">4</span><span class="k m">Ctrl K</span><span class="chip">Epic GEO-90</span><span class="chip"><dc-import name="Icon" icon="pr" size="12" hint-size="12px,12px"></dc-import>!212 draft</span><span class="chip"><dc-import name="Icon" icon="file" size="12" hint-size="12px,12px"></dc-import><span class="m">tile-cache.ts</span><dc-import name="Icon" icon="x" size="11" hint-size="11px,11px"></dc-import></span></div>
+<div style="color:#868c97;font-size:11.5px;padding-top:8px">State is the same ring as in the tree: open ring while working, filled when done. No pills.</div>
+</div>
+
+<div class="card">
+<div class="cap">INPUTS</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="height:26px;border:1px solid #2c2f35;border-radius:4px;background:#101113;display:flex;align-items:center;padding:0 8px;color:#868c97">Branch name</div>
+<div style="height:26px;border:1px solid #8fa0e8;border-radius:4px;background:#101113;display:flex;align-items:center;padding:0 8px">fix(tiles): evict old zoom</div>
+<div class="row"><span style="display:flex;border:1px solid #2c2f35;border-radius:4px;overflow:hidden"><span class="ib" style="width:28px;border-radius:0;background:#1b1d22;color:#d4d7dd"><dc-import name="Icon" icon="chat" size="14" hint-size="14px,14px"></dc-import></span><span class="ib" style="width:28px;border-radius:0"><dc-import name="Icon" icon="terminal" size="14" hint-size="14px,14px"></dc-import></span></span><span style="color:#868c97;font-size:11.5px">segmented: our chat or the agent CLI</span></div>
+</div>
+</div>
+
+<div class="card" style="flex:1">
+<div class="cap">MENU, TOAST</div>
+<div style="width:220px;border:1px solid #2c2f35;border-radius:4px;background:#181a1e;padding:3px">
+<div class="r" style="background:#1f2127;justify-content:space-between"><span>Open diff</span><span class="k m">Enter</span></div>
+<div class="r" style="justify-content:space-between"><span>Stage file</span><span class="k m">S</span></div>
+<div class="r" style="justify-content:space-between"><span style="color:#d98080">Discard</span><span class="k m">D</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;border:1px solid #2c2f35;border-radius:4px;background:#181a1e;padding:8px 10px;width:300px;margin-top:10px"><span style="color:#d4ae6a"><dc-import name="Icon" icon="alert" size="15" hint-size="15px,15px"></dc-import></span><span style="flex:1">PROJ-455 needs your answer</span><span style="color:#8fa0e8">Open</span></div>
+</div>
+</div>
+
+<!-- column 2 -->
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+<div class="card">
+<div class="cap">PANEL: FOCUSED, NOT FOCUSED</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="border:1px solid #23252a;background:#131417;box-shadow:inset 0 1px 0 #8fa0e8"><div style="height:28px;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;color:#868c97"><dc-import name="Icon" icon="terminal" size="14" hint-size="14px,14px"></dc-import><span style="font-weight:500;color:#d4d7dd;flex:1">Terminal</span><span class="ib" style="width:22px;height:22px"><dc-import name="Icon" icon="more" size="14" hint-size="14px,14px"></dc-import></span><span class="ib" style="width:22px;height:22px"><dc-import name="Icon" icon="x" size="13" hint-size="13px,13px"></dc-import></span></div></div>
+<div style="border:1px solid #23252a;background:#131417"><div style="height:28px;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;color:#868c97"><dc-import name="Icon" icon="chat" size="14" hint-size="14px,14px"></dc-import><span style="font-weight:500;flex:1">Chat 1</span><span class="ib" style="width:22px;height:22px"><dc-import name="Icon" icon="more" size="14" hint-size="14px,14px"></dc-import></span><span class="ib" style="width:22px;height:22px"><dc-import name="Icon" icon="x" size="13" hint-size="13px,13px"></dc-import></span></div></div>
+</div>
+<div style="color:#868c97;font-size:11.5px;padding-top:8px">Focus is a 1 px accent line on top of the panel and a brighter title. Tab-only panels (editor) skip the title.</div>
+</div>
+
+<div class="card">
+<div class="cap">TABS</div>
+<div style="display:flex;height:30px;background:#101113;border:1px solid #23252a">
+<div style="display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;background:#131417;border-right:1px solid #23252a;white-space:nowrap"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import><span class="m" style="font-size:12px">tile-cache.ts</span><span class="ib" style="width:18px;height:18px"><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></span></div>
+<div style="display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;color:#868c97;border-right:1px solid #23252a;white-space:nowrap"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import><span class="m" style="font-size:12px;font-style:italic">lru.ts</span><span class="ib" style="width:18px;height:18px"><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></span></div>
+</div>
+<div style="color:#868c97;font-size:11.5px;padding-top:8px">Titles never wrap and truncate with an ellipsis. Italic is a preview tab.</div>
+</div>
+
+<div class="card" style="flex:1">
+<div class="cap">TREE AND LIST ROWS</div>
+<div style="display:flex;flex-direction:column">
+<div class="r"><span style="color:#868c97"><dc-import name="Icon" icon="chevD" size="14" hint-size="14px,14px"></dc-import></span><span style="color:#868c97"><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import></span><span style="font-weight:500">src</span></div>
+<div class="r" style="padding-left:30px"><span style="position:absolute;left:20px;top:0;bottom:0;width:1px;background:#2c2f35"></span><span style="color:#868c97"><dc-import name="Icon" icon="chevD" size="14" hint-size="14px,14px"></dc-import></span><span style="color:#868c97"><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import></span><span>tiles</span></div>
+<div class="r" style="padding-left:52px;background:#1b1d22"><span style="position:absolute;left:20px;top:0;bottom:0;width:1px;background:#2c2f35"></span><span style="position:absolute;left:42px;top:0;bottom:0;width:1px;background:#2c2f35"></span><span style="color:#868c97"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import></span><span class="m" style="font-size:12px;flex:1">tile-cache.ts</span><span class="m" style="color:#d4ae6a">M</span></div>
+<div class="r" style="padding-left:52px;box-shadow:inset 0 0 0 1px #8fa0e8"><span style="position:absolute;left:20px;top:0;bottom:0;width:1px;background:#2c2f35"></span><span style="position:absolute;left:42px;top:0;bottom:0;width:1px;background:#2c2f35"></span><span style="color:#868c97"><dc-import name="Icon" icon="file" size="13" hint-size="13px,13px"></dc-import></span><span class="m" style="font-size:12px;flex:1">lru.ts</span><span class="m" style="color:#d4ae6a">M</span></div>
+<div class="r"><span style="color:#868c97"><dc-import name="Icon" icon="chevR" size="14" hint-size="14px,14px"></dc-import></span><span style="color:#868c97"><dc-import name="Icon" icon="folder" size="14" hint-size="14px,14px"></dc-import></span><span>tests</span></div>
+</div>
+<div style="color:#868c97;font-size:11.5px;padding-top:8px">Real tree: chevrons, indent guides, one row component for files and projects. Selected is a quiet tint; the keyboard cursor is a 1 px ring.</div>
+<div style="padding-top:14px" class="cap">OUR TREE: PROJECT AS A BRANCH GRAPH</div>
+<div style="position:relative;width:220px">
+<span style="position:absolute;left:12px;top:0;bottom:12px;width:1px;background:#2c2f35"></span>
+<sc-for list="{{graph}}" as="g" hint-placeholder-count="3"><div class="r" style="padding-left:34px"><span style="position:absolute;left:12px;top:12px;width:9px;height:1px;background:#2c2f35"></span><span style="position:absolute;left:21px;top:7px;width:9px;height:9px;box-sizing:border-box;border-radius:50%;border:1.5px solid {{g.c}};background:{{g.fill}}"></span><span class="m" style="font-size:12px">{{g.t}}</span></div></sc-for>
+</div>
+<div style="color:#868c97;font-size:11.5px;padding-top:6px">Our own detail: worktrees fork off the default branch like a git graph, and the node is the state.</div>
+</div>
+</div>
+
+<!-- column 3 -->
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px">
+<div class="card">
+<div class="cap">COMPOSER: IDLE</div>
+<div style="border:1px solid #2c2f35;border-radius:6px;background:#101113">
+<div style="padding:8px 10px 4px;min-height:30px;color:#868c97">Message the agent. @ for context, / for commands.</div>
+<div style="display:flex;align-items:center;gap:2px;padding:4px 6px 6px"><span class="ib"><dc-import name="Icon" icon="clip" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="at" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="slash" size="14" hint-size="14px,14px"></dc-import></span><span style="width:6px"></span><span class="chip" style="border-color:transparent"><dc-import name="Icon" icon="shield" size="12" hint-size="12px,12px"></dc-import>Ask first</span><span class="chip" style="border-color:transparent">Sonnet</span><span class="chip" style="border-color:transparent">High</span><span style="flex:1"></span><span style="width:26px;height:26px;border-radius:5px;background:#232830;color:#868c97;display:inline-flex;align-items:center;justify-content:center"><dc-import name="Icon" icon="arrowUp" size="14" hint-size="14px,14px"></dc-import></span></div>
+</div>
+<div class="cap" style="padding-top:12px">COMPOSER: RUNNING, WITH CONTEXT</div>
+<div style="display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;align-items:center;gap:8px;height:24px;padding:0 8px;background:#1b1d22;border-radius:4px;font-size:12px;color:#a9afba"><span style="color:#868c97">Queued</span><span style="flex:1">add a regression test</span><span style="color:#8fa0e8">Steer</span><dc-import name="Icon" icon="x" size="12" hint-size="12px,12px"></dc-import></div>
+<div style="border:1px solid #2c2f35;border-radius:6px;background:#101113">
+<div style="display:flex;gap:4px;padding:6px 8px 0"><span class="chip"><dc-import name="Icon" icon="file" size="12" hint-size="12px,12px"></dc-import><span class="m">tile-cache.ts</span><dc-import name="Icon" icon="x" size="11" hint-size="11px,11px"></dc-import></span><span class="chip"><dc-import name="Icon" icon="image" size="12" hint-size="12px,12px"></dc-import>screenshot.png<dc-import name="Icon" icon="x" size="11" hint-size="11px,11px"></dc-import></span></div>
+<div style="padding:6px 10px 4px;min-height:30px">Also handle <span class="m" style="font-size:12px;color:#8fa0e8;background:#1a1d2b;border-radius:3px;padding:0 3px">@layer-manager.ts</span></div>
+<div style="display:flex;align-items:center;gap:2px;padding:4px 6px 6px"><span class="ib"><dc-import name="Icon" icon="clip" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="at" size="14" hint-size="14px,14px"></dc-import></span><span class="ib"><dc-import name="Icon" icon="slash" size="14" hint-size="14px,14px"></dc-import></span><span style="flex:1"></span><span style="color:#868c97;font-size:11px;margin-right:8px">42%</span><span style="width:26px;height:26px;border-radius:5px;background:#d4d7dd;color:#101113;display:inline-flex;align-items:center;justify-content:center"><dc-import name="Icon" icon="stop" size="13" hint-size="13px,13px"></dc-import></span></div>
+</div>
+</div>
+<div style="color:#868c97;font-size:11.5px;padding-top:8px">Context chips, queued message with steer, mode, model, effort, context meter, one primary button that becomes stop. Drafts survive switching worktrees.</div>
+</div>
+
+<div class="card">
+<div class="cap">ICONS (LUCIDE-STYLE, 1.6 STROKE)</div>
+<div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px">
+<sc-for list="{{icons}}" as="i" hint-placeholder-count="24"><div style="display:flex;flex-direction:column;align-items:center;gap:3px;color:#a9afba"><dc-import name="Icon" icon="{{i}}" size="16" hint-size="16px,16px"></dc-import><span style="font-size:9.5px;color:#868c97">{{i}}</span></div></sc-for>
+</div>
+</div>
+
+<div class="card" style="flex:1">
+<div class="cap">COLOR TOKENS</div>
+<div class="row" style="gap:6px">
+<sc-for list="{{swatches}}" as="s" hint-placeholder-count="12"><div style="width:58px"><div style="height:28px;border-radius:3px;background:{{s.c}};border:1px solid #2c2f35"></div><div style="font-size:9.5px;color:#868c97;padding-top:2px">{{s.n}}</div></div></sc-for>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1020}}'>
+class Component extends DCLogic {
+renderVals() {
+const none = 'transparent';
+const iconButtons = [
+{ icon: 'plus', bg: none, c: '#868c97' }, { icon: 'search', bg: '#1b1d22', c: '#d4d7dd' }, { icon: 'terminal', bg: '#1b1d22', c: '#d4d7dd' },
+{ icon: 'bell', bg: none, c: '#868c97' }, { icon: 'x', bg: none, c: '#868c97' }
+];
+const states = [
+{ t: 'Running', c: '#78aedd', fill: '#101113' }, { t: 'Needs you', c: '#d4ae6a', fill: '#101113' }, { t: 'Error', c: '#d98080', fill: '#101113' },
+{ t: 'Done', c: '#74b996', fill: '#74b996' }, { t: 'Idle', c: '#868c97', fill: '#101113' }
+];
+const graph = [
+{ t: 'main', c: '#868c97', fill: '#868c97' }, { t: 'PROJ-482-fix-tile-cache', c: '#78aedd', fill: '#101113' }, { t: 'PROJ-431-sentry-noise', c: '#74b996', fill: '#74b996' }
+];
+const icons = ['branch', 'pr', 'folder', 'file', 'files', 'changes', 'chat', 'terminal', 'review', 'zap', 'plugin', 'sliders', 'search', 'x', 'plus', 'chevR', 'chevD', 'select', 'layout', 'dollar', 'more', 'check', 'bell', 'play', 'alert', 'sparkle', 'split', 'pin', 'clip', 'at', 'slash', 'shield', 'arrowUp', 'stop', 'image', 'crosshair', 'history', 'list'];
+const swatches = [
+{ n: 'ground', c: '#101113' }, { n: 'surface', c: '#131417' }, { n: 'raised', c: '#181a1e' }, { n: 'border', c: '#23252a' }, { n: 'text', c: '#d4d7dd' },
+{ n: 'muted', c: '#868c97' }, { n: 'accent', c: '#8fa0e8' }, { n: 'running', c: '#78aedd' }, { n: 'attention', c: '#d4ae6a' }, { n: 'error', c: '#d98080' },
+{ n: 'done', c: '#74b996' }
+];
+return { iconButtons, states, graph, icons, swatches };
+}
+}
+</script>
+</body>
+</html>

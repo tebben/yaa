@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Workflow runs: a ticket pickup waiting for approval</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.k{border:1px solid #2c2f35;border-radius:4px;padding:0 5px;font-size:11px;color:#868c97}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.cap{font-size:11px;letter-spacing:.06em;color:#868c97;text-transform:uppercase}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;display:flex;background:#101113;color:#d4d7dd;font:13px/1.45 Geist,system-ui,sans-serif;overflow:hidden">
+
+<dc-import name="Menu" view="workflows" hint-size="232px,900px"></dc-import>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:34px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px;background:#101113;border-bottom:1px solid #23252a">
+<span style="color:#868c97"><dc-import name="Icon" icon="folder" size="15" hint-size="15px,15px"></dc-import></span><span style="color:#868c97">geo-viewer</span><span style="color:#4b515c">/</span>
+<span style="color:#868c97"><dc-import name="Icon" icon="zap" size="15" hint-size="15px,15px"></dc-import></span><span>Workflows</span>
+<span style="flex:1"></span>
+<span style="width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="bell" size="16" hint-size="16px,16px"></dc-import></span><span style="width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="split" size="16" hint-size="16px,16px"></dc-import></span>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+
+<!-- runs list -->
+<div style="width:380px;flex:none;border-right:1px solid #23252a;background:#101113;display:flex;flex-direction:column;box-sizing:border-box">
+<div style="padding:12px 14px;border-bottom:1px solid #23252a;display:flex;justify-content:space-between"><span style="font-weight:600">Runs</span><span style="color:#868c97">Workflows · Sensors</span></div>
+<div style="padding:8px 6px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{runs}}" as="r" hint-placeholder-count="5">
+<div style="padding:8px 10px;border-radius:4px;background:{{r.bg}};display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;justify-content:space-between"><span style="font-weight:500">{{r.name}}</span><span style="color:{{r.c}};font-size:12px">{{r.state}}</span></div>
+<div style="display:flex;justify-content:space-between;color:#868c97;font-size:12px"><span>{{r.trig}}</span><span class="m">{{r.when}}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="padding:12px 14px;border-top:1px solid #23252a;color:#868c97;font-size:12px">Sensor: Jira assigned to me · polling every 2 min · on for geo-viewer</div>
+</div>
+
+<!-- run detail -->
+<div style="flex:1;min-width:0;padding:22px 28px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div><div style="font-size:18px;font-weight:600">Pick up ticket · GEO-512</div><div style="color:#868c97">Triggered by sensor: issue assigned to you · started 4 min ago · cost so far <span class="m">$0.61</span></div></div>
+<span style="display:flex;gap:8px"><span style="border:1px solid #2c2f35;border-radius:6px;padding:4px 12px;color:#a9afba">Cancel run</span></span>
+</div>
+
+<div style="display:flex;gap:18px;min-height:0;flex:1">
+<!-- step timeline -->
+<div style="width:380px;flex:none;border:1px solid #23252a;border-radius:4px;background:#101113;padding:8px 0">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="7">
+<div style="display:flex;gap:12px;padding:9px 16px;background:{{s.bg}}">
+<span class="dot" style="background:{{s.c}};margin-top:6px"></span>
+<div style="flex:1"><div style="display:flex;justify-content:space-between"><span style="font-weight:500">{{s.name}}</span><span class="k">{{s.mode}}</span></div><div style="color:#868c97;font-size:12px">{{s.note}}</div></div>
+</div>
+</sc-for>
+</div>
+
+<!-- approval card -->
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div style="border:1px solid #6b5217;border-radius:4px;background:#1a150a;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between"><span style="font-weight:600;color:#d4ae6a">Waiting: review before commit and push</span><span class="k">review step</span></div>
+<div style="color:#a9afba">The agent finished and the project check passed. Approve to commit and push to a new branch, or edit the commit message first.</div>
+<div class="cap">Commit message</div>
+<div class="m" style="border:1px solid #2c2f35;border-radius:6px;background:#101113;padding:10px 12px;font-size:12px">fix(tiles): evict entries from other zoom levels (GEO-512)</div>
+<div class="cap">Changes</div>
+<div class="m" style="font-size:12px;color:#a9afba;line-height:20px">M src/tiles/lru.ts <span style="color:#868c97">+14</span><br>M src/tiles/tile-cache.ts <span style="color:#868c97">+9 −2</span><br>A src/tiles/tile-cache.test.ts <span style="color:#868c97">+38</span></div>
+<div style="display:flex;gap:10px;align-items:center">
+<span style="padding:6px 16px;border-radius:6px;background:#8fa0e8;color:#101113;font-weight:600">Approve and continue</span>
+<span style="padding:6px 16px;border:1px solid #2c2f35;border-radius:6px;color:#a9afba">Edit</span>
+<span style="padding:6px 16px;border:1px solid #2c2f35;border-radius:6px;color:#d98080">Reject</span>
+<span style="flex:1"></span><span style="color:#868c97">Open diff</span>
+</div>
+</div>
+<div style="border:1px solid #23252a;border-radius:4px;background:#101113;padding:12px 16px;flex:1;min-height:0;overflow:hidden">
+<div class="cap" style="padding-bottom:6px">Step output · Agent prompt</div>
+<div class="m" style="font-size:12px;line-height:19px;color:#a9afba"><div>Implemented eviction on zoom change.</div><div>Added removeWhere to the LRU cache and a regression test.</div><div style="color:#74b996">pnpm run check: passed</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="height:24px;flex:none;display:flex;align-items:center;gap:14px;padding:0 14px;background:#101113;border-top:1px solid #23252a;font-size:12px;color:#868c97"><span>3 runs today</span><span>Sensor: Jira assigned to me, every 2 min</span><span style="flex:1"></span><span style="color:#d4ae6a">1 waiting for approval</span><span style="display:flex;align-items:center;gap:5px"><dc-import name="Icon" icon="dollar" size="13" hint-size="13px,13px"></dc-import><span style="font-family:Geist Mono,monospace">0.61 this run</span></span></div>
+</div>
+<dc-import name="Rail" on="zap" hint-size="40px,900px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const runs = [
+{ name: 'Pick up ticket · GEO-512', state: 'Waiting for approval', c: '#d4ae6a', trig: 'Sensor: Jira assigned', when: '4 min', bg: '#1b1d22' },
+{ name: 'Review PR · !208', state: 'Running', c: '#78aedd', trig: 'Manual: PR panel', when: '12 min', bg: 'transparent' },
+{ name: 'Pick up ticket · GEO-497', state: 'Succeeded', c: '#74b996', trig: 'Sensor: Jira assigned', when: '2 h', bg: 'transparent' },
+{ name: 'Write spec · GEO-501', state: 'Failed at step 3', c: '#d98080', trig: 'Manual: issue row', when: 'yesterday', bg: 'transparent' },
+{ name: 'Review PR · !199', state: 'Succeeded', c: '#74b996', trig: 'Event: pr.opened', when: 'yesterday', bg: 'transparent' }
+];
+const steps = [
+{ name: 'Create worktree', mode: 'auto', note: 'GEO-512-tile-cache-growth from main', c: '#74b996', bg: 'transparent' },
+{ name: 'Agent prompt', mode: 'auto', note: 'Claude Code · Sonnet · ticket text as prompt', c: '#74b996', bg: 'transparent' },
+{ name: 'Shell', mode: 'auto', note: 'pnpm run check · passed', c: '#74b996', bg: 'transparent' },
+{ name: 'Commit and push', mode: 'review', note: 'Waiting for you', c: '#d4ae6a', bg: '#1b1d22' },
+{ name: 'Create merge request', mode: 'auto', note: 'Target main · title from the ticket', c: '#7d8590', bg: 'transparent' },
+{ name: 'Notify', mode: 'auto', note: 'OS notification with the MR link', c: '#7d8590', bg: 'transparent' }
+];
+return { runs, steps };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Diff review with annotations and command palette</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.m{font-family:'Geist Mono',ui-monospace,monospace}
+.k{border:1px solid #2c2f35;border-radius:4px;padding:0 5px;font-size:11px;color:#868c97}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.cap{font-size:11px;letter-spacing:.06em;color:#868c97;text-transform:uppercase}
+</style>
+</helmet>
+<div style="position:relative;width:1440px;height:900px;display:flex;background:#101113;color:#d4d7dd;font:13px/1.45 Geist,system-ui,sans-serif;overflow:hidden">
+
+<dc-import name="Menu" view="review" hint-size="232px,900px"></dc-import>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:34px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px;background:#101113;border-bottom:1px solid #23252a">
+<span style="color:#868c97"><dc-import name="Icon" icon="folder" size="15" hint-size="15px,15px"></dc-import></span><span style="color:#868c97">geo-viewer</span><span style="color:#4b515c">/</span>
+<span style="color:#868c97"><dc-import name="Icon" icon="review" size="15" hint-size="15px,15px"></dc-import></span><span>Review</span><span style="display:flex;align-items:center;gap:6px;border-radius:999px;padding:1px 10px;background:#2a2214;color:#d4ae6a;font-size:12px">2 open</span>
+<span style="flex:1"></span>
+<span style="width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="bell" size="16" hint-size="16px,16px"></dc-import></span><span style="width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#868c97"><dc-import name="Icon" icon="split" size="16" hint-size="16px,16px"></dc-import></span>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div style="height:34px;flex:none;display:flex;background:#101113;border-bottom:1px solid #23252a">
+<div style="padding:0 14px;display:flex;align-items:center;gap:8px;background:#101113;border-right:1px solid #23252a;border-top:2px solid #8fa0e8"><span class="m" style="font-size:12px">diff: tile-cache.ts</span></div>
+<div style="padding:0 14px;display:flex;align-items:center;color:#868c97;border-right:1px solid #23252a"><span class="m" style="font-size:12px;font-style:italic">diff: lru.ts</span></div>
+</div>
+<div style="display:flex;border-bottom:1px solid #23252a" class="cap"><span style="flex:1;padding:6px 16px">Before</span><span style="flex:1;padding:6px 16px;border-left:1px solid #23252a">After</span></div>
+<div style="flex:1;overflow:hidden;font-size:12.5px;line-height:20px">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<div>
+<div style="display:flex">
+<div style="flex:1;display:flex;background:{{r.lbg}}"><span class="m" style="width:44px;text-align:right;padding-right:12px;color:#6f7787;flex:none">{{r.ln}}</span><span class="m" style="white-space:pre;color:#d6dae1">{{r.l}}</span></div>
+<div style="flex:1;display:flex;background:{{r.rbg}};border-left:1px solid #23252a"><span class="m" style="width:44px;text-align:right;padding-right:12px;color:#6f7787;flex:none">{{r.rn}}</span><span class="m" style="white-space:pre;color:#d6dae1">{{r.r}}</span></div>
+</div>
+<sc-if value="{{r.note}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex"><div style="flex:1"></div><div style="flex:1;border-left:1px solid #23252a"><div style="margin:6px 20px 6px 56px;border:1px solid {{r.nb}};background:#161a24;border-radius:6px;padding:8px 10px;line-height:18px"><span style="color:{{r.nc}};font-weight:600">{{r.state}}</span><span> {{r.note}}</span></div></div></div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="width:380px;flex:none;border-left:1px solid #23252a;background:#101113;padding:14px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600">Review</span><span class="k">3 annotations</span></div>
+<sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+<div style="border:1px solid #23252a;border-radius:4px;padding:8px 10px;display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;justify-content:space-between"><span class="m" style="font-size:12px;color:#8fa0e8">{{n.loc}}</span><span style="color:{{n.c}};font-size:12px">{{n.state}}</span></div>
+<div>{{n.t}}</div>
+</div>
+</sc-for>
+<div style="flex:1"></div>
+<div style="text-align:center;padding:8px;border-radius:6px;background:#8fa0e8;color:#101113;font-weight:600">Send 2 open to chat</div>
+</div>
+</div>
+
+<div style="height:24px;flex:none;display:flex;align-items:center;gap:14px;padding:0 14px;background:#101113;border-top:1px solid #23252a;font-size:12px;color:#868c97"><span style="display:flex;align-items:center;gap:5px"><dc-import name="Icon" icon="branch" size="13" hint-size="13px,13px"></dc-import><span style="font-family:Geist Mono,monospace">PROJ-482-fix-tile-cache</span></span><span style="flex:1"></span><span>Review: 2 open annotations</span></div>
+</div>
+<dc-import name="Rail" on="changes,review" hint-size="40px,900px"></dc-import>
+<!-- command palette overlay -->
+<div style="position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(5,6,8,0.55);display:flex;justify-content:center;align-items:flex-start;padding-top:120px">
+<div style="width:620px;border:1px solid #2c2f35;border-radius:4px;background:#15171c;overflow:hidden">
+<div style="padding:12px 16px;border-bottom:1px solid #23252a;display:flex;justify-content:space-between"><span>worktree from</span><span class="k m">Esc</span></div>
+<sc-for list="{{cmds}}" as="c" hint-placeholder-count="5">
+<div style="display:flex;justify-content:space-between;padding:8px 16px;background:{{c.bg}}"><span>{{c.t}}</span><span style="color:#868c97">{{c.src}}</span></div>
+</sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+const none = 'transparent', del = 'rgba(242,109,109,0.13)', add = 'rgba(76,195,138,0.13)';
+const rows = [
+{ ln: '8', l: '  private zoom = 0;', rn: '8', r: '  private zoom = 0;', lbg: none, rbg: none },
+{ ln: '9', l: '', rn: '9', r: '', lbg: none, rbg: none },
+{ ln: '10', l: '  setZoom(next: number) {', rn: '10', r: '  // Drop entries from other zoom levels', lbg: del, rbg: add },
+{ ln: '11', l: '    this.zoom = next;', rn: '11', r: '  setZoom(next: number) {', lbg: del, rbg: add },
+{ ln: '', l: '', rn: '12', r: '    if (next === this.zoom) return;', lbg: none, rbg: add },
+{ ln: '', l: '', rn: '13', r: '    this.cache.removeWhere((key) => key.z !== next);', lbg: none, rbg: add, note: 'Should this also cancel in-flight fetches for the old zoom?', state: 'Open', nc: '#d4ae6a', nb: '#6b5217' },
+{ ln: '', l: '', rn: '14', r: '    this.zoom = next;', lbg: none, rbg: add },
+{ ln: '12', l: '  }', rn: '15', r: '  }', lbg: none, rbg: none },
+{ ln: '13', l: '', rn: '16', r: '', lbg: none, rbg: none },
+{ ln: '14', l: '  get(key: TileKey) {', rn: '17', r: '  get(key: TileKey) {', lbg: none, rbg: none },
+{ ln: '15', l: '    return this.cache.get(id(key));', rn: '18', r: '    return this.cache.get(id(key));', lbg: none, rbg: none, note: 'id(key) allocates a string per lookup. Cache the id on the key.', state: 'Open', nc: '#d4ae6a', nb: '#6b5217' },
+{ ln: '16', l: '  }', rn: '19', r: '  }', lbg: none, rbg: none }
+];
+const notes = [
+{ loc: 'tile-cache.ts:13 (new)', state: 'Open', c: '#d4ae6a', t: 'Should this also cancel in-flight fetches for the old zoom?' },
+{ loc: 'tile-cache.ts:18 (new)', state: 'Open', c: '#d4ae6a', t: 'id(key) allocates a string per lookup. Cache the id on the key.' },
+{ loc: 'lru.ts:41 (new)', state: 'Sent, resolved', c: '#74b996', t: 'Name this evictWhere to match the rest of the class.' }
+];
+const cmds = [
+{ t: 'Create worktree from ticket GEO-512', src: 'Issue tracker', bg: '#1b1d22' },
+{ t: 'Create worktree from branch', src: 'Git', bg: none },
+{ t: 'Create worktree from pull request', src: 'Source control', bg: none },
+{ t: 'Start workflow: Review PR', src: 'Workflows', bg: none }
+];
+return { rows, notes, cmds };
+}
+}
+</script>
+</body>
+</html>
