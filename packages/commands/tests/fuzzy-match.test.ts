@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchCommands } from "../command-match.ts";
+import { fuzzyMatch, fuzzyScore } from "../fuzzy-match.ts";
 
 const commands = [
 	{ title: "Toggle left menu", category: "View" },
@@ -8,9 +8,13 @@ const commands = [
 	{ title: "Reset layout", category: "Layout" },
 ];
 const titles = (query: string) =>
-	matchCommands(query, commands).map((command) => command.title);
+	fuzzyMatch(
+		query,
+		commands,
+		(command) => `${command.category} ${command.title}`,
+	).map((command) => command.title);
 
-describe("matchCommands", () => {
+describe("fuzzyMatch", () => {
 	it("keeps every command in order for an empty query", () => {
 		expect(titles(" ")).toHaveLength(4);
 	});
@@ -26,7 +30,15 @@ describe("matchCommands", () => {
 		expect(titles("panel le")[0]).toBe("Focus panel left");
 	});
 
-	it("matches the category too", () => {
+	it("matches the whole label, the category too", () => {
 		expect(titles("layout")).toEqual(["Reset layout"]);
+	});
+});
+
+describe("fuzzyScore", () => {
+	it("scores 0 for an empty query and undefined for no match", () => {
+		expect(fuzzyScore("", "anything")).toBe(0);
+		expect(fuzzyScore("zz", "geo-viewer")).toBeUndefined();
+		expect(fuzzyScore("gv", "geo-viewer")).toBe(0);
 	});
 });

@@ -1,4 +1,4 @@
-import { matchCommands } from "@yaa/commands/command-match";
+import { fuzzyMatch } from "@yaa/commands/fuzzy-match";
 import type { PaletteEntry } from "../commands/index.ts";
 
 type PaletteOptions = {
@@ -16,7 +16,14 @@ export const createPalette = ({ commands, run }: PaletteOptions) => {
 	let offered = $state.raw<readonly PaletteEntry[]>([]);
 	// Where focus was before, so closing gives it back.
 	let returnFocus: HTMLElement | undefined;
-	const entries = $derived(matchCommands(query, offered));
+	// The palette matches a command's category and title together.
+	const entries = $derived(
+		fuzzyMatch(
+			query,
+			offered,
+			({ category, title }) => `${category ?? ""} ${title}`,
+		),
+	);
 
 	const hide = () => {
 		if (!open) return;
