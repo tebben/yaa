@@ -42,6 +42,15 @@ export const appCommands = ({
 		category: "View",
 		run: () => regions.move(direction),
 	})),
+	{ id: "input.leave", when: "textField", run: regions.leaveField },
+	{
+		id: "input.edit",
+		title: "Edit the text field",
+		category: "View",
+		when: "!inputFocus",
+		enabled: regions.hasField,
+		run: regions.editField,
+	},
 	{
 		id: "focus.hideHighlight",
 		when: "focus.highlight",

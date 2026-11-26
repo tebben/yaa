@@ -1,4 +1,5 @@
 import {
+	type AddPanelOptions,
 	createDockview,
 	type DockviewApi,
 	type GroupPanelPartInitParameters,
@@ -97,6 +98,9 @@ export const createDock = ({
 	// The latest layout, so attaching again (a remount, hot reload in dev)
 	// restores the grid as it was, not as it was loaded.
 	let latest = layout;
+	// By kind: how wide its panel was when it closed alone in its group, so
+	// it opens again at that width.
+	const widths = new Map<string, number>();
 
 	const headerHost = (panelId: string) => {
 		let host = headerHosts.get(panelId);
@@ -155,14 +159,46 @@ export const createDock = ({
 	const add = (
 		dock: DockviewApi,
 		kind: string,
-		position?: Parameters<DockviewApi["addPanel"]>[0]["position"],
+		placement: Pick<AddPanelOptions, "position" | "initialWidth"> = {},
 	) => {
 		dock.addPanel({
 			id: kind,
 			component: kind,
 			title: kinds.get(kind)?.title ?? kind,
-			...(position === undefined ? {} : { position }),
+			...placement,
 		});
+	};
+
+	// Opens the kind's panel at the right edge of the grid, spanning its
+	// height, as wide as it was when it closed; the other panels give up
+	// room in proportion to their widths (docs/decisions/0033).
+	const addAtEdge = (dock: DockviewApi, kind: string) => {
+		const width = widths.get(kind);
+		add(dock, kind, {
+			position: { direction: "right" },
+			...(width === undefined ? {} : { initialWidth: width }),
+		});
+	};
+
+	// Marks where a kind's panel is, its group and its tab, with one of the
+	// locating classes in dock.css; nothing when it is not open.
+	const mark = (kind: string, className: "yaa-peek" | "yaa-flash") => {
+		const panel = api?.getPanel(kind);
+		if (panel === undefined) return [];
+		const tab = panel.group.element.querySelector(
+			`.dv-tab[data-tab-panel-id="${CSS.escape(kind)}"]`,
+		);
+		const marked = [panel.group.element, ...(tab ? [tab] : [])];
+		for (const element of marked) element.classList.add(className);
+		return marked;
+	};
+	let peeked: readonly Element[] = [];
+
+	const close = (panel: IDockviewPanel) => {
+		if (panel.group.panels.length === 1) {
+			widths.set(panel.id, panel.group.api.width);
+		}
+		panel.api.close();
 	};
 
 	const restore = (dock: DockviewApi) => {
@@ -176,11 +212,22 @@ export const createDock = ({
 				dock,
 				kind,
 				beside && {
-					referencePanel: beside.kind,
-					direction: beside.direction,
+					position: {
+						referencePanel: beside.kind,
+						direction: beside.direction,
+					},
 				},
 			);
 		}
+	};
+
+	// The root of the panel's content, which takes focus for the panel.
+	const content = (panel: IDockviewPanel | undefined) => {
+		const slot = slots.find(
+			(slot) => slot.part === "content" && slot.panelId === panel?.id,
+		);
+		const root = slot?.element.firstElementChild;
+		return root instanceof HTMLElement ? root : undefined;
 	};
 
 	// Makes the panel the active one and moves keyboard focus into it, out of
@@ -188,15 +235,12 @@ export const createDock = ({
 	const activate = (panel: IDockviewPanel | undefined) => {
 		if (panel === undefined) return;
 		panel.api.setActive();
-		const slot = slots.find(
-			(slot) => slot.part === "content" && slot.panelId === panel.id,
-		);
-		const content = slot?.element.firstElementChild;
-		if (content instanceof HTMLElement) memory.enter(content);
+		const root = content(panel);
+		if (root !== undefined) memory.enter(root);
 	};
 
 	// Opening or closing a panel moves focus only when it was in the grid:
-	// toggling from the rail or the palette leaves it where it was.
+	// toggling from the panel bar or the palette leaves it where it was.
 	const settle = (panel: IDockviewPanel | undefined, hadFocus: boolean) => {
 		if (hadFocus) activate(panel);
 		else panel?.api.setActive();
@@ -267,6 +311,21 @@ export const createDock = ({
 		focusActive() {
 			activate(api?.activePanel);
 		},
+		// Moves focus from a text field in the active panel onto the panel.
+		leaveField() {
+			const root = content(api?.activePanel);
+			if (root !== undefined) memory.leave(root);
+		},
+		// Whether the active panel has a text field to go back to.
+		hasField() {
+			const root = content(api?.activePanel);
+			return root !== undefined && memory.hasField(root);
+		},
+		// Focuses the active panel's text field, the one it had last.
+		editField() {
+			const root = content(api?.activePanel);
+			if (root !== undefined) memory.edit(root);
+		},
 		// Focuses the group beside the active one; false at the grid's edge.
 		focus(direction: DockDirection): boolean {
 			const group = api?.activeGroup;
@@ -306,7 +365,7 @@ export const createDock = ({
 			if (api === undefined) return;
 			const active = api.activePanel;
 			if (active !== undefined && closeHandlers.get(active.id)?.()) return;
-			active?.api.close();
+			if (active !== undefined) close(active);
 			activate(api.activePanel);
 		},
 		reset() {
@@ -316,7 +375,8 @@ export const createDock = ({
 			restore(api);
 		},
 		close(panelId: string) {
-			api?.getPanel(panelId)?.api.close();
+			const panel = api?.getPanel(panelId);
+			if (panel !== undefined) close(panel);
 		},
 		// Brings the kind's panel into view, opening it at the right edge of the
 		// grid when it is not there. With `takeOver` it becomes the active panel,
@@ -325,9 +385,7 @@ export const createDock = ({
 		show(kind: string, takeOver: boolean) {
 			if (api === undefined) return;
 			const active = api.activePanel;
-			if (api.getPanel(kind) === undefined) {
-				add(api, kind, { direction: "right" });
-			}
+			if (api.getPanel(kind) === undefined) addAtEdge(api, kind);
 			const panel = api.getPanel(kind);
 			panel?.api.setActive();
 			if (!takeOver && active && active.group !== panel?.group) {
@@ -343,14 +401,29 @@ export const createDock = ({
 				// Closing a panel that is not the active one would make whichever
 				// group dockview picks active; keep the one that was.
 				const active = api.activePanel;
-				panel.api.close();
+				close(panel);
 				settle(active === panel ? api.activePanel : active, hadFocus);
 				return;
 			}
-			add(api, kind, { direction: "right" });
+			addAtEdge(api, kind);
 			// The new panel's content renders on the next tick; dockview may
 			// have moved the focused element out of the page meanwhile.
 			void tick().then(() => settle(api?.getPanel(kind), hadFocus));
+			for (const element of mark(kind, "yaa-flash")) {
+				// Animations inside the panel end here too.
+				const done = (event: Event) => {
+					if (event.target !== element) return;
+					element.classList.remove("yaa-flash");
+					element.removeEventListener("animationend", done);
+				};
+				element.addEventListener("animationend", done);
+			}
+		},
+		// Shows where the kind's panel is while its toggle is hovered or
+		// focused; undefined takes the mark off.
+		peek(kind: string | undefined) {
+			for (const element of peeked) element.classList.remove("yaa-peek");
+			peeked = kind === undefined ? [] : mark(kind, "yaa-peek");
 		},
 	};
 };

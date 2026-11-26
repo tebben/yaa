@@ -36,6 +36,8 @@ export const createEditorView = (save: () => void) => {
 			text.className = "text";
 			const status = document.createElement("div");
 			status.className = "vim";
+			// What is typed after / and : is vim's, Escape included.
+			status.dataset["ownKeys"] = "";
 			element.replaceChildren(text, status);
 			const created = createEditor(text);
 			const vim = attachVim(created, status, save);

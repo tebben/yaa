@@ -26,7 +26,7 @@ let {
 
 <footer
 	{@attach region}
-	class="yaa-focus-region col-span-3 col-start-1 row-start-3 flex h-footer items-center gap-4 border-t border-border bg-chrome px-3 text-sm text-text-muted"
+	class="yaa-focus-region col-span-2 col-start-1 row-start-3 flex h-footer items-center gap-4 border-t border-border bg-chrome px-3 text-sm text-text-muted"
 >
 	{#if status}
 		<span class="flex min-w-0 items-center gap-1.5">

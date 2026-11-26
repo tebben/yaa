@@ -2,31 +2,35 @@
 import PanelLeftClose from "@lucide/svelte/icons/panel-left-close";
 import PanelLeftOpen from "@lucide/svelte/icons/panel-left-open";
 import { Icon, IconButton } from "@yaa/ui";
+import type { Snippet } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { Crumb } from "./crumb.ts";
 
 // Spans the window. It leads with the button that hides or shows the left
 // menu and the name, which keep their place either way; while the menu is
 // open they take its width, so the project lines up with the grid. Then the
-// selected project and what of it the grid shows. Plugin slots come later.
+// selected project and what of it the grid shows, and at the end `end`, the
+// panel toggles while a worktree is open. Plugin slots come later.
 let {
 	region,
 	menuOpen,
 	menuShortcut,
 	ontogglemenu,
 	crumbs,
+	end,
 }: {
 	region: Attachment<HTMLElement>;
 	menuOpen: boolean;
 	menuShortcut: readonly string[] | undefined;
 	ontogglemenu: () => void;
 	crumbs: readonly Crumb[];
+	end?: Snippet;
 } = $props();
 </script>
 
 <header
 	{@attach region}
-	class="yaa-focus-region col-span-3 col-start-1 row-start-1 flex h-header items-center border-b border-border bg-chrome pr-3 text-text-muted"
+	class="yaa-focus-region col-span-2 col-start-1 row-start-1 flex h-header items-center border-b border-border bg-chrome pr-1.5 text-text-muted"
 >
 	<div
 		class={["flex shrink-0 items-center gap-1.5 pl-1.5", menuOpen && "w-menu"]}
@@ -65,4 +69,5 @@ let {
 			<span class="truncate">No project selected</span>
 		{/each}
 	</div>
+	{@render end?.()}
 </header>

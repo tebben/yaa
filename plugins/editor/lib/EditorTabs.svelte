@@ -1,7 +1,6 @@
 <script lang="ts">
 import File from "@lucide/svelte/icons/file";
-import X from "@lucide/svelte/icons/x";
-import { Icon } from "@yaa/ui";
+import { Icon, TabClose } from "@yaa/ui";
 import type { EditorPanelController } from "./editor-panel.svelte.ts";
 
 let { editor }: { editor: EditorPanelController } = $props();
@@ -11,7 +10,7 @@ let { editor }: { editor: EditorPanelController } = $props();
 	{#each editor.tabs as tab (tab.path)}
 		<div
 			class={[
-				"tab",
+				"tab yaa-tab",
 				{ active: tab.active, preview: tab.preview, deleted: tab.deleted },
 			]}
 			{@attach tab.active
@@ -37,17 +36,12 @@ let { editor }: { editor: EditorPanelController } = $props();
 					<span class="folder">{tab.folder}</span>
 				{/if}
 			</button>
-			<button
-				type="button"
-				class={["close", { dirty: tab.dirty }]}
-				aria-label={tab.dirty
-					? `Close ${tab.name}, unsaved`
-					: `Close ${tab.name}`}
+			<TabClose
+				label={tab.dirty ? `Close ${tab.name}, unsaved` : `Close ${tab.name}`}
+				dirty={tab.dirty}
+				concealed={!tab.active}
 				onclick={() => editor.close(tab.path)}
-			>
-				<span class="dot"></span>
-				<span class="cross"><Icon icon={X} /></span>
-			</button>
+			/>
 		</div>
 	{:else}
 		<span class="none">Editor</span>
@@ -94,8 +88,7 @@ let { editor }: { editor: EditorPanelController } = $props();
 	outline: none;
 }
 
-.file :global(svg),
-.close :global(svg) {
+.file :global(svg) {
 	width: var(--spacing-3_5);
 	height: var(--spacing-3_5);
 }
@@ -115,47 +108,6 @@ let { editor }: { editor: EditorPanelController } = $props();
 .folder {
 	color: var(--color-text-muted);
 	font-size: var(--text-xs);
-}
-
-.close {
-	display: grid;
-	place-items: center;
-	width: var(--spacing-4_5);
-	height: var(--spacing-4_5);
-	border-radius: var(--radius-chip);
-	outline: none;
-}
-
-.close:hover,
-.close:focus-visible {
-	background: var(--color-hover);
-}
-
-/* The dot and the cross share a place: unsaved text shows the dot until the
-   button is under the pointer. */
-.dot,
-.cross {
-	grid-area: 1 / 1;
-	visibility: hidden;
-}
-
-.dot {
-	width: var(--spacing-2);
-	height: var(--spacing-2);
-	border-radius: 50%;
-	background: var(--color-text-soft);
-}
-
-.cross {
-	display: flex;
-}
-
-.dirty:is(:hover, :focus-visible) .cross,
-.dirty:not(:hover, :focus-visible) .dot,
-.active .close:not(.dirty) .cross,
-.close:not(.dirty):focus-visible .cross,
-.tab:hover .close:not(.dirty) .cross {
-	visibility: visible;
 }
 
 .none {

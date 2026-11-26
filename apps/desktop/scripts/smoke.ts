@@ -2,7 +2,7 @@
 // and drives its window over the DevTools protocol. The app starts with a
 // project (added beforehand: the system's folder picker cannot be driven),
 // its overview opens, search finds it, its main checkout opens, a worktree
-// is created and finished, the rail opens the files panel at the right edge,
+// is created and finished, the panel bar opens the files panel at the right edge,
 // which filters on /, follows the folder and makes and deletes a file, a file
 // opens from it in the editor, is edited and saved with vim keys, and another
 // by quick open, the palette runs the hello plugin's command, and the fake
@@ -243,7 +243,7 @@ const clickElement = async (page: Connection, element: string) => {
 // The open worktree's dock; the docks of other worktrees stay, hidden.
 const DOCK = `[...document.querySelectorAll(".yaa-dock")].find((dock) => dock.offsetParent !== null)`;
 
-const checkRailPlacement = async (page: Connection) => {
+const checkPanelBarPlacement = async (page: Connection) => {
 	const changes = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Changes")`;
 	const files = `document.querySelector('[aria-label="Panels"] button[aria-label="Files"]')`;
 	const filesTab = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Files")`;
@@ -268,7 +268,7 @@ const DELETE_FILE: Key = { key: "d", code: "KeyD", keyCode: 68, text: "d" };
 const fileRow = (path: string) =>
 	`(${DOCK}).querySelector('[aria-label="Files"] button[title="${path}"]')`;
 
-// In the files panel the rail opened: a file made outside the app appears,
+// In the files panel the panel bar opened: a file made outside the app appears,
 // and one is created and deleted by keys.
 const useFilesPanel = async (page: Connection, repo: string) => {
 	await waitFor(page, `(${DOCK}).querySelector('[aria-label="Files"]')`);
@@ -584,8 +584,8 @@ try {
 	console.log("The project's overview, search and main checkout opened.");
 	await createAndFinishWorktree(first.page, dataDir);
 	console.log("A worktree was created, set up, torn down and finished.");
-	await checkRailPlacement(first.page);
-	console.log("The rail opened a panel at the right edge.");
+	await checkPanelBarPlacement(first.page);
+	console.log("The panel bar opened a panel at the right edge.");
 	await useFilesPanel(first.page, join(dataDir, "repo"));
 	console.log("The files panel followed the folder, made and deleted a file.");
 	await useEditor(first.page, join(dataDir, "repo"));

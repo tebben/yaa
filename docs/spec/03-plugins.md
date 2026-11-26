@@ -22,7 +22,7 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 | Point | What a plugin adds |
 | --- | --- |
-| Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the rail before the UI module loads |
+| Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the panel bar before the UI module loads |
 | Header and footer items | components in named slots |
 | Commands and keybindings | actions in the palette, default keys |
 | Settings | a schema-rendered settings page, or a custom panel |
@@ -50,7 +50,7 @@ Backend plugin code runs in a separate plugin host process, so a crashing plugin
 
 - Core starts the host on first use and talks to it over its own typed protocol in `contracts`: activate a plugin, run a command, and the host's log lines. Backend commands run in the host; the palette and keys reach them through core. The same port carries the plugin API's requests from the host to core.
 - When the host crashes, core forgets what it had activated and starts a new host on the next use, at once if an `onStartup` plugin needs one. After 3 crashes within a minute it stops restarting the host until yaa restarts, and plugin commands fail with that reason in the footer.
-- A UI module loads when one of its panels first renders. A plugin's panel with the id of one of the app's placeholder panels takes its place in the rail.
+- A UI module loads when one of its panels first renders. A plugin's panel with the id of one of the app's placeholder panels takes its place in the panel bar.
 
 **Plugin UI in the renderer**
 

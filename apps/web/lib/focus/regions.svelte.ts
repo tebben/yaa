@@ -4,23 +4,22 @@ import type { Attachment } from "svelte/attachments";
 
 // The parts of the window focus moves between: the shell's fixed regions
 // and the dock grid (docs/spec/01-ui-layout-theming.md).
-export type RegionName = "menu" | "header" | "dock" | "footer" | "rail";
+export type RegionName = "menu" | "header" | "dock" | "footer";
 export type Orientation = "vertical" | "horizontal";
 
 type Region = { element: HTMLElement; orientation: Orientation };
 
 // Which region lies in each direction, after the grid in App.svelte: the
-// header runs across the top and the footer across the bottom; between them
-// are the menu, the dock and the rail.
+// header, with the panel toggles at its end, runs across the top and the
+// footer across the bottom; between them are the menu and the dock.
 const neighbours: Record<
 	RegionName,
 	Partial<Record<DockDirection, RegionName>>
 > = {
 	menu: { right: "dock", up: "header", down: "footer" },
 	header: { down: "dock" },
-	dock: { left: "menu", right: "rail", up: "header", down: "footer" },
+	dock: { left: "menu", up: "header", down: "footer" },
 	footer: { up: "dock" },
-	rail: { left: "dock", up: "header", down: "footer" },
 };
 
 type RegionsOptions = {
@@ -88,6 +87,25 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 		},
 		hideHighlight() {
 			highlighted = false;
+		},
+		// Moves focus out of the text field it is in, onto the panel or region
+		// holding it.
+		leaveField() {
+			const region = regions.get(current());
+			if (region === undefined) dock()?.leaveField();
+			else memory.leave(region.element);
+		},
+		// Whether the focused panel or region has a text field to edit.
+		hasField() {
+			const region = regions.get(current());
+			if (region === undefined) return dock()?.hasField() ?? false;
+			return memory.hasField(region.element);
+		},
+		// Focuses the text field of the focused panel or region.
+		editField() {
+			const region = regions.get(current());
+			if (region === undefined) dock()?.editField();
+			else memory.edit(region.element);
 		},
 		// Moves to the panel or region in that direction, if there is one.
 		move(direction: DockDirection) {

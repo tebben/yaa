@@ -14,15 +14,15 @@ Authority: this file and `tokens.json` win over the mockups. Mockups are a guide
 - **Cursor**: anything that acts on a click shows the pointer; sashes show the resize cursor.
 
 ## Surfaces
-Each part of the window has its own colour token, so a theme can tune it alone. The frame (header, footer and menu) is darkest. The grid, the workspace between the menu and the rail, is lighter, so it reads as the content area; the panels and the rail are darker cards on it, each panel with a header strip in the menu's colour (`docs/decisions/0026-lighter-grid.md`). Overlays and controls are lightest.
+Each part of the window has its own colour token, so a theme can tune it alone. The frame (header, footer and menu) is darkest. The grid, the workspace right of the menu, is lighter, so it reads as the content area; the panels are darker cards on it, each panel with a header strip in the menu's colour (`docs/decisions/0026-lighter-grid.md`). Overlays and controls are lightest.
 
 | Part | Token |
 | --- | --- |
 | Header and footer | `chrome` |
 | Left menu, and the panel header strip in the same colour | `menu`, `panelHeader` |
-| Panel content and the right rail, the cards on the grid | `surface`, `rail` |
+| Panel content, the cards on the grid | `surface` |
 | Panel header on hover | `panelHeaderHover` |
-| The workspace behind the panels and rail | `grid` |
+| The workspace behind the panels | `grid` |
 | Inputs, buttons and key caps | `raised` |
 | Palette and tooltips | `overlay`, with the `overlay` shadow and radius |
 | Hover, pressed toggle and selected item | `hover`, `pressed`, `selection` |
@@ -34,13 +34,14 @@ Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and
 ## Spacing
 - One inset, 12px (`space.3`), from the edge of every area to its content: header, menu items, panel header icon and panel content line up on it.
 - 8px between an icon and its text (6px in the header, where the icon is a button with its own padding).
-- Heights are on a 4px grid: header 40px, panel header 36px, footer 28px, buttons 26px, rail buttons 32px.
+- Heights are on a 4px grid: header 40px, panel header 36px, footer 28px, buttons 26px.
 
 ## Layout
 - The header spans the window. It leads with the button that hides and shows the left menu and the name "yaa"; these keep their place whether the menu is open or not. While the menu is open they take its width, so the project starts in line with the leftmost panel's content. The header is bound to the **selected project**.
-- The left menu, the grid and the right rail sit between the header and the footer, which also spans the window.
-- The right rail is a card on the grid, rounded like the panels and as tall as its buttons. Open panels have a bright icon on a quiet `pressed` tint, closed panels a muted icon with no background; hover and keyboard focus add the hover tint. The icon stroke stays the same in both states.
+- The left menu and the grid sit between the header and the footer, which also spans the window.
+- The panel bar ends the header: a row of icon buttons, one per panel kind, its last icon as far from the window's edge as the menu button's is at the start. Open panels have a bright icon on a quiet `pressed` tint, closed panels a muted icon with no background; hover and keyboard focus add the hover tint. The icon stroke stays the same in both states. Pointing at or focusing an open panel's icon draws an `accent` edge over a faint accent tint on that panel, above the focus edge; a panel the bar opens flashes the same once and fades.
 - Panel header: icon, medium title, menu, close (x), on a strip in the left menu's colour, darker than the content, with a hairline under it and lighter while hovered. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
+- Panels sharing a group show a strip of tabs like the editor's file tabs: icon and medium title, a hairline after each tab, the shown tab on the `surface` colour so it runs into the content, the others muted and `textSoft` under the pointer. A tab's close (`TabClose` in `packages/ui`, shared with the editor) shows on the shown tab and under the pointer.
 - Closing: small x button; Ctrl+W closes the tab, then the panel. No hint text about it.
 - The editor's header is its file tabs: file icon, name in Geist Mono, italic while a preview, and a dot for unsaved text that turns into the close button under the pointer.
 - **Focus must be obvious**: the focused panel has a brighter title. After a key moves focus, it also shows the focus edge, a border in the `focus` colour; a click or Escape hides the edge until a key moves focus again. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0. A setting to choose between the two lands with the settings page (proposed).

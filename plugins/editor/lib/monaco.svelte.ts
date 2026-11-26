@@ -50,6 +50,9 @@ export const createEditor = (
 		lineHeight: Number.parseFloat(value("--leading-tight")),
 		automaticLayout: true,
 		minimap: { enabled: false },
+		// Counted from the cursor line, for vim counts such as 5j; a setting
+		// comes with plugin settings (docs/spec/07-editor-files-terminal.md).
+		lineNumbers: "relative",
 		scrollBeyondLastLine: false,
 		// Menus and hovers would otherwise be cut off at the panel's edge.
 		fixedOverflowWidgets: true,

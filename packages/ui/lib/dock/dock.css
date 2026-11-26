@@ -58,14 +58,78 @@
 	flex-shrink: 1;
 	min-width: 0;
 	overflow: hidden;
+	/* For the locating tint (below). */
+	position: relative;
 }
 
-/* Panel actions stay out of sight until the header is hovered; Ctrl W
-   closes by keyboard (docs/design/ui.md). */
-.yaa-dock .yaa-tab-actions {
-	visibility: hidden;
+/* A lone panel's actions stay out of sight until its header is hovered;
+   Ctrl W closes by keyboard (docs/design/ui.md). Opacity, not visibility:
+   the close button's cross sets its own visibility. */
+.yaa-dock .dv-single-tab:not(:hover) .yaa-tab-actions:not(:focus-within) {
+	opacity: 0;
 }
 
-.yaa-dock .dv-tabs-and-actions-container:hover .yaa-tab-actions {
-	visibility: visible;
+/* Panels sharing a group: a strip of tabs like the editor's file tabs, a
+   hairline after each and the shown one on the content's surface, which it
+   runs into. A tab's close shows while it is shown or hovered. */
+.yaa-dock .dv-tabs-and-actions-container:not(.dv-single-tab) .dv-tab {
+	flex: none;
+	border-right: 1px solid var(--color-border);
+}
+
+.yaa-dock
+	.dv-tabs-and-actions-container:not(.dv-single-tab)
+	.dv-tab.dv-active-tab {
+	background-color: var(--color-surface);
+}
+
+.yaa-dock
+	.dv-tabs-and-actions-container:not(.dv-single-tab)
+	.dv-tab.dv-inactive-tab:hover {
+	color: var(--color-text-soft);
+}
+
+/* Opacity, not visibility: the button's cross sets its own visibility. */
+.yaa-dock
+	.dv-tab.dv-inactive-tab:not(:hover)
+	.yaa-tab-close:not(:focus-visible) {
+	opacity: 0;
+}
+
+/* Locating a panel: while its toggle in the panel bar is hovered or
+   focused, its group gets an accent edge over a faint accent tint, and its
+   tab the tint too. A panel that opens flashes the same once. */
+.yaa-dock .dv-groupview:is(.yaa-peek, .yaa-flash)::after,
+.yaa-dock .dv-tab:is(.yaa-peek, .yaa-flash)::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-color: color-mix(in oklab, var(--color-accent) 8%, transparent);
+	border-radius: inherit;
+	pointer-events: none;
+	/* Above the focus edge (styles.css). */
+	z-index: 7;
+}
+
+.yaa-dock .dv-groupview:is(.yaa-peek, .yaa-flash)::after {
+	border: 1px solid var(--color-accent);
+}
+
+.yaa-dock .yaa-flash::after {
+	animation: yaa-flash 800ms ease-out forwards;
+}
+
+@keyframes yaa-flash {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yaa-dock .yaa-flash::after {
+		animation-duration: 1ms;
+	}
 }

@@ -1,44 +1,45 @@
 <script lang="ts">
 import { Tooltip } from "bits-ui";
+import type { HTMLButtonAttributes } from "svelte/elements";
 import Icon from "./Icon.svelte";
 import type { IconSource } from "./icon-source.ts";
 import Kbd from "./Kbd.svelte";
 
 // The label names the action for the tooltip and screen readers; the
 // shortcut, when the action has one, is shown beside it. A toggle passes
-// `pressed`, shown by a bright icon. In a column of buttons, such as the
-// rail, `tooltipSide` puts the tooltip beside the column so it covers none
-// of the others. `large` is for buttons that stand alone in a column.
+// `pressed`, shown by a bright icon. `tooltipSide` puts the tooltip where
+// it covers nothing it should not, such as below a button in the header.
+// Pointer and focus handlers reach the button.
 let {
 	icon,
 	label,
 	shortcut,
 	pressed,
-	size = "default",
 	tooltipSide = "top",
 	onclick,
+	...events
 }: {
 	icon: IconSource;
 	label: string;
 	shortcut?: readonly string[] | undefined;
 	pressed?: boolean;
-	size?: "default" | "large";
 	tooltipSide?: "top" | "right" | "bottom" | "left";
 	onclick: () => void;
-} = $props();
+} & Pick<
+	HTMLButtonAttributes,
+	"onpointerenter" | "onpointerleave" | "onfocus" | "onblur"
+> = $props();
 </script>
 
 <Tooltip.Root>
 	<Tooltip.Trigger
-		class={[
-			"inline-flex shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:bg-pressed aria-pressed:text-text aria-pressed:hover:bg-hover",
-			size === "large" ? "size-control-lg" : "size-control",
-		]}
+		class="inline-flex size-control shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:bg-pressed aria-pressed:text-text aria-pressed:hover:bg-hover"
 		aria-label={label}
 		aria-pressed={pressed}
 		{onclick}
+		{...events}
 	>
-		<Icon {icon} class={size === "large" ? "size-4.5" : "size-3.5"} />
+		<Icon {icon} class="size-3.5" />
 	</Tooltip.Trigger>
 	<Tooltip.Portal>
 		<Tooltip.Content

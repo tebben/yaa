@@ -17,6 +17,14 @@ export const defaultKeybindings: readonly Keybinding[] = [
 		command: "menu.leaveSearch",
 		when: "focus.region == menu && inputFocus && !palette.open",
 	},
+	// Escape leaves a text field for the panel or region holding it, and I
+	// goes back in, so keys such as J and K work there again.
+	{
+		key: "escape",
+		command: "input.leave",
+		when: "textField && !palette.open",
+	},
+	{ key: "i", command: "input.edit", when: "!inputFocus && !palette.open" },
 	{
 		key: "escape",
 		command: "focus.hideHighlight",
