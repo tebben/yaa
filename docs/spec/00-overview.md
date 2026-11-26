@@ -2,6 +2,8 @@
 
 ## Overview
 
+Lands in: M1; the goals and working principles guide every milestone.
+
 A keyboard-first desktop IDE where every unit of work is a git worktree with its own agent chat, diff review, terminal and cost counter. The core stays small; almost everything else (git panel, PR/MR, Jira, chat extras) is a plugin built on the same API that third parties and agents use.
 
 **Goals**

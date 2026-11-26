@@ -12,7 +12,8 @@
 		"typecheck": "tsc -p . && svelte-check --tsconfig ./tsconfig.json",
 		"test": "pnpm -r test",
 		"lint:boundaries": "depcruise --config .dependency-cruiser.cjs .",
-		"lint:svelte-size": "node scripts/svelte-size.ts"
+		"lint:svelte-size": "node scripts/svelte-size.ts",
+		"check:docs": "node scripts/check-docs.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.6.9",
