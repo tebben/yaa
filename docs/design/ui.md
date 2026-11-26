@@ -27,7 +27,7 @@ Each part of the window has its own colour token, so a theme can tune it alone. 
 | Palette and tooltips | `overlay`, with the `overlay` shadow and radius |
 | Hover, pressed toggle and selected item | `hover`, `pressed`, `selection` |
 
-Code is highlighted with the `syntax` colours: `keyword`, `string`, `number`, `comment` and `type`.
+Code is highlighted with the `syntax` colours: `keyword`, `string`, `number`, `comment` and `type`. The terminal draws on `surface` in `text`, with the 16 `terminal` colours as its palette, an `accent` cursor and a `selection` selection.
 
 Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and the scrollbar. Text: `text` (primary), `textSoft` (secondary), `textMuted`. Accent: `accent` and `accentSoft`; `focus` for the focus edge.
 
@@ -43,6 +43,7 @@ Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and
 - Panel header: icon, medium title, menu, close (x), on a strip in the left menu's colour, darker than the content, with a hairline under it and lighter while hovered. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
 - Closing: small x button; Ctrl+W closes the tab, then the panel. No hint text about it.
 - The editor's header is its file tabs: file icon, name in Geist Mono, italic while a preview, and a dot for unsaved text that turns into the close button under the pointer.
+- The terminal's header is its tabs: terminal icon, the running program in Geist Mono with the folder after it when that is not the worktree's, and a button for a new terminal after the last tab.
 - **Focus must be obvious**: the focused panel has a brighter title. After a key moves focus, it also shows the focus edge, a border in the `focus` colour; a click or Escape hides the edge until a key moves focus again. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0. A setting to choose between the two lands with the settings page (proposed).
 - Shortcuts are shown as key caps, one per key (`Kbd` in `packages/ui`), in tooltips and the palette.
 - Scrollbars are thin everywhere, in the `borderStrong` colour on a transparent track.

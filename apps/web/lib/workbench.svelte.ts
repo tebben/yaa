@@ -3,7 +3,7 @@ import { tick } from "svelte";
 import { createAgentChat } from "./agent/index.ts";
 import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
-import type { CoreClient } from "./core-connection.ts";
+import type { CoreConnection } from "./core-connection.ts";
 import { createRegions } from "./focus/index.ts";
 import { createLayouts } from "./layout.svelte.ts";
 import { createPalette } from "./palette/index.ts";
@@ -14,6 +14,7 @@ import {
 	createWorktrees,
 	projectCommands,
 } from "./projects/index.ts";
+import { createTerminalLinks } from "./terminals/index.ts";
 
 // Keys typed here are text, so bindings such as shift+h leave them alone.
 const isTextEntry = (element: Element | null) =>
@@ -30,7 +31,8 @@ const describe = (reason: unknown) =>
 // The app's composition root: the plugins, the agent chat, the projects
 // and their worktrees, a dock grid per worktree, the left menu, focus across the shell's regions, the
 // commands with their keys, and the palette.
-export const createWorkbench = (client: CoreClient) => {
+export const createWorkbench = (core: CoreConnection) => {
+	const { client } = core;
 	// The last failure the footer shows.
 	let failure = $state<string>();
 	const report = (message: string) => {
@@ -41,6 +43,7 @@ export const createWorkbench = (client: CoreClient) => {
 
 	const plugins = createPlugins({
 		client,
+		terminals: createTerminalLinks(core),
 		report,
 		// Panels render and commands run only after `projects` exists.
 		worktree: (id) =>

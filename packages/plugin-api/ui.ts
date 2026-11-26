@@ -4,6 +4,7 @@
 import type { Client } from "@yaa/contracts/client";
 import type { Worktree } from "@yaa/contracts/projects";
 import type { Disposable, ProtocolDefinition } from "@yaa/contracts/protocol";
+import type { Terminal, TerminalSize } from "@yaa/contracts/terminals";
 import type { Component } from "svelte";
 import type { Attachment } from "svelte/attachments";
 
@@ -48,6 +49,42 @@ export type PickSource = {
 	accept(item: PickItem): void;
 };
 
+// What a panel shows a terminal on.
+export type TerminalScreen = {
+	size(): TerminalSize;
+	// Starts over with what is on the terminal, as escape sequences.
+	reset(data: string): void;
+	// Shows the output that follows; `shown` is called once the screen has
+	// taken it in, which is what keeps a fast program in step.
+	write(data: string, shown: () => void): void;
+	// The terminal could not be shown.
+	fail(problem: string): void;
+};
+
+// A screen's connection to its terminal. It attaches again by itself after
+// the app's core restarted.
+export type TerminalLink = {
+	// Input for the program in the terminal.
+	write(data: string): void;
+	resize(size: TerminalSize): void;
+	// Leaves the terminal running.
+	dispose(): void;
+};
+
+// The panel's worktree's terminals, which the app's core runs, so they go on
+// while no panel shows them.
+export type PanelTerminals = {
+	// Calls `listener` with them, oldest first, as they are and after each
+	// change.
+	watch(listener: (terminals: readonly Terminal[]) => void): Disposable;
+	// A new one in the worktree's folder, by its id. Its shell starts when a
+	// screen first connects.
+	create(): Promise<string>;
+	// Ends its program.
+	close(id: string): Promise<void>;
+	connect(id: string, screen: TerminalScreen): TerminalLink;
+};
+
 // What one panel gets. Everything registered through it is disposed when the
 // panel closes.
 export type PanelContext = {
@@ -72,6 +109,11 @@ export type PanelContext = {
 	handleOpenFile(handler: (file: OpenFile) => void): Disposable;
 	// Opens the palette on the source, while the panel's worktree is open.
 	pick(source: PickSource): void;
+	readonly terminals: PanelTerminals;
+	// While focus is inside the element, keys go to it, except the ones the
+	// app keeps for itself (the `keyboard.terminalAppKeys` setting). For a
+	// terminal.
+	readonly captureKeys: Attachment<HTMLElement>;
 };
 
 export type PanelProps = { panel: PanelContext };

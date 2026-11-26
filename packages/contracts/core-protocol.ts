@@ -14,6 +14,14 @@ import {
 } from "./projects.ts";
 import { providerStatus } from "./providers.ts";
 import { settingsState } from "./settings.ts";
+import {
+	terminal,
+	terminalOutput,
+	terminalProgress,
+	terminalSize,
+	terminalSnapshot,
+	terminalView,
+} from "./terminals.ts";
 import { worktreeState } from "./worktree-state.ts";
 
 // The state of each worktree by its id; one that is not listed is idle.
@@ -124,6 +132,42 @@ export const coreProtocol = defineProtocol({
 			}),
 			result: z.object({ result: z.unknown() }),
 		},
+		// A worktree's terminals, oldest first; `terminals.changed` carries
+		// them again after each change.
+		"terminals.list": {
+			params: z.object({ worktree: z.string() }),
+			result: z.object({ terminals: z.array(terminal) }),
+		},
+		// A new terminal in the worktree's folder. Its shell starts when a view
+		// first attaches.
+		"terminals.create": {
+			params: z.object({ worktree: z.string() }),
+			result: z.object({ id: z.string() }),
+		},
+		// Ends the terminal's program and takes it off the list.
+		"terminals.close": {
+			params: z.object({ id: z.string() }),
+			result: z.object({}),
+		},
+		// Attaches a view, sized as it is: the reply is what is on the terminal,
+		// and `terminals.output` carries what follows its offset. A view goes
+		// with the connection it was attached on.
+		"terminals.attach": {
+			params: terminalView.extend(terminalSize.shape),
+			result: terminalSnapshot,
+		},
+		"terminals.detach": { params: terminalView, result: z.object({}) },
+		// The view has shown the output up to `offset`.
+		"terminals.ack": { params: terminalProgress, result: z.object({}) },
+		// Input for the terminal's program.
+		"terminals.write": {
+			params: z.object({ id: z.string(), data: z.string() }),
+			result: z.object({}),
+		},
+		"terminals.resize": {
+			params: terminalSize.extend({ id: z.string() }),
+			result: z.object({}),
+		},
 		// Whether a chat can start with a provider a plugin contributes, checked
 		// anew on each call.
 		"providers.status": {
@@ -178,6 +222,11 @@ export const coreProtocol = defineProtocol({
 	},
 	events: {
 		"agent.event": sessionEvent,
+		"terminals.output": terminalOutput,
+		"terminals.changed": z.object({
+			worktree: z.string(),
+			terminals: z.array(terminal),
+		}),
 		"plugins.event": pluginEvent,
 		// The plugin host went away: what plugin backends held, such as file
 		// watches, went with it.

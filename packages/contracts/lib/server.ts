@@ -11,9 +11,18 @@ import {
 import type { Port } from "./port.ts";
 import { clientMessage, type ErrorCode } from "./wire.ts";
 
-export type Handlers<P extends ProtocolDefinition> = {
+// The connection a request came over.
+export type Caller = {
+	// Calls `listener` once the connection is gone.
+	onClose(listener: () => void): void;
+};
+
+// `C` is what a handler gets after the params: a server passes the caller,
+// which a handler is free to ignore.
+export type Handlers<P extends ProtocolDefinition, C extends unknown[] = []> = {
 	[M in RequestName<P>]: (
 		params: ParamsOut<P, M>,
+		...caller: C
 	) => ResultIn<P, M> | Promise<ResultIn<P, M>>;
 };
 
@@ -29,14 +38,14 @@ export type ServerOptions = {
 	onError(error: unknown): void;
 };
 
-type Connection = { port: Port; events: Set<string> };
+type Connection = { port: Port; events: Set<string>; caller: Caller };
 
 const describe = (error: unknown): string =>
 	error instanceof Error ? error.message : String(error);
 
 export const createServer = <P extends ProtocolDefinition>(
 	protocol: P,
-	handlers: Handlers<P>,
+	handlers: Handlers<P, [Caller]>,
 	options: ServerOptions,
 ): Server<P> => {
 	const connections = new Set<Connection>();
@@ -49,6 +58,7 @@ export const createServer = <P extends ProtocolDefinition>(
 	const run = async <M extends RequestName<P>>(
 		method: M,
 		raw: unknown,
+		caller: Caller,
 	): Promise<
 		| { ok: true; result: ResultIn<P, M> }
 		| { ok: false; code: ErrorCode; message: string }
@@ -63,7 +73,7 @@ export const createServer = <P extends ProtocolDefinition>(
 			};
 		}
 		try {
-			return { ok: true, result: await handlers[method](params.data) };
+			return { ok: true, result: await handlers[method](params.data, caller) };
 		} catch (error) {
 			options.onError(error);
 			return { ok: false, code: "handler_failed", message: describe(error) };
@@ -98,7 +108,7 @@ export const createServer = <P extends ProtocolDefinition>(
 			});
 			return;
 		}
-		const outcome = await run(method, message.params);
+		const outcome = await run(method, message.params, connection.caller);
 		if (!connections.has(connection)) return;
 		connection.port.postMessage(
 			outcome.ok
@@ -109,12 +119,25 @@ export const createServer = <P extends ProtocolDefinition>(
 
 	return {
 		connect(port) {
-			const connection: Connection = { port, events: new Set() };
+			const closing: (() => void)[] = [];
+			const connection: Connection = {
+				port,
+				events: new Set(),
+				caller: {
+					onClose(listener) {
+						if (connections.has(connection)) closing.push(listener);
+						else listener();
+					},
+				},
+			};
 			connections.add(connection);
 			port.onMessage((raw) => {
 				void receive(connection, raw);
 			});
-			port.onClose(() => connections.delete(connection));
+			port.onClose(() => {
+				if (!connections.delete(connection)) return;
+				for (const listener of closing.splice(0)) listener();
+			});
 		},
 
 		emit(event, payload) {

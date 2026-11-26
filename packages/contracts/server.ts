@@ -1,4 +1,5 @@
 export {
+	type Caller,
 	createServer,
 	type Handlers,
 	type Server,

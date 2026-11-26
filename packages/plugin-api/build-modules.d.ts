@@ -4,3 +4,6 @@ declare module "*?worker" {
 	const start: () => Worker;
 	export default start;
 }
+
+// A CSS file, which the build adds to the plugin's stylesheet.
+declare module "*.css";

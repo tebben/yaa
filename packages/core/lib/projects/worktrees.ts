@@ -46,7 +46,10 @@ type WorktreesOptions = {
 		GitService,
 		"shared" | "status" | "branches" | "unpushed" | "upstream"
 	>;
-	settings(): CoreSettings;
+	settings(): Pick<
+		CoreSettings,
+		"worktree.directory" | "worktree.branchTemplate" | "worktree.ticketPrefix"
+	>;
 	steps: Pick<StepsRunner, "setup" | "teardown" | "stop">;
 	// What a leading ~ in a path stands for.
 	home: string;

@@ -10,6 +10,7 @@ import type { Worktrees } from "./projects/worktrees.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { StateTracker } from "./state/state-tracker.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
+import type { Terminals } from "./terminals/terminals.ts";
 
 export type CoreServerOptions = {
 	log: Logger;
@@ -21,6 +22,7 @@ export type CoreServerOptions = {
 	projects: Projects;
 	worktrees: Worktrees;
 	states: StateTracker;
+	terminals: Terminals;
 	pickFolder(): Promise<string | null>;
 };
 
@@ -34,6 +36,7 @@ export const createCoreServer = ({
 	projects,
 	worktrees,
 	states,
+	terminals,
 	pickFolder,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
@@ -75,6 +78,34 @@ export const createCoreServer = ({
 			},
 			"plugins.call": ({ plugin, method, params }) =>
 				plugins.call(plugin, method, params),
+			"terminals.list": ({ worktree }) => ({
+				terminals: terminals.list(worktree),
+			}),
+			"terminals.create": ({ worktree }) => ({
+				id: terminals.create(worktree),
+			}),
+			"terminals.close": ({ id }) => {
+				terminals.close(id);
+				return {};
+			},
+			"terminals.attach": ({ id, view, cols, rows }, caller) =>
+				terminals.attach({ id, view }, { cols, rows }, caller),
+			"terminals.detach": ({ id, view }) => {
+				terminals.detach(id, view);
+				return {};
+			},
+			"terminals.ack": ({ id, view, offset }) => {
+				terminals.ack(id, view, offset);
+				return {};
+			},
+			"terminals.write": ({ id, data }) => {
+				terminals.write(id, data);
+				return {};
+			},
+			"terminals.resize": ({ id, cols, rows }) => {
+				terminals.resize(id, { cols, rows });
+				return {};
+			},
 			"providers.status": ({ provider }) => plugins.providerStatus(provider),
 			"agent.start": async ({ worktree, provider }) => ({
 				sessionId: await agents.start(worktree, provider),
@@ -107,6 +138,13 @@ export const createCoreServer = ({
 	worktrees.onChange(projectsChanged);
 	states.onChange(() =>
 		server.emit("worktrees.statesChanged", { states: states.states() }),
+	);
+	terminals.onOutput((output) => server.emit("terminals.output", output));
+	terminals.onChange((worktree) =>
+		server.emit("terminals.changed", {
+			worktree,
+			terminals: terminals.list(worktree),
+		}),
 	);
 	return server;
 };
