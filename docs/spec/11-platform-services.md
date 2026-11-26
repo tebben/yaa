@@ -57,5 +57,5 @@ Core, plugin host, agent protocol and workflow logs go to one place with levels 
 
 Lands in: M6.
 
-- The manifest declares the plugin API version it targets, and the plugin manager refuses or warns on a mismatch. Plugins are installed by placing a folder in the plugin directory; there is no marketplace.
+- The manifest declares the plugin API version it targets, and the plugin manager refuses or warns on a mismatch. It also checks the Svelte version a plugin was built with (see `03-plugins.md`). Plugins are installed by placing a folder in the plugin directory; there is no marketplace.
 - The app sends no telemetry. The licence is MIT (`docs/decisions/0001-licence-mit.md`). Third-party licences are collected into a generated notices file that ships with the app, and CI fails when a dependency has a licence outside an allow-list (MIT, ISC, BSD, Apache-2.0, OFL for fonts).
