@@ -17,6 +17,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | Agents | ACP first, provider-specific fallback | proposed |
 | Storage | JSON settings files; one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | proposed |
 | Runtime validation | Zod 4 in `contracts` for protocol messages, manifests and settings (`docs/decisions/0013-zod-schemas.md`) | decided |
+| Build | Vite for the renderer; esbuild bundles main, the preload and the core; `pnpm run dev` drives both | in use since M1 |
 | Packaging | electron-builder | proposed |
 | Lint, format, tests | Biome, `tsc` (TypeScript 6, since `svelte-check` 4 does not support 7), `svelte-check`, Vitest | in use since the repo foundation |
 

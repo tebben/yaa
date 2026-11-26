@@ -8,7 +8,7 @@ Read `docs/README.md` first; it says which doc wins and where each topic lives.
 - One package's tests: `pnpm --filter @yaa/<name> test`
 - Format: `pnpm run format`
 - Everything, as CI runs it: `pnpm run check:all`
-- Dev (`pnpm run dev`) arrives in M1 and Linux packaging (`pnpm run package:linux`) in M6.
+- Run the app in dev mode: `pnpm run dev` (Vite for the renderer, esbuild watchers for main, preload and core; arguments go to Electron). Linux packaging (`pnpm run package:linux`) arrives in M6.
 
 ## Architecture
 - Backend owns agents, git and plugins; the UI only subscribes. See docs/spec/00-overview.md.

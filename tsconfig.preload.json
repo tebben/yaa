@@ -1,0 +1,9 @@
+{
+	"$comment": "The preload runs in the page's isolated world: DOM types plus Electron's renderer API. tsconfig.json covers the rest of the Node side.",
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ES2024", "DOM", "DOM.Iterable"],
+		"types": ["node"]
+	},
+	"include": ["apps/desktop/preload.ts"]
+}
