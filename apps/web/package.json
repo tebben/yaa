@@ -7,6 +7,6 @@
 		"test": "vitest run --passWithNoTests"
 	},
 	"dependencies": {
-		"svelte": "^5.59.2"
+		"svelte": "~5.59.1"
 	}
 }
