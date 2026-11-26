@@ -76,13 +76,33 @@ module.exports = {
 			from: { path: "^(apps/web|packages/ui)/" },
 			to: { path: "^packages/core/" },
 		},
+		// --- Svelte structure (setup-svelte-structure skill, docs/rules/svelte.md) ---
+		{
+			name: "svelte-no-transport",
+			comment:
+				"Components never touch the transport: they go through a .svelte.ts controller, which uses the typed client from contracts.",
+			severity: "error",
+			from: { path: "\\.svelte$" },
+			to: { path: "^packages/contracts/client\\.ts$" },
+		},
+		{
+			name: "pure-ts-no-svelte",
+			comment:
+				"Pure .ts modules hold logic without Svelte: they never import .svelte files. Entry points (index.ts) may, to expose components.",
+			severity: "error",
+			from: {
+				path: "\\.ts$",
+				pathNot: ["\\.svelte\\.ts$", "(^|/)index\\.ts$"],
+			},
+			to: { path: "\\.svelte$" },
+		},
 	],
 	options: {
 		includeOnly: `^(${ROOTS}|scripts)/`,
 		doNotFollow: { path: "node_modules" },
 		tsConfig: { fileName: "tsconfig.json" },
 		enhancedResolveOptions: {
-			extensions: [".ts", ".js", ".json"],
+			extensions: [".ts", ".js", ".json", ".svelte"],
 		},
 	},
 };

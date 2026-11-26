@@ -9,14 +9,17 @@
 	"scripts": {
 		"lint": "biome check . && node scripts/check-suppressions.ts",
 		"format": "biome check --write .",
-		"typecheck": "tsc -p .",
+		"typecheck": "tsc -p . && svelte-check --tsconfig ./tsconfig.json",
 		"test": "pnpm -r test",
-		"lint:boundaries": "depcruise --config .dependency-cruiser.cjs ."
+		"lint:boundaries": "depcruise --config .dependency-cruiser.cjs .",
+		"lint:svelte-size": "node scripts/svelte-size.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.6.9",
 		"@types/node": "^24.19.3",
 		"dependency-cruiser": "^18.9.0",
+		"svelte": "^5.59.2",
+		"svelte-check": "^4.7.8",
 		"typescript": "~6.0.3",
 		"vite": "^8.3.8",
 		"vitest": "^5.1.2"
