@@ -5,7 +5,12 @@
 		"lib": ["ES2024", "DOM", "DOM.Iterable"],
 		"types": []
 	},
-	"include": ["apps/web", "packages/ui", "packages/contracts"],
+	"include": [
+		"apps/web",
+		"packages/ui",
+		"packages/contracts",
+		"packages/commands"
+	],
 	"exclude": [
 		"**/node_modules",
 		"**/dist",

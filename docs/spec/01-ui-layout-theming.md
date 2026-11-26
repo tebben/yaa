@@ -10,7 +10,7 @@ The window is a fixed shell around a user-arrangeable grid: a full-height left m
 
 **Shell**
 
-- **Left menu:** the project list. Each project expands to its default branch and its worktrees, each with a state badge (see `02-worktrees.md`). A project overview entry sits at the top of each project.
+- **Left menu:** the project list, hidden and shown again with Ctrl B. Each project expands to its default branch and its worktrees, each with a state badge (see `02-worktrees.md`). A project overview entry sits at the top of each project.
 - **Header:** shows the current project and worktree, with slots on the left, centre and right that plugins can fill.
 - **Footer:** slots for plugins, plus core info for the selected project: branch, uncommitted change count, ahead/behind. Plugins add chips for agent state, cost and PR status.
 - **Centre grid:** every panel is a view contributed by core or a plugin (id, title, icon, component). Users drag panels to rearrange, split, tab and resize them. A layout is saved per project, with a default layout for new projects and a reset action. A saved layout that no longer reads as one (from an older dock version, for example) gives way to the default. A panel whose kind nothing provides any more, such as one from a removed plugin, keeps its place and says so.
@@ -21,17 +21,18 @@ The window is a fixed shell around a user-arrangeable grid: a full-height left m
 - **Panel header:** a small header with an icon, a title, a menu and a close button, so every panel can be closed with the mouse. Panels with a single purpose, such as the editor, show tabs instead of a title.
 - **Closing by keyboard:** Ctrl W closes the focused tab, and the panel when it has none. In a focused terminal Ctrl W goes to the shell, where it deletes a word (see Keyboard model).
 - **Focus:** exactly one panel is focused and is styled as `docs/design/ui.md` describes. The footer shows the input mode, for example NORMAL when the vim layer is on. Focus moves with directional keys.
+- **Default keys:** Ctrl H, J, K and L focus the panel to the left, below, above and to the right. Shift H or K and Shift L or J go to the previous and next tab of the focused panel, wrapping around; they do nothing while a text field has focus, where they type capitals. Ctrl Shift H and L make the focused panel narrower and wider, Ctrl Shift K and J shorter and taller, by 5% of the grid. Closing a panel that is not focused leaves focus where it was.
 - **Icons over text:** settings, plugins, close, add, search and similar controls are icon buttons with a tooltip that shows the shortcut. Text labels are for content, not for chrome.
 
 **Command palette**
 
-- One keystroke opens it. It lists every registered command, filtered by context (project, worktree, focused panel).
+- One keystroke opens it, Ctrl Shift P by default. It lists every registered command that has a title and whose `when` condition holds where the palette was opened (project, worktree, focused panel), each with its first key and its category. Typing filters the list: the typed characters must appear in order in the category and title, case and spaces ignored, and a run of characters or a match at the start of a word ranks higher. Arrow keys move the selection, Enter runs the selected command after the palette closes and focus has returned, Escape or a click outside closes it. These keys are commands too, bound with `when: palette.open`.
 - Plugins register commands, and may register a settings page that the palette's settings entry lists next to core settings. Plugin settings are rendered from a schema by default, or from a custom panel.
 
 **Keyboard model**
 
 - Every action is a command with an id. Keybindings map keys to command ids, and users can override them. Components never attach their own key listeners; Monaco and the terminal are the two exceptions below.
-- **Focus contexts:** each keybinding has an optional `when` condition over context keys such as `panel.kind == terminal`, `editor.focus` or `vim.mode == normal`, like VS Code's `when` clauses. A key resolves to the first binding whose condition holds. Plugins add context keys under their namespace.
+- **Focus contexts:** each keybinding has an optional `when` condition over context keys such as `panel.kind == terminal`, `editor.focus` or `vim.mode == normal`, like VS Code's `when` clauses. A condition is keys combined with `!`, `&&`, `||` and parentheses (`&&` binds tighter), and `key == value` or `key != value` with a bare or single-quoted value; a key on its own holds when its value is true or a non-empty string. A command can have a `when` too: it runs, and the palette lists it, only while that holds. A key resolves to the first binding whose condition holds and whose command is registered and can run, so a binding to a command no plugin provides does not take the key. Core context keys: `panel.kind` (the focused panel's kind), `inputFocus` (a text field has focus) and `palette.open`. Plugins add context keys under their namespace.
 - **Passthrough:** Monaco and the terminal receive keys first. Each declares the keys it gives up to the app, for example the palette key and panel-focus keys. Every other key, Ctrl W and Ctrl C in a terminal included, stays with the widget. The list is a setting, so a user can take a key back.
 - Electron's default application menu is replaced, so its accelerators do not take app keys.
 - Focus moves between panels with directional keys, and within a panel by the panel's own navigation (lists, trees and tabs share one navigation helper).

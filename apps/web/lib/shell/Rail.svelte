@@ -6,10 +6,12 @@ import type { PanelKind } from "@yaa/ui/dock";
 let {
 	kinds,
 	isOpen,
+	shortcut,
 	ontoggle,
 }: {
 	kinds: ReadonlyMap<string, PanelKind>;
 	isOpen: (kind: string) => boolean;
+	shortcut: (kind: string) => string | undefined;
 	ontoggle: (kind: string) => void;
 } = $props();
 </script>
@@ -22,6 +24,7 @@ let {
 		<IconButton
 			icon={kind.icon}
 			label={kind.title}
+			shortcut={shortcut(id)}
 			pressed={isOpen(id)}
 			onclick={() => ontoggle(id)}
 		/>

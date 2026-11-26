@@ -13,6 +13,7 @@ apps/
 packages/
   core/           worktrees, git, event bus, plugin manager
   contracts/      shared types, runtime schemas and the core protocol
+  commands/       when conditions, the keymap, key names and the palette filter
   plugin-api/     the typed API plugins import
   ui/             design tokens and Bits UI wrappers
 plugins/          built-in plugins: git, chat, files, terminal, github, jira, pr

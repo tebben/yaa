@@ -4,7 +4,7 @@
 </script>
 
 <header
-	class="flex h-header items-center border-b border-border bg-chrome px-3 text-text-muted"
+	class="col-start-2 flex h-header items-center border-b border-border bg-chrome px-3 text-text-muted"
 >
 	No project selected
 </header>

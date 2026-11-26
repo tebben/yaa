@@ -3,6 +3,7 @@ import {
 	createDockview,
 	type DockviewApi,
 	type GroupPanelPartInitParameters,
+	type IDockviewPanel,
 } from "dockview-core";
 import { type Component, untrack } from "svelte";
 import type { Attachment } from "svelte/attachments";
@@ -17,6 +18,11 @@ export type PanelKind = {
 };
 
 type Direction = "left" | "right" | "above" | "below" | "within";
+
+export type DockDirection = "left" | "right" | "up" | "down";
+
+// How far one resize step moves an edge, as a share of the grid.
+const RESIZE_STEP = 0.05;
 
 // One step of a default layout: a panel, and where it goes relative to one
 // placed before it. The first step goes into the empty grid.
@@ -61,6 +67,7 @@ export const createDock = ({
 	// an item would move its node back out of dockview.
 	const slots = $state<DockSlot[]>([]);
 	let open = $state<ReadonlySet<string>>(new Set());
+	let activeKind = $state<string>();
 	let api: DockviewApi | undefined;
 	// The latest layout, so attaching again (a remount, hot reload in dev)
 	// restores the grid as it was, not as it was loaded.
@@ -119,6 +126,18 @@ export const createDock = ({
 		}
 	};
 
+	// Makes the panel the active one and moves keyboard focus into it, out of
+	// whatever had it, such as an input in another panel.
+	const activate = (panel: IDockviewPanel | undefined) => {
+		if (panel === undefined) return;
+		panel.api.setActive();
+		const slot = slots.find(
+			(slot) => slot.part === "content" && slot.panelId === panel.id,
+		);
+		const content = slot?.element.firstElementChild;
+		if (content instanceof HTMLElement) content.focus();
+	};
+
 	const attach: Attachment<HTMLElement> = (element) =>
 		// Creating panels writes to `slots`; untracked, so that does not rerun
 		// the attachment and rebuild the grid.
@@ -142,8 +161,13 @@ export const createDock = ({
 				latest = JSON.stringify(dock.toJSON());
 				onChange(latest);
 			});
+			const activeChanges = dock.onDidActivePanelChange(() => {
+				activeKind = dock.activePanel?.api.component;
+			});
+			activeKind = dock.activePanel?.api.component;
 			return () => {
 				changes.dispose();
+				activeChanges.dispose();
 				dock.dispose();
 				api = undefined;
 			};
@@ -157,6 +181,43 @@ export const createDock = ({
 		isOpen(kind: string) {
 			return open.has(kind);
 		},
+		// The kind of the focused panel, for `panel.kind` in when conditions.
+		get activeKind() {
+			return activeKind;
+		},
+		focus(direction: DockDirection) {
+			const group = api?.activeGroup;
+			if (api === undefined || group === undefined) return;
+			activate(api.adjacentGroupInDirection(group, direction)?.activePanel);
+		},
+		// The next or previous tab of the focused group, wrapping around.
+		cycleTab(step: 1 | -1) {
+			const group = api?.activeGroup;
+			const panel = group?.activePanel;
+			if (group === undefined || panel === undefined) return;
+			const { panels } = group;
+			const index = panels.indexOf(panel) + step;
+			activate(panels[(index + panels.length) % panels.length]);
+		},
+		// Grows or shrinks the focused group by one step.
+		resize(axis: "width" | "height", step: 1 | -1) {
+			const group = api?.activeGroup;
+			if (api === undefined || group === undefined) return;
+			const size = group.api[axis] + step * RESIZE_STEP * api[axis];
+			group.api.setSize(axis === "width" ? { width: size } : { height: size });
+		},
+		// Closes the focused tab and focuses the panel that takes its place.
+		closeActive() {
+			if (api === undefined) return;
+			api.activePanel?.api.close();
+			activate(api.activePanel);
+		},
+		reset() {
+			if (api === undefined) return;
+			api.clear();
+			latest = undefined;
+			restore(api);
+		},
 		close(panelId: string) {
 			api?.getPanel(panelId)?.api.close();
 		},
@@ -165,7 +226,11 @@ export const createDock = ({
 			if (api === undefined) return;
 			const panel = api.getPanel(kind);
 			if (panel !== undefined) {
+				// Closing a panel that is not focused would move focus to
+				// whichever group dockview picks; keep it where it was.
+				const focused = api.activePanel;
 				panel.api.close();
+				activate(focused === panel ? api.activePanel : focused);
 				return;
 			}
 			const group = api.activeGroup;

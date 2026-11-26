@@ -31,6 +31,8 @@ export type TokenName =
 	| "spacing-footer"
 	| "spacing-menu"
 	| "spacing-rail"
+	| "spacing-palette"
+	| "spacing-palette-offset"
 	| "color-chrome"
 	| "color-surface"
 	| "color-raised"

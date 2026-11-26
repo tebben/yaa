@@ -84,6 +84,16 @@ describe("resolveKeybindings", () => {
 		]);
 	});
 
+	it("drops an entry whose when does not parse", () => {
+		const result = resolveKeybindings(
+			JSON.stringify([{ key: "ctrl+p", command: "a", when: "inputFocus &&" }]),
+		);
+		expect(result.bindings).toEqual([]);
+		expect(result.problems).toEqual([
+			{ path: [0, "when"], message: expect.any(String) },
+		]);
+	});
+
 	it("gives no bindings with one problem for invalid JSON or a non-array", () => {
 		for (const text of ["[", '{"key": "a"}']) {
 			const result = resolveKeybindings(text);

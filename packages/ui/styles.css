@@ -20,6 +20,13 @@
 		color-scheme: dark;
 	}
 
+	/* Tailwind's preflight gives buttons the default cursor; anything that
+	   acts on a click shows the pointer. */
+	button:not(:disabled),
+	[role="button"]:not([aria-disabled="true"]) {
+		cursor: pointer;
+	}
+
 	body {
 		background-color: var(--color-chrome);
 		color: var(--color-text);

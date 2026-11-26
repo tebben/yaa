@@ -208,13 +208,16 @@ importers:
         version: 0.28.2
       vite:
         specifier: ^8.3.8
-        version: 8.3.8(@types/node@24.19.3)(esbuild@0.28.2)
+        version: 8.3.8(@types/node@24.19.3)(esbuild@0.28.2)(jiti@2.7.0)
 
   apps/web:
     dependencies:
       '@lucide/svelte':
         specifier: ~1.79.0
         version: 1.79.0(svelte@5.59.1)
+      '@yaa/commands':
+        specifier: workspace:*
+        version: link:../../packages/commands
       '@yaa/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -238,6 +241,12 @@ importers:
         specifier: ^8.3.8
         version: 8.3.8(@types/node@24.19.3)(esbuild@0.28.2)(jiti@2.7.0)
 
+  packages/commands:
+    dependencies:
+      '@yaa/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/contracts:
     dependencies:
       zod:
@@ -246,6 +255,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@yaa/commands':
+        specifier: workspace:*
+        version: link:../commands
       '@yaa/contracts':
         specifier: workspace:*
         version: link:../contracts
@@ -2253,18 +2265,6 @@ snapshots:
 
   undici@7.30.2:
     optional: true
-
-  vite@8.3.8(@types/node@24.19.3)(esbuild@0.28.2):
-    dependencies:
-      lightningcss: 1.33.0
-      picomatch: 4.0.7
-      postcss: 8.5.33
-      rolldown: 1.2.19
-      tinyglobby: 0.2.17
-    optionalDependencies:
-      '@types/node': 24.19.3
-      esbuild: 0.28.2
-      fsevents: 2.3.3
 
   vite@8.3.8(@types/node@24.19.3)(esbuild@0.28.2)(jiti@2.7.0):
     dependencies:

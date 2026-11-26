@@ -9,6 +9,7 @@ Authority: this file and `tokens.json` win over the mockups. Mockups are a guide
 - **Icons over text** for actions (settings, close, add, more). Text only where an icon would be ambiguous. Icon set: `@lucide/svelte`.
 - **Font**: Geist Sans and Geist Mono (OFL).
 - **Keyboard first**: everything reachable by keys; the command palette is opened by key, there is no search bar in the header.
+- **Cursor**: anything that acts on a click shows the pointer; sashes show the resize cursor.
 
 ## Layout
 - Header and footer are bound to the **selected project**; they do not span the left menu. The left menu runs full height. A right rail toggles panels.

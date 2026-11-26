@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"@lucide/svelte": "~1.79.0",
+		"@yaa/commands": "workspace:*",
 		"@yaa/contracts": "workspace:*",
 		"@yaa/ui": "workspace:*",
 		"svelte": "~5.59.1"
