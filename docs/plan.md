@@ -34,7 +34,7 @@ Electron shell with a hardened renderer, core process, typed protocol with runti
 Exit: the app starts, panels can be arranged and focused by keyboard, the palette runs a command from a plugin, and the fake agent streams a turn into a placeholder panel. Measure launch time and palette open time.
 
 ## M2: worktrees and chat (first product slice)
-Projects, worktree create, switch and finish, setup hooks, the per-repository git queue, the first real provider end to end (Copilot CLI or Claude Code, whichever the M0 spike shows is better covered by ACP), chat with composer, parallel agents, derived state with the combining rules, attention overview, session restore, permission modes, debug panel. Then the second provider, then MCP and skills per worktree.
+Projects, worktree create, switch and finish, setup hooks, the per-repository git queue, the first real provider end to end (Claude Code, which the M0 spike showed is better covered by ACP: `docs/decisions/0014-acp-coverage.md`), chat with composer, parallel agents, derived state with the combining rules, attention overview, session restore, permission modes, debug panel. Then the second provider, then MCP and skills per worktree.
 
 Exit: you build yaa's next feature inside yaa. Two worktrees run real agents in parallel; one asking a permission question shows Needs attention, and a key jumps to it. Measure worktree switch time and chat streaming.
 
