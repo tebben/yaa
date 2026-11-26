@@ -1,6 +1,7 @@
 // A minimal Chrome DevTools Protocol client over Node's WebSocket, enough
 // for the smoke test to drive a page: commands, and evaluating expressions
-// that may return a promise.
+// that may return a promise. Every command has a deadline, so a window that
+// stops answering fails the run instead of hanging it.
 import { z } from "zod";
 
 const reply = z.object({
@@ -16,9 +17,13 @@ export type Connection = {
 	close(): void;
 };
 
-export const connect = (url: string): Promise<Connection> =>
+export const connect = (url: string, timeoutMs: number): Promise<Connection> =>
 	new Promise((resolveOpen, rejectOpen) => {
 		const socket = new WebSocket(url);
+		const opening = setTimeout(() => {
+			socket.close();
+			rejectOpen(new Error(`Timed out connecting to ${url}`));
+		}, timeoutMs);
 		const pending = new Map<number, Pending>();
 		let next = 0;
 
@@ -40,21 +45,35 @@ export const connect = (url: string): Promise<Connection> =>
 		socket.addEventListener("error", () =>
 			rejectOpen(new Error(`Cannot connect to ${url}`)),
 		);
-		socket.addEventListener("open", () =>
+		socket.addEventListener("open", () => {
+			clearTimeout(opening);
 			resolveOpen({
 				send(method, params = {}) {
 					next += 1;
 					const id = next;
 					socket.send(JSON.stringify({ id, method, params }));
-					return new Promise((resolve, reject) =>
-						pending.set(id, { resolve, reject }),
-					);
+					return new Promise((resolve, reject) => {
+						const timer = setTimeout(() => {
+							pending.delete(id);
+							reject(new Error(`${method} got no reply in ${timeoutMs} ms`));
+						}, timeoutMs);
+						pending.set(id, {
+							resolve(value) {
+								clearTimeout(timer);
+								resolve(value);
+							},
+							reject(error) {
+								clearTimeout(timer);
+								reject(error);
+							},
+						});
+					});
 				},
 				close() {
 					socket.close();
 				},
-			}),
-		);
+			});
+		});
 	});
 
 const evaluated = z.object({

@@ -25,3 +25,4 @@ jobs:
       # (docs/spec/12-stack-packaging.md).
       - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: xvfb-run --auto-servernum pnpm run smoke
+        timeout-minutes: 5

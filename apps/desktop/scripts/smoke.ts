@@ -11,6 +11,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { appOrigin } from "@yaa/contracts/app-urls";
 import { z } from "zod";
 import { outDir } from "./bundle.ts";
 import { type Connection, connect, evaluate } from "./cdp.ts";
@@ -20,6 +21,8 @@ const PALETTE_TARGET_MS = 50;
 const WARM_LAUNCHES = 3;
 const PALETTE_OPENS = 5;
 const STEP_TIMEOUT_MS = 15_000;
+// Longer than a step, whose own deadline runs in the page.
+const COMMAND_TIMEOUT_MS = 20_000;
 
 type App = {
 	child: ChildProcess;
@@ -28,7 +31,11 @@ type App = {
 	launchMs: number;
 };
 
-const target = z.object({ type: z.string(), webSocketDebuggerUrl: z.string() });
+const target = z.object({
+	type: z.string(),
+	url: z.string(),
+	webSocketDebuggerUrl: z.string(),
+});
 
 // Polls until `find` returns a value; the window and its DevTools endpoint
 // take a moment to appear.
@@ -76,31 +83,48 @@ const launch = async (dataDir: string): Promise<App> => {
 	const { port, path } = await poll("the DevTools port", () =>
 		devToolsEndpoint(dataDir),
 	);
-	const browser = await connect(`ws://127.0.0.1:${port}${path}`);
+	const browser = await connect(
+		`ws://127.0.0.1:${port}${path}`,
+		COMMAND_TIMEOUT_MS,
+	);
 	const pageUrl = await poll("the window", async () => {
-		const response = await fetch(`http://127.0.0.1:${port}/json/list`);
+		const response = await fetch(`http://127.0.0.1:${port}/json/list`, {
+			signal: AbortSignal.timeout(COMMAND_TIMEOUT_MS),
+		});
 		const targets = z.array(target).parse(await response.json());
-		return targets.find(({ type }) => type === "page")?.webSocketDebuggerUrl;
+		// The window shows about:blank until it navigates to the app, which
+		// would destroy anything evaluated before.
+		return targets.find(
+			({ type, url }) => type === "page" && url.startsWith(appOrigin),
+		)?.webSocketDebuggerUrl;
 	});
-	const page = await connect(pageUrl);
+	const page = await connect(pageUrl, COMMAND_TIMEOUT_MS);
 	// The mark App sets once the dock is on screen, in epoch milliseconds.
-	const interactiveAt = await evaluate(
-		page,
-		until(`(() => {
-			const [mark] = performance.getEntriesByName("yaa:interactive");
-			return mark && performance.timeOrigin + mark.startTime;
-		})()`),
-		z.number(),
+	// Polled from here: the mark keeps its time, and the page's first
+	// document may still be replaced by the app's.
+	const interactiveAt = await poll("the dock", () =>
+		evaluate(
+			page,
+			`(() => {
+				const [mark] = performance.getEntriesByName("yaa:interactive");
+				return mark && performance.timeOrigin + mark.startTime;
+			})()`,
+			z.number().optional(),
+		),
 	);
 	return { child, page, browser, launchMs: interactiveAt - launchedAt };
 };
 
+// Closing the browser quits the app as closing its window does. The reply
+// may never come, as the connection goes with the browser; the exit counts.
 const quit = async ({ child, page, browser }: App) => {
-	const exited = once(child, "exit");
+	const exited = once(child, "exit", {
+		signal: AbortSignal.timeout(COMMAND_TIMEOUT_MS),
+	});
 	page.close();
-	await browser.send("Browser.close").catch(() => undefined);
-	browser.close();
+	browser.send("Browser.close").catch(() => undefined);
 	await exited;
+	browser.close();
 	running = undefined;
 };
 
@@ -167,11 +191,13 @@ const type = (page: Connection, text: string) =>
 	page.send("Input.insertText", { text });
 
 // From the key's event to the frame after the palette is in the DOM, so
-// its paint is included.
+// its paint is included. The listeners go in before the key is sent: input
+// reaches the page through the browser process, so it can overtake an
+// expression still being evaluated.
 const paletteOpenMs = async (page: Connection): Promise<number> => {
-	const measured = evaluate(
+	await evaluate(
 		page,
-		`new Promise((resolve) => {
+		`void (globalThis.paletteOpened = new Promise((resolve) => {
 			let pressedAt;
 			addEventListener("keydown", (event) => { pressedAt = event.timeStamp; }, { capture: true, once: true });
 			const observer = new MutationObserver(() => {
@@ -180,11 +206,11 @@ const paletteOpenMs = async (page: Connection): Promise<number> => {
 				requestAnimationFrame(() => setTimeout(() => resolve(performance.now() - pressedAt)));
 			});
 			observer.observe(document.body, { childList: true, subtree: true });
-		})`,
-		z.number(),
+		}))`,
+		z.undefined(),
 	);
 	await press(page, OPEN_PALETTE);
-	const ms = await measured;
+	const ms = await evaluate(page, "globalThis.paletteOpened", z.number());
 	await press(page, ESCAPE);
 	await waitFor(page, `!${PALETTE}`);
 	return ms;
@@ -234,12 +260,16 @@ const dataDir = await mkdtemp(join(tmpdir(), "yaa-smoke-"));
 const logFile = join(dataDir, "logs", "yaa.log");
 try {
 	const first = await launch(dataDir);
+	console.log("The app started.");
 	await runPluginCommand(first.page, logFile);
+	console.log("The palette ran the hello plugin's command.");
 	await playFakeTurn(first.page);
+	console.log("The fake agent's turn played to its end.");
 	const paletteTimes: number[] = [];
 	for (let run = 0; run < PALETTE_OPENS; run += 1) {
 		paletteTimes.push(await paletteOpenMs(first.page));
 	}
+	console.log("The palette opened and closed.");
 	await quit(first);
 
 	const warmTimes: number[] = [];
@@ -247,6 +277,7 @@ try {
 		const app = await launch(dataDir);
 		warmTimes.push(app.launchMs);
 		await quit(app);
+		console.log(`The app started again (${run + 1}/${WARM_LAUNCHES}).`);
 	}
 
 	console.log("Smoke test passed.");
