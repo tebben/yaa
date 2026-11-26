@@ -22,7 +22,7 @@ Source: `docs/spec/13-repo-conventions.md` and `docs/decisions/0008-lean-testing
 - `pnpm run check` runs unit tests for changed packages only: those changed against `origin/main` and the packages that depend on them. It sees committed, staged and modified files, but not new untracked files: `git add` new files before you run it.
 - `pnpm --filter @yaa/<name> test` runs one package. Prefer it while you work.
 - Never run the whole suite (`pnpm run test`, `check:all`) when a package filter exists. CI runs `check:all`.
-- Smoke tests (app starts, a worktree opens, a fake chat turn renders) run in CI and on demand from M1. End-to-end runs only before a release.
+- Smoke tests (app starts, a worktree opens, a fake chat turn renders) run in CI and on demand from M1: `pnpm run smoke` (`apps/desktop/scripts/smoke.ts`). Run it after changing main, the preload, the shell, the palette, the plugin host or the agent path. A new user-facing flow that must not break gets a step there, not a component test. End-to-end runs only before a release.
 
 ## Budget (proposed, revisit in M2)
 - One test per behaviour, not per function. A pure module rarely needs more than about ten.
