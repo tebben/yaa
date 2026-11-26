@@ -5,6 +5,10 @@ export {
 	type StoredEvent,
 } from "./lib/storage/event-log.ts";
 export {
+	createLayoutStore,
+	type LayoutStore,
+} from "./lib/storage/layout-store.ts";
+export {
 	type Migrations,
 	migrate,
 	schemaVersion,

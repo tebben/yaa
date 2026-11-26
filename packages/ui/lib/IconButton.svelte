@@ -3,24 +3,28 @@ import type { LucideIcon } from "@lucide/svelte";
 import { Tooltip } from "bits-ui";
 
 // The label names the action for the tooltip and screen readers; the
-// shortcut, when the action has one, is shown beside it.
+// shortcut, when the action has one, is shown beside it. A toggle passes
+// `pressed`.
 let {
 	icon: Icon,
 	label,
 	shortcut,
+	pressed,
 	onclick,
 }: {
 	icon: LucideIcon;
 	label: string;
 	shortcut?: string;
+	pressed?: boolean;
 	onclick: () => void;
 } = $props();
 </script>
 
 <Tooltip.Root>
 	<Tooltip.Trigger
-		class="inline-flex size-control items-center justify-center rounded-control text-text-muted outline-focus hover:bg-selection hover:text-text focus-visible:outline-1"
+		class="inline-flex size-control items-center justify-center rounded-control text-text-muted outline-focus hover:bg-selection hover:text-text focus-visible:outline-1 aria-pressed:bg-selection aria-pressed:text-text"
 		aria-label={label}
+		aria-pressed={pressed}
 		{onclick}
 	>
 		<Icon class="size-3.5" aria-hidden="true" />

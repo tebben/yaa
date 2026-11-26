@@ -5,6 +5,7 @@
 	"type": "module",
 	"exports": {
 		".": "./index.ts",
+		"./dock": "./dock.ts",
 		"./styles.css": "./styles.css",
 		"./tokens": "./tokens.ts",
 		"./token-codegen": "./token-codegen.ts"
@@ -17,7 +18,12 @@
 		"@fontsource-variable/geist-mono": "^5.3.0",
 		"@lucide/svelte": "~1.79.0",
 		"bits-ui": "^2.22.0",
+		"dockview": "8.9.1",
+		"dockview-core": "8.9.1",
 		"svelte": "~5.59.1",
 		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "^7.3.2"
 	}
 }

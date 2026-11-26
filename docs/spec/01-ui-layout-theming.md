@@ -13,7 +13,7 @@ The window is a fixed shell around a user-arrangeable grid: a full-height left m
 - **Left menu:** the project list. Each project expands to its default branch and its worktrees, each with a state badge (see `02-worktrees.md`). A project overview entry sits at the top of each project.
 - **Header:** shows the current project and worktree, with slots on the left, centre and right that plugins can fill.
 - **Footer:** slots for plugins, plus core info for the selected project: branch, uncommitted change count, ahead/behind. Plugins add chips for agent state, cost and PR status.
-- **Centre grid:** every panel is a view contributed by core or a plugin (id, title, icon, component). Users drag panels to rearrange, split, tab and resize them. A layout is saved per project, with a default layout for new projects and a reset action.
+- **Centre grid:** every panel is a view contributed by core or a plugin (id, title, icon, component). Users drag panels to rearrange, split, tab and resize them. A layout is saved per project, with a default layout for new projects and a reset action. A saved layout that no longer reads as one (from an older dock version, for example) gives way to the default. A panel whose kind nothing provides any more, such as one from a removed plugin, keeps its place and says so.
 
 **Right rail and panels**
 

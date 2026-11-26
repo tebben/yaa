@@ -88,11 +88,15 @@ module.exports = {
 		{
 			name: "pure-ts-no-svelte",
 			comment:
-				"Pure .ts modules hold logic without Svelte: they never import .svelte files. Entry points (index.ts) may, to expose components.",
+				"Pure .ts modules hold logic without Svelte: they never import .svelte files. Entry points (index.ts, and a package's root files) may, to expose components.",
 			severity: "error",
 			from: {
 				path: "\\.ts$",
-				pathNot: ["\\.svelte\\.ts$", "(^|/)index\\.ts$"],
+				pathNot: [
+					"\\.svelte\\.ts$",
+					"(^|/)index\\.ts$",
+					`^${ROOTS}/[^/]+/[^/]+\\.ts$`,
+				],
 			},
 			to: { path: "\\.svelte$" },
 		},

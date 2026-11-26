@@ -212,6 +212,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@lucide/svelte':
+        specifier: ~1.79.0
+        version: 1.79.0(svelte@5.59.1)
       '@yaa/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -270,12 +273,22 @@ importers:
       bits-ui:
         specifier: ^2.22.0
         version: 2.22.0(@internationalized/date@3.12.4)(svelte@5.59.1)
+      dockview:
+        specifier: 8.9.1
+        version: 8.9.1
+      dockview-core:
+        specifier: 8.9.1
+        version: 8.9.1
       svelte:
         specifier: ~5.59.1
         version: 5.59.1
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+    devDependencies:
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^7.3.2
+        version: 7.3.2(svelte@5.59.1)(vite@8.3.8(@types/node@24.19.3)(esbuild@0.28.2)(jiti@2.7.0))
 
 packages:
 
@@ -914,6 +927,12 @@ packages:
 
   devalue@5.9.4:
     resolution: {integrity: sha512-sPAT4pztbu6586/hrhOnMKS17IJrvg12mXiSPSS3W5qDeN2RGgvZ0diZCm31dBbnevfVmujNO3IM2wrS4Y2Rhg==}
+
+  dockview-core@8.9.1:
+    resolution: {integrity: sha512-OzqB63P65qeSquFoyYjQi5yT85ERcmceaJ0+YdQL68IZJmBd5kAfe4UD9bl3xILuXJ1tlXIoExdZ+vLpv30u1g==}
+
+  dockview@8.9.1:
+    resolution: {integrity: sha512-y35BxYANBtHJ4q7AIkd2c1Oh2pPx3dsaMhm6s4YvMXyIWlklxHRZupXtN6bS8QuJ/hmy/5ih/Ow2oARbEx4Yog==}
 
   electron@45.5.0:
     resolution: {integrity: sha512-rBQ0Czu1Qrtrs6Fygq7Qtfcgkhpt79SylMkaFb1AhtXItdxh0Wq3ERQoPfBYECYf+FxptAiXKCZ7p+H/39CWIA==}
@@ -1870,6 +1889,12 @@ snapshots:
   detect-libc@2.1.2: {}
 
   devalue@5.9.4: {}
+
+  dockview-core@8.9.1: {}
+
+  dockview@8.9.1:
+    dependencies:
+      dockview-core: 8.9.1
 
   electron@45.5.0(supports-color@7.2.0):
     dependencies:

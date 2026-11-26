@@ -7,16 +7,19 @@ import { settingsState } from "./settings.ts";
 // the plugin host from M1 step 7.
 export const coreProtocol = defineProtocol({
 	requests: {
-		"core.info": {
-			params: z.object({}),
-			result: z.object({
-				electron: z.string(),
-				node: z.string(),
-				startedAt: z.number(),
-			}),
-		},
 		"settings.get": { params: z.object({}), result: settingsState },
 		"keybindings.get": { params: z.object({}), result: keybindingsState },
+		// The dock layout as the renderer serialized it. Core stores it as
+		// opaque text; the renderer validates it before restoring it. One
+		// layout until projects arrive in M2, which makes it per project.
+		"layout.get": {
+			params: z.object({}),
+			result: z.object({ layout: z.string().nullable() }),
+		},
+		"layout.save": {
+			params: z.object({ layout: z.string() }),
+			result: z.object({}),
+		},
 	},
 	events: {
 		// Sent when a save changes what the file resolves to.
