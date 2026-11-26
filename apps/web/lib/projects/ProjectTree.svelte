@@ -4,6 +4,7 @@ import ChevronRight from "@lucide/svelte/icons/chevron-right";
 import Folder from "@lucide/svelte/icons/folder";
 import GitBranchPlus from "@lucide/svelte/icons/git-branch-plus";
 import X from "@lucide/svelte/icons/x";
+import type { WorktreeState } from "@yaa/contracts/worktree-state";
 import { Icon } from "@yaa/ui";
 import type { Attachment } from "svelte/attachments";
 import type { Place, TreeProject } from "./project-tree.ts";
@@ -19,6 +20,7 @@ let {
 	creating,
 	isFinishing,
 	isExpanded,
+	stateOf,
 	list,
 	onselect,
 	ontoggle,
@@ -31,6 +33,7 @@ let {
 	creating: readonly Pending[];
 	isFinishing: (id: string) => boolean;
 	isExpanded: (id: string) => boolean;
+	stateOf: (worktree: string) => WorktreeState;
 	list: Attachment<HTMLElement>;
 	onselect: (place: Place) => void;
 	ontoggle: (id: string) => void;
@@ -103,6 +106,7 @@ let {
 							last={index === worktrees.length - 1 && pending.length === 0}
 							selected={place?.worktree === worktree.id}
 							busy={isFinishing(worktree.id)}
+							state={stateOf(worktree.id)}
 							onselect={() =>
 								onselect({ project: project.id, worktree: worktree.id })}
 							onfinish={main

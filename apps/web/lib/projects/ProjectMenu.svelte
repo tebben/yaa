@@ -58,6 +58,7 @@ let {
 		creating={worktrees.creating}
 		isFinishing={worktrees.isFinishing}
 		isExpanded={projects.isExpanded}
+		stateOf={projects.stateOf}
 		list={projects.treeList}
 		onselect={projects.go}
 		ontoggle={projects.toggle}

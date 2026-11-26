@@ -35,7 +35,7 @@ const isSkipped = (error: unknown) =>
 
 // Watches every folder of a worktree that git does not ignore, one watch per
 // folder, so build output and dependencies cost nothing
-// (docs/decisions/0028-worktree-plugin-api.md). Folders are relative to the
+// (docs/decisions/0029-worktree-plugin-api.md). Folders are relative to the
 // root with `/`, "" being the root itself.
 export const watchTree = async ({
 	root,

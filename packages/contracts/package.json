@@ -21,6 +21,7 @@
 		"./agent-events": "./agent-events.ts",
 		"./projects": "./projects.ts",
 		"./worktree-name": "./worktree-name.ts",
+		"./worktree-state": "./worktree-state.ts",
 		"./worktree-steps": "./worktree-steps.ts",
 		"./worktree-files": "./worktree-files.ts"
 	},

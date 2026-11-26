@@ -1,12 +1,10 @@
 <script lang="ts">
 import { Dock, type DockController } from "@yaa/ui/dock";
-import { untrack } from "svelte";
-import { setPanelWorktree } from "./plugins/index.ts";
+import { setPanelWorktree } from "./panel-worktree.ts";
 
-// One worktree's grid, telling its panels which worktree they are in. A dock
-// stays with its worktree, so the id is read once.
+// A worktree's grid, which tells its panels the worktree they are in.
 let { worktree, dock }: { worktree: string; dock: DockController } = $props();
-setPanelWorktree(untrack(() => worktree));
+setPanelWorktree(() => worktree);
 </script>
 
 <Dock {dock} />

@@ -28,6 +28,8 @@ export type Worktrees = {
 		text: string;
 		base: string;
 	}): Promise<CreateWorktreeResult>;
+	// The worktree's folder.
+	folder(id: string): string;
 	status(id: string): Promise<BranchStatus>;
 	finishCheck(id: string): Promise<FinishCheck>;
 	finish(
@@ -211,6 +213,7 @@ export const createWorktrees = ({
 			});
 			return { worktree: added };
 		},
+		folder: (id) => worktree(id).path,
 		async status(id) {
 			return git.status(worktree(id).path);
 		},

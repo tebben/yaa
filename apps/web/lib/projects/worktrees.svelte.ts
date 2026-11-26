@@ -91,6 +91,9 @@ export const createWorktrees = ({
 		isFinishing(id: string) {
 			return finishing.has(id);
 		},
+		setDone(id: string, done: boolean) {
+			client.request("worktrees.setDone", { id, done }).catch(fail);
+		},
 		// From the default branch.
 		create: (project: string) => named(project),
 		// From a branch picked first.

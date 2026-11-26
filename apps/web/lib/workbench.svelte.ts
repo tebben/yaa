@@ -72,6 +72,9 @@ export const createWorkbench = (client: CoreClient) => {
 		"panel.kind": dock()?.activeKind,
 		"project.selected": projects.selected !== undefined,
 		"worktree.selected": (projects.worktree?.index ?? 0) > 0,
+		"worktree.done":
+			projects.worktree !== undefined &&
+			projects.stateOf(projects.worktree.id) === "done",
 		"focus.region": regions.current(),
 		"focus.list": regions.list(),
 		"focus.highlight": regions.highlighted,

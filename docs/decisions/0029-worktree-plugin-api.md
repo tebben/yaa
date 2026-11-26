@@ -1,4 +1,4 @@
-# 0028 The plugin API for worktrees, and file watching
+# 0029 The plugin API for worktrees, and file watching
 
 Status: decided, 2026-11-26.
 

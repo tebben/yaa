@@ -12,7 +12,8 @@
 		"./agents": "./agents.ts",
 		"./git": "./git.ts",
 		"./files": "./files.ts",
-		"./projects": "./projects.ts"
+		"./projects": "./projects.ts",
+		"./state": "./state.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

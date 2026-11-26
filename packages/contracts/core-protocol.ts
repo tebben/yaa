@@ -13,6 +13,12 @@ import {
 	project,
 } from "./projects.ts";
 import { settingsState } from "./settings.ts";
+import { worktreeState } from "./worktree-state.ts";
+
+// The state of each worktree by its id; one that is not listed is idle.
+const worktreeStates = z.object({
+	states: z.record(z.string(), worktreeState),
+});
 
 // Requests and events between the core and the renderer. The plugin host
 // has its own protocol (plugin-host-protocol.ts).
@@ -90,6 +96,14 @@ export const coreProtocol = defineProtocol({
 			}),
 			result: z.object({ problem: z.string().optional() }),
 		},
+		// The states derived from core's events; `worktrees.statesChanged`
+		// carries them again after each change.
+		"worktrees.states": { params: z.object({}), result: worktreeStates },
+		// Marks a worktree done, ready to finish, or takes the mark off.
+		"worktrees.setDone": {
+			params: z.object({ id: z.string(), done: z.boolean() }),
+			result: z.object({}),
+		},
 		// The plugins core loaded, with what they contribute.
 		"plugins.list": {
 			params: z.object({}),
@@ -109,10 +123,11 @@ export const coreProtocol = defineProtocol({
 			}),
 			result: z.object({ result: z.unknown() }),
 		},
-		// Starts an agent session. Until providers arrive in M2 the only agent
-		// is the fake one, in dev mode only (docs/spec/05-agents-chat.md).
+		// Starts an agent session in a worktree. Until providers arrive in M2
+		// the only agent is the fake one, in dev mode only
+		// (docs/spec/05-agents-chat.md).
 		"agent.start": {
-			params: z.object({}),
+			params: z.object({ worktree: z.string() }),
 			result: z.object({ sessionId: z.string() }),
 		},
 		// Every session with the events it has sent so far; `agent.event`
@@ -121,7 +136,11 @@ export const coreProtocol = defineProtocol({
 			params: z.object({}),
 			result: z.object({
 				sessions: z.array(
-					z.object({ sessionId: z.string(), events: z.array(agentEvent) }),
+					z.object({
+						sessionId: z.string(),
+						worktree: z.string(),
+						events: z.array(agentEvent),
+					}),
 				),
 			}),
 		},
@@ -161,6 +180,7 @@ export const coreProtocol = defineProtocol({
 		"settings.changed": settingsState,
 		"keybindings.changed": keybindingsState,
 		"projects.changed": z.object({ projects: z.array(project) }),
+		"worktrees.statesChanged": worktreeStates,
 	},
 });
 

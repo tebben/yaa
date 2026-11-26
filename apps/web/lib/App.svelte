@@ -80,6 +80,7 @@ const shortcut = (id: string) => {
 		</main>
 		<Footer
 			status={projects.status}
+			state={projects.worktree && projects.stateOf(projects.worktree.id)}
 			message={workbench.failure}
 			region={regions.region("footer", "horizontal")}
 		/>

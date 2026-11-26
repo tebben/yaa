@@ -7,21 +7,30 @@ import type {
 	QuestionAnswer,
 	SessionEvent,
 } from "@yaa/contracts/agent-events";
+import type { CoreEvent } from "@yaa/contracts/core-events";
 import { errorData, type Logger } from "@yaa/contracts/log";
+import { chatEvent } from "../state/chat-event.ts";
 import { type AcpSession, openAcpSession } from "./acp-session.ts";
 
 export type AgentSessionsOptions = {
 	// The fake agent's script, in dev mode only. Provider plugins replace it
 	// in M2 (docs/spec/05-agents-chat.md).
 	fakeAgent: string | null;
-	cwd: string;
+	// A worktree's folder, where its agents start.
+	folder(worktree: string): string;
+	// Logs the events the worktree's state is derived from.
+	record(event: CoreEvent): void;
 	log: Logger;
 	// For the lines agents write to stderr.
 	agentLog: Logger;
 	emit(event: SessionEvent): void;
 };
 
-type Session = { acp: AcpSession; events: AgentEvent[] };
+type Session = {
+	acp: AcpSession;
+	worktree: string;
+	events: AgentEvent[];
+};
 
 // Runs the fake agent as its own process, as a real agent runs: Electron's
 // binary in Node mode, ACP over its stdio.
@@ -48,7 +57,8 @@ const spawnFakeAgent = (script: string, agentLog: Logger) => {
 // business state, see docs/spec/00-overview.md).
 export const createAgentSessions = ({
 	fakeAgent,
-	cwd,
+	folder,
+	record,
 	log,
 	agentLog,
 	emit,
@@ -62,10 +72,11 @@ export const createAgentSessions = ({
 	};
 
 	return {
-		async start(): Promise<string> {
+		async start(worktree: string): Promise<string> {
 			if (fakeAgent === null) {
 				throw new Error("No agent available: the fake agent runs in dev mode");
 			}
+			const cwd = folder(worktree);
 			const sessionId = randomUUID();
 			const events: AgentEvent[] = [];
 			const acp = await openAcpSession({
@@ -74,16 +85,19 @@ export const createAgentSessions = ({
 				log,
 				emit(event) {
 					events.push(event);
+					const logged = chatEvent({ worktree, chat: sessionId }, event);
+					if (logged !== undefined) record(logged);
 					emit({ sessionId, seq: events.length - 1, event });
 				},
 			});
-			sessions.set(sessionId, { acp, events });
-			log.info("agent session started", { sessionId });
+			sessions.set(sessionId, { acp, worktree, events });
+			log.info("agent session started", { sessionId, worktree });
 			return sessionId;
 		},
 		list() {
-			return [...sessions].map(([sessionId, { events }]) => ({
+			return [...sessions].map(([sessionId, { worktree, events }]) => ({
 				sessionId,
+				worktree,
 				events,
 			}));
 		},

@@ -18,6 +18,3 @@ export type PluginPanels = {
 };
 
 export const [getPluginPanels, setPluginPanels] = createContext<PluginPanels>();
-
-// The worktree whose grid a panel is in; set around each worktree's dock.
-export const [getPanelWorktree, setPanelWorktree] = createContext<string>();

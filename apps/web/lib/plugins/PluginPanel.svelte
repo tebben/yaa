@@ -1,7 +1,8 @@
 <script lang="ts">
 import type { PanelProps } from "@yaa/ui/dock";
 import { onDestroy, untrack } from "svelte";
-import { getPanelWorktree, getPluginPanels } from "./plugin-panels.ts";
+import { getPanelWorktree } from "../panel-worktree.ts";
+import { getPluginPanels } from "./plugin-panels.ts";
 
 // A panel a plugin contributes: its component once the plugin's UI module
 // has loaded. A component that throws while rendering is caught by the
@@ -10,7 +11,7 @@ let { kind }: PanelProps = $props();
 // A slot keeps its kind and worktree for as long as it lives.
 const mounted = getPluginPanels().mount(
 	untrack(() => kind),
-	getPanelWorktree(),
+	getPanelWorktree()(),
 );
 onDestroy(mounted.dispose);
 </script>

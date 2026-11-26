@@ -1,16 +1,19 @@
 <script lang="ts">
 import { Button } from "@yaa/ui";
 import type { PanelProps } from "@yaa/ui/dock";
+import { getPanelWorktree } from "../panel-worktree.ts";
 import { getAgentChat } from "./agent-chat.svelte.ts";
 import Composer from "./Composer.svelte";
 import TranscriptEntry from "./TranscriptEntry.svelte";
+import { foldTranscript } from "./transcript.ts";
 
 // The chat panel until the chat arrives in M2: it streams turns from the
 // fake agent, in dev mode (docs/spec/05-agents-chat.md).
 let { kind }: PanelProps = $props();
 const agentChat = getAgentChat();
-const chat = $derived(agentChat());
-const transcript = $derived(chat.transcript);
+const worktree = getPanelWorktree();
+const chat = $derived(agentChat().in(worktree()));
+const transcript = $derived(foldTranscript(chat.events));
 </script>
 
 {#if !chat.started}

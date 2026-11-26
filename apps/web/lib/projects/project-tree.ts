@@ -28,6 +28,29 @@ export const filterTree = (
 // Where the grid is: a project's overview, or one of its worktrees.
 export type Place = { project: string; worktree?: string };
 
+// Every worktree in tree order, as places.
+const worktreePlaces = (projects: readonly Project[]) =>
+	projects.flatMap(({ id, worktrees }) =>
+		worktrees.map((worktree) => ({ project: id, worktree: worktree.id })),
+	);
+
+// The first worktree after `current` in tree order, wrapping around, that
+// `wanted` accepts; `current` itself comes last. From an overview, the
+// search starts at the project's first worktree.
+export const nextWorktree = (
+	projects: readonly Project[],
+	current: Place | undefined,
+	wanted: (worktree: string) => boolean,
+): Place | undefined => {
+	const all = worktreePlaces(projects);
+	const at = all.findIndex(({ worktree }) => worktree === current?.worktree);
+	const first = all.findIndex(({ project }) => project === current?.project);
+	const from = at >= 0 ? at + 1 : Math.max(first, 0);
+	return [...all.slice(from), ...all.slice(0, from)].find(({ worktree }) =>
+		wanted(worktree),
+	);
+};
+
 // The worktree `step` places from `current` in tree order, every project's
 // worktrees included, wrapping around; from an overview, the project's
 // first or last worktree.
@@ -36,9 +59,7 @@ export const stepWorktree = (
 	current: Place | undefined,
 	step: 1 | -1,
 ): Place | undefined => {
-	const all = projects.flatMap(({ id, worktrees }) =>
-		worktrees.map((worktree) => ({ project: id, worktree: worktree.id })),
-	);
+	const all = worktreePlaces(projects);
 	if (all.length === 0) return undefined;
 	const at = all.findIndex(({ worktree }) => worktree === current?.worktree);
 	if (at >= 0) return all[(at + step + all.length) % all.length];

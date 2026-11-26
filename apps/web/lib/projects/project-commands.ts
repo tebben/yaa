@@ -66,6 +66,32 @@ export const projectCommands = ({
 		},
 	},
 	{
+		id: "worktree.markDone",
+		title: "Mark worktree done",
+		category: "Worktree",
+		when: "worktree.selected && !worktree.done",
+		run: () => {
+			const { worktree } = projects;
+			if (worktree !== undefined) worktrees.setDone(worktree.id, true);
+		},
+	},
+	{
+		id: "worktree.unmarkDone",
+		title: "Mark worktree not done",
+		category: "Worktree",
+		when: "worktree.done",
+		run: () => {
+			const { worktree } = projects;
+			if (worktree !== undefined) worktrees.setDone(worktree.id, false);
+		},
+	},
+	{
+		id: "worktree.nextAttention",
+		title: "Next worktree that needs attention",
+		category: "Worktree",
+		run: projects.nextAttention,
+	},
+	{
 		id: "worktree.next",
 		title: "Next worktree",
 		category: "Worktree",
