@@ -3,7 +3,8 @@ import { X } from "@lucide/svelte";
 import IconButton from "../IconButton.svelte";
 import type { PanelKind } from "./dock.svelte.ts";
 
-// The panel header: dockview colours the text by focus (theme in styles.css).
+// The panel header: dockview colours the text by focus, and the close button
+// shows while the header is hovered (dock.css).
 let {
 	kind,
 	title,
@@ -17,5 +18,7 @@ let {
 		<kind.icon class="size-3.5 shrink-0" aria-hidden="true" />
 	{/if}
 	<span class="flex-1 truncate">{title}</span>
-	<IconButton icon={X} label="Close" onclick={onclose} />
+	<span class="yaa-tab-actions flex">
+		<IconButton icon={X} label="Close" onclick={onclose} />
+	</span>
 </div>

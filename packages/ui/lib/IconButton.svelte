@@ -22,7 +22,7 @@ let {
 
 <Tooltip.Root>
 	<Tooltip.Trigger
-		class="inline-flex size-control items-center justify-center rounded-control text-text-muted outline-focus hover:bg-selection hover:text-text focus-visible:outline-1 aria-pressed:bg-selection aria-pressed:text-text"
+		class="inline-flex size-control items-center justify-center rounded-control text-text-muted outline-focus hover:bg-selection hover:text-text focus-visible:bg-selection focus-visible:text-text focus-visible:outline-1 aria-pressed:bg-selection aria-pressed:text-text"
 		aria-label={label}
 		aria-pressed={pressed}
 		{onclick}

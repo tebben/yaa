@@ -42,3 +42,19 @@
 	background-color: var(--color-focus);
 	z-index: 1;
 }
+
+/* A hairline between a panel's header and its content. */
+.yaa-dock .dv-tabs-and-actions-container {
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--color-border);
+}
+
+/* Panel actions stay out of sight until the header is hovered; Ctrl W
+   closes by keyboard (docs/design/ui.md). */
+.yaa-dock .yaa-tab-actions {
+	visibility: hidden;
+}
+
+.yaa-dock .dv-tabs-and-actions-container:hover .yaa-tab-actions {
+	visibility: visible;
+}
