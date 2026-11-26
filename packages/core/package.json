@@ -6,7 +6,8 @@
 	"exports": {
 		"./main": "./main.ts",
 		"./storage": "./storage.ts",
-		"./log": "./log.ts"
+		"./log": "./log.ts",
+		"./settings": "./settings.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

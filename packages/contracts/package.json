@@ -10,7 +10,10 @@
 		"./core-protocol": "./core-protocol.ts",
 		"./process-control": "./process-control.ts",
 		"./log": "./log.ts",
-		"./core-events": "./core-events.ts"
+		"./core-events": "./core-events.ts",
+		"./file-problem": "./file-problem.ts",
+		"./settings": "./settings.ts",
+		"./keybindings": "./keybindings.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
