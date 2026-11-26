@@ -23,4 +23,6 @@ Source: `docs/spec/03-plugins.md`. The plugin API lands in M1 and stays unstable
 ## Look
 - Style with `ui` components and token CSS variables. No colour or spacing literals. Icons from `@lucide/svelte` through `ui`.
 - Never bundle a copy of `svelte` or `ui`; import the app's.
-- Extra styles ship as one compiled, scoped CSS file declared in the manifest.
+- Never rely on Tailwind classes: the app's build only contains the classes the app uses.
+- Extra styles go in scoped `<style>` blocks; the plugin build extracts them into one CSS file declared in the manifest.
+- Components use runes. Build plugin UI only with the yaa plugin build, which links it to the app's Svelte runtime (`docs/decisions/0015-plugin-ui-loading.md`).

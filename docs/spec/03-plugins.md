@@ -36,9 +36,10 @@ Backend plugin code runs in a separate plugin host process, so a crashing plugin
 
 **Plugin UI in the renderer**
 
-- Plugin UI modules import `svelte` and the app's `ui` package from the app, through an import map or bundler externals, never a bundled copy. Two Svelte runtimes in one page break context and reactivity.
-- The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins therefore style with `ui` components and the token CSS variables. A plugin that needs more ships its own compiled, scoped CSS file, declared in the manifest.
-- The M0 hot-reload spike proves both points before the plugin API is frozen.
+- Plugin UI runs on the app's single Svelte runtime and the app's `ui` package, never a bundled copy. Two Svelte runtimes in one page break context and reactivity. The app exposes a registry of the shared modules' real namespaces (every public client entry of `svelte`, the private entries compiled code imports, and `ui`), and the yaa plugin build compiles a plugin's imports of them into reads from that registry. Import maps do not work, because compiled Svelte code reads live bindings from the runtime (`docs/decisions/0015-plugin-ui-loading.md`).
+- The plugin build (esbuild plus the Svelte compiler) compiles in runes mode and stamps the Svelte version into the output. The loader refuses a plugin built with a different Svelte version and shows the error in the plugin manager (proposed; how third-party plugins follow app upgrades is open, see docs/decisions/open-questions.md).
+- The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins never rely on Tailwind classes: they style with `ui` components, the token CSS variables and scoped `<style>` blocks, which the plugin build extracts into one CSS file declared in the manifest.
+- Plugin UI modules and styles are served over a custom protocol that the renderer's CSP allows. The app renders each plugin panel inside its own tree, so context reaches it, wrapped in an error boundary keyed by the plugin version, so a plugin that throws shows an error in its panel and a fixed version renders again.
 
 **API stability**
 
@@ -51,10 +52,10 @@ The plugin API is public from M1: built-in, third-party and agent-written plugin
 
 **Hot reload**
 
-- In dev mode only, a watcher on the plugin folders reloads a plugin on change: the backend module is deactivated (every registration is a disposable, so cleanup is automatic) and re-imported; the UI module is swapped in place.
+- In dev mode only, a watcher on the plugin folders reloads a plugin on change: the backend module is deactivated (every registration is a disposable, so cleanup is automatic) and re-imported; the UI module is re-imported under a new version and swapped in place, with its new CSS loaded before the old is removed. Imported modules are never evicted, so a long dev session grows memory until the window reloads.
 - Plugin state lives in storage, not in module memory, so a reload is invisible to the user.
 - A failed load keeps the previous version running and shows the error in a plugin manager panel.
-- Plugin UI in Svelte needs a build step, so dev mode bundles a compiler (for example Vite or esbuild with the Svelte plugin) in the plugin host. Production builds load prebuilt plugins, with no watcher and no compiler; installing or updating a plugin takes effect after a restart.
+- Plugin UI in Svelte needs a build step, so dev mode runs the plugin build as an incremental watcher in the plugin host. Production builds load prebuilt plugins, with no watcher and no compiler; installing or updating a plugin takes effect after a restart.
 
 **Agent-authored plugins**
 
