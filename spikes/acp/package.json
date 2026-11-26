@@ -1,0 +1,1 @@
+{"name":"acp-spike","private":true,"type":"module","dependencies":{"@agentclientprotocol/claude-agent-acp":"0.112.0","@agentclientprotocol/sdk":"2.12.0"}}
