@@ -12,7 +12,9 @@ import type { Workbench } from "./workbench.svelte.ts";
 let { workbench }: { workbench: Workbench } = $props();
 const { layouts, regions, commands, palette, projects, worktrees } =
 	$derived(workbench);
-setPluginPanels({ load: (kind) => workbench.plugins.panels.load(kind) });
+setPluginPanels({
+	mount: (kind, worktree) => workbench.plugins.panels.mount(kind, worktree),
+});
 setAgentChat(() => workbench.agentChat);
 
 // The window is interactive once a dock is on screen: the launch time the

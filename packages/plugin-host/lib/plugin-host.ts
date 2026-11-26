@@ -1,17 +1,58 @@
 import { pathToFileURL } from "node:url";
+import { createClient } from "@yaa/contracts/client";
 import { createLogger, errorData } from "@yaa/contracts/log";
-import { pluginHostProtocol } from "@yaa/contracts/plugin-host-protocol";
-import type { Port } from "@yaa/contracts/protocol";
-import { createServer } from "@yaa/contracts/server";
+import {
+	pluginCoreProtocol,
+	pluginHostProtocol,
+} from "@yaa/contracts/plugin-host-protocol";
+import {
+	type Port,
+	type ProtocolDefinition,
+	paramsSchema,
+	type RequestName,
+	safeParse,
+	splitPort,
+} from "@yaa/contracts/protocol";
+import { createServer, type Handlers } from "@yaa/contracts/server";
 import type { CommandHandler, PluginContext } from "@yaa/plugin-api";
 import { backendModule } from "./backend-module.ts";
+import { createWorktreeApi } from "./worktree-api.ts";
+
+type Service = (method: string, params: unknown) => Promise<unknown>;
+
+// A plugin's handlers behind its protocol: the params its UI sent are
+// checked before a handler sees them.
+const serviceOf = <P extends ProtocolDefinition>(
+	plugin: string,
+	protocol: P,
+	handlers: Handlers<P>,
+): Service => {
+	const isMethod = (method: string): method is RequestName<P> =>
+		Object.hasOwn(protocol.requests, method);
+	const run = async <M extends RequestName<P>>(method: M, params: unknown) => {
+		const parsed = safeParse(paramsSchema(protocol, method), params);
+		if (!parsed.success) throw parsed.error;
+		return handlers[method](parsed.data);
+	};
+	return async (method, params) => {
+		if (!isMethod(method)) {
+			throw new Error(`Plugin ${plugin} serves no ${method}`);
+		}
+		return run(method, params);
+	};
+};
 
 // Runs backend plugin code for the core: imports a plugin's module on its
-// activation and calls the command handlers it registers. Plugin state
+// activation, calls the command handlers it registers and what it serves its
+// UI, and gives it the plugin API, which the core answers. Plugin state
 // lives in this process only, so the core can restart it after a crash.
 export const startPluginHost = (port: Port) => {
 	const active = new Set<string>();
 	const handlers = new Map<string, CommandHandler>();
+	const services = new Map<string, Service>();
+	const { serving, calling } = splitPort(port);
+	const core = createClient(pluginCoreProtocol);
+	const api = createWorktreeApi(core);
 
 	const server = createServer(
 		pluginHostProtocol,
@@ -34,6 +75,13 @@ export const startPluginHost = (port: Port) => {
 				}
 				await handler();
 				return {};
+			},
+			"plugin.call": async ({ id, method, params }) => {
+				const service = services.get(id);
+				if (service === undefined) {
+					throw new Error(`Plugin ${id} serves nothing`);
+				}
+				return { result: await service(method, params) };
 			},
 		},
 		{
@@ -65,6 +113,20 @@ export const startPluginHost = (port: Port) => {
 				};
 			},
 		},
+		serve(protocol, served) {
+			if (services.has(id)) throw new Error(`Plugin ${id} serves twice`);
+			const service = serviceOf(id, protocol, served);
+			services.set(id, service);
+			return {
+				emit(event, payload) {
+					server.emit("plugin.event", { plugin: id, event, payload });
+				},
+				dispose() {
+					if (services.get(id) === service) services.delete(id);
+				},
+			};
+		},
+		...api,
 		log: createLogger(
 			(record) =>
 				server.emit("log", {
@@ -83,5 +145,6 @@ export const startPluginHost = (port: Port) => {
 		setImmediate(() => process.exit(1));
 	});
 
-	server.connect(port);
+	server.connect(serving);
+	core.attach(calling);
 };

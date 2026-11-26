@@ -23,9 +23,15 @@ const pluginPath = z
 // renderer's command registry.
 const pluginCommand = z.strictObject({
 	id: z.string(),
-	title: z.string().min(1),
+	// What the palette lists it as. A panel's command without one is reached
+	// by its keys only.
+	title: z.string().min(1).exactOptional(),
 	category: z.string().min(1).exactOptional(),
 	when: z.string().min(1).exactOptional(),
+	// A command of one of the plugin's panels: it runs in that panel's UI,
+	// while the open worktree has the panel. Without it, it runs in the
+	// backend.
+	panel: z.string().exactOptional(),
 });
 
 // A view in the grid. The icon is an SVG file in the plugin folder, so the
@@ -96,7 +102,22 @@ export const pluginManifest = z
 				);
 			}
 		});
-		if (commands.length > 0 && manifest.main === undefined) {
+		commands.forEach(({ panel, title }, index) => {
+			if (panel === undefined && title === undefined) {
+				issue(
+					["contributes", "commands", index, "title"],
+					"A backend command needs a title",
+				);
+			}
+			if (panel !== undefined && !panelIds.has(panel)) {
+				issue(
+					["contributes", "commands", index, "panel"],
+					"Expected a panel this plugin contributes",
+				);
+			}
+		});
+		const inBackend = commands.some(({ panel }) => panel === undefined);
+		if (inBackend && manifest.main === undefined) {
 			issue(["main"], "Commands need a backend module");
 		}
 		if (panels.length > 0 && manifest.ui === undefined) {

@@ -1,6 +1,8 @@
 import { join } from "node:path";
 import { errorData, type Logger, type LogRecord } from "@yaa/contracts/log";
+import type { PluginEvent } from "@yaa/contracts/plugin-host-protocol";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
+import type { Port } from "@yaa/contracts/protocol";
 import { createPluginHostSupervisor } from "./plugin-host-supervisor.ts";
 import { readPluginFolders } from "./read-plugin-folders.ts";
 import { resolvePlugins } from "./resolve-plugins.ts";
@@ -13,6 +15,12 @@ export type PluginManagerOptions = {
 	requestHost(): void;
 	// The host's log lines.
 	write(record: LogRecord): void;
+	// Serves the plugin API to a host.
+	serve(port: Port): void;
+	// An event a plugin's backend sends its UI.
+	onEvent(event: PluginEvent): void;
+	// The host went away, with everything its plugins held.
+	onLost(): void;
 };
 
 // The plugin manager (docs/spec/03-plugins.md): reads the plugin folders
@@ -23,6 +31,9 @@ export const createPluginManager = ({
 	log,
 	requestHost,
 	write,
+	serve,
+	onEvent,
+	onLost,
 }: PluginManagerOptions) => {
 	const { plugins, refused } = resolvePlugins(readPluginFolders(dir));
 	for (const { folder, problems } of refused) {
@@ -32,7 +43,10 @@ export const createPluginManager = ({
 
 	const owners = new Map<string, PluginManifest>();
 	for (const plugin of plugins) {
-		for (const { id } of plugin.contributes.commands) owners.set(id, plugin);
+		for (const { id, panel } of plugin.contributes.commands) {
+			// A panel's commands run in the renderer.
+			if (panel === undefined) owners.set(id, plugin);
+		}
 	}
 	// One activation per plugin per host, kept when it failed: a plugin whose
 	// activate threw stays failed until the host restarts.
@@ -41,10 +55,13 @@ export const createPluginManager = ({
 	const host = createPluginHostSupervisor({
 		requestHost,
 		write,
+		serve,
+		onEvent,
 		log,
 		// Everything the host had activated went with it.
 		onLost: () => {
 			activations.clear();
+			onLost();
 			activateStartup();
 		},
 	});
@@ -58,7 +75,9 @@ export const createPluginManager = ({
 				await host.client().request("plugin.activate", {
 					id: plugin.id,
 					main: join(dir, plugin.id, main),
-					commands: plugin.contributes.commands.map(({ id }) => id),
+					commands: plugin.contributes.commands.flatMap(({ id, panel }) =>
+						panel === undefined ? [id] : [],
+					),
 				});
 				log.info(`plugin ${plugin.id} activated`);
 			})();
@@ -81,6 +100,15 @@ export const createPluginManager = ({
 	return {
 		plugins,
 		attachHost: host.attach,
+		// A request from a plugin's UI to its backend.
+		async call(id: string, method: string, params: unknown) {
+			const plugin = plugins.find((candidate) => candidate.id === id);
+			if (plugin?.main === undefined) {
+				throw new Error(`No plugin ${id} has a backend`);
+			}
+			await activate(plugin);
+			return host.client().request("plugin.call", { id, method, params });
+		},
 		async runCommand(command: string) {
 			const owner = owners.get(command);
 			if (owner === undefined) {

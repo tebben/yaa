@@ -2,7 +2,8 @@ import * as z from "zod";
 import { agentEvent, questionAnswer, sessionEvent } from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
-import { pluginManifest } from "./plugin-manifest.ts";
+import { pluginEvent } from "./plugin-host-protocol.ts";
+import { pluginId, pluginManifest } from "./plugin-manifest.ts";
 import {
 	addProjectResult,
 	branchStatus,
@@ -113,6 +114,15 @@ export const coreProtocol = defineProtocol({
 			params: z.object({ command: z.string() }),
 			result: z.object({}),
 		},
+		// A request from a plugin's UI to its backend, activating it first.
+		"plugins.call": {
+			params: z.object({
+				plugin: pluginId,
+				method: z.string(),
+				params: z.unknown(),
+			}),
+			result: z.object({ result: z.unknown() }),
+		},
 		// Starts an agent session in a worktree. Until providers arrive in M2
 		// the only agent is the fake one, in dev mode only
 		// (docs/spec/05-agents-chat.md).
@@ -162,6 +172,10 @@ export const coreProtocol = defineProtocol({
 	},
 	events: {
 		"agent.event": sessionEvent,
+		"plugins.event": pluginEvent,
+		// The plugin host went away: what plugin backends held, such as file
+		// watches, went with it.
+		"plugins.reset": z.object({}),
 		// Sent when a save changes what the file resolves to.
 		"settings.changed": settingsState,
 		"keybindings.changed": keybindingsState,

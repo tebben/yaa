@@ -79,6 +79,22 @@ describe("plugin manifest schema", () => {
 		).toContain("Expected a command this plugin contributes");
 	});
 
+	it("accepts panel commands without a backend, for its own panels only", () => {
+		const { main: _main, ...noMain } = hello;
+		const inPanel = (panel: string) =>
+			messages({
+				...noMain,
+				contributes: {
+					...hello.contributes,
+					commands: [{ id: "hello.greet", title: "Say hello", panel }],
+				},
+			});
+		expect(inPanel("hello")).toEqual([]);
+		expect(inPanel("chat")).toContain(
+			"Expected a panel this plugin contributes",
+		);
+	});
+
 	it("rejects commands without a backend and panels without a UI module", () => {
 		const { main: _main, ...noMain } = hello;
 		const { ui: _ui, styles: _styles, ...noUi } = hello;

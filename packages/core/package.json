@@ -11,6 +11,7 @@
 		"./plugins": "./plugins.ts",
 		"./agents": "./agents.ts",
 		"./git": "./git.ts",
+		"./files": "./files.ts",
 		"./projects": "./projects.ts",
 		"./state": "./state.ts"
 	},

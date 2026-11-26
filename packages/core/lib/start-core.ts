@@ -6,8 +6,10 @@ import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
 import { createCoreServer } from "./core-server.ts";
+import { createWorktreeWatches } from "./files/worktree-watches.ts";
 import { createGitService } from "./git/git-service.ts";
 import { openLogFile } from "./log/log-file.ts";
+import { createPluginApiServer } from "./plugins/plugin-api-server.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
 import { createProjects } from "./projects/projects.ts";
 import { createWorktrees } from "./projects/worktrees.ts";
@@ -77,12 +79,6 @@ export const startCore = ({
 		resolve: resolveKeybindings,
 		log,
 	});
-	const plugins = createPluginManager({
-		dir: pluginsDir,
-		log,
-		requestHost: requestPluginHost,
-		write: logFile.write,
-	});
 	const git = createGitService();
 	const steps = createStepsRunner({ git, events: states, log });
 	const worktrees = createWorktrees({
@@ -105,6 +101,39 @@ export const startCore = ({
 	// SIGTERM, which would end it without the exit handlers.
 	process.on("exit", steps.shutdown);
 	process.on("SIGTERM", () => process.exit(0));
+	const projects = createProjects({ db, git, home: homedir() });
+	const allWorktrees = () =>
+		projects.list().flatMap((project) => project.worktrees);
+	const worktree = (id: string) => {
+		const found = allWorktrees().find((candidate) => candidate.id === id);
+		if (found === undefined) throw new Error(`No worktree ${id}`);
+		return found;
+	};
+	const watches = createWorktreeWatches({
+		pathOf: (id) => worktree(id).path,
+		git,
+		log,
+	});
+	// A finished worktree, or one of a removed project, is watched no longer.
+	const unwatchGone = () =>
+		watches.keep(new Set(allWorktrees().map(({ id }) => id)));
+	projects.onChange(unwatchGone);
+	worktrees.onChange(unwatchGone);
+	const pluginApi = createPluginApiServer({ worktree, git, watches, log });
+	const plugins = createPluginManager({
+		dir: pluginsDir,
+		log,
+		requestHost: requestPluginHost,
+		write: logFile.write,
+		serve: pluginApi.connect,
+		// A host runs only once a client or startup asks for a plugin, and
+		// `server` exists before either hears from it.
+		onEvent: (event) => server.emit("plugins.event", event),
+		onLost: () => {
+			watches.keep(new Set());
+			server.emit("plugins.reset", {});
+		},
+	});
 	const server = createCoreServer({
 		log,
 		settings,
@@ -113,7 +142,7 @@ export const startCore = ({
 		plugins,
 		agents,
 		pickFolder,
-		projects: createProjects({ db, git, home: homedir() }),
+		projects,
 		worktrees,
 		states,
 	});

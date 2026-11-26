@@ -1,6 +1,9 @@
 import type { BranchStatus } from "@yaa/contracts/projects";
+import type { GitChange, GitFiles } from "@yaa/contracts/worktree-files";
 import { createKeyedQueue } from "./keyed-queue.ts";
 import { parseBranches } from "./parse-branches.ts";
+import { parseChanges } from "./parse-changes.ts";
+import { parseFiles, splitNul } from "./parse-files.ts";
 import { parseStatus } from "./parse-status.ts";
 import { mainWorktree } from "./parse-worktree-list.ts";
 import { type RunGit, runGit } from "./run-git.ts";
@@ -19,6 +22,15 @@ export type GitService = {
 	// out in `repo`.
 	defaultBranch(repo: string): Promise<string>;
 	status(dir: string): Promise<BranchStatus>;
+	// The files with uncommitted changes, each untracked one by itself.
+	changes(dir: string): Promise<GitChange[]>;
+	// Tracked and untracked files, ignored ones left out.
+	files(dir: string): Promise<GitFiles>;
+	// The ignored files and folders; a folder ends with `/` and stands for
+	// everything in it.
+	ignored(dir: string): Promise<string[]>;
+	// The folder holding the checkout's own index and HEAD.
+	gitDir(dir: string): Promise<string>;
 	branches(repo: string): Promise<{ local: string[]; remote: string[] }>;
 	// The files in `dir` that git does not track, ignored ones included, and
 	// that match one of the glob patterns, relative to `dir`. A repository
@@ -62,8 +74,47 @@ export const createGitService = (run: RunGit = runGit): GitService => {
 				);
 			});
 		},
+		// Without optional locks, status leaves the index alone, so a watcher
+		// that reads it after a change does not cause the next one.
 		status: async (dir) =>
-			parseStatus(await run(dir, ["status", "--porcelain=v2", "--branch"])),
+			parseStatus(
+				await run(dir, [
+					"--no-optional-locks",
+					"status",
+					"--porcelain=v2",
+					"--branch",
+				]),
+			),
+		changes: async (dir) =>
+			parseChanges(
+				await run(dir, [
+					"--no-optional-locks",
+					"status",
+					"--porcelain=v2",
+					"-z",
+					"--untracked-files=all",
+				]),
+			),
+		async files(dir) {
+			const [tracked, others] = await Promise.all([
+				run(dir, ["ls-files", "-z", "--stage"]),
+				run(dir, ["ls-files", "-z", "--others", "--exclude-standard"]),
+			]);
+			return parseFiles(tracked, others);
+		},
+		ignored: async (dir) =>
+			splitNul(
+				await run(dir, [
+					"ls-files",
+					"-z",
+					"--others",
+					"--ignored",
+					"--exclude-standard",
+					"--directory",
+				]),
+			),
+		gitDir: async (dir) =>
+			(await run(dir, ["rev-parse", "--absolute-git-dir"])).trim(),
 		branches: async (repo) =>
 			parseBranches(
 				await run(repo, [
@@ -83,7 +134,7 @@ export const createGitService = (run: RunGit = runGit): GitService => {
 				"--",
 				...patterns.map((pattern) => `:(glob)${pattern}`),
 			]);
-			return out.split("\0").filter((path) => path !== "");
+			return splitNul(out);
 		},
 		unpushed: async (repo, branch, base) =>
 			Number(
