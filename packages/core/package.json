@@ -3,7 +3,16 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"exports": {
+		"./main": "./main.ts"
+	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@yaa/contracts": "workspace:*"
+	},
+	"devDependencies": {
+		"electron": "45.5.0"
 	}
 }

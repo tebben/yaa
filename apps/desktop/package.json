@@ -3,7 +3,20 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"main": "dist/main.js",
 	"scripts": {
+		"dev": "node scripts/dev.ts",
+		"build": "node scripts/build.ts",
+		"start": "node scripts/build.ts && electron dist/main.js",
 		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@yaa/contracts": "workspace:*",
+		"@yaa/core": "workspace:*"
+	},
+	"devDependencies": {
+		"electron": "45.5.0",
+		"esbuild": "0.28.2",
+		"vite": "^8.3.8"
 	}
 }

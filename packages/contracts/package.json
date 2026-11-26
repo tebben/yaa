@@ -3,6 +3,13 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
+	"exports": {
+		"./protocol": "./protocol.ts",
+		"./client": "./client.ts",
+		"./server": "./server.ts",
+		"./core-protocol": "./core-protocol.ts",
+		"./process-control": "./process-control.ts"
+	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"
 	},

@@ -9,7 +9,8 @@
 	"scripts": {
 		"lint": "biome check . && node scripts/check-suppressions.ts",
 		"format": "biome check --write .",
-		"typecheck": "tsc -p . && svelte-check --tsconfig ./tsconfig.json",
+		"typecheck": "tsc -p . && tsc -p tsconfig.preload.json && svelte-check --tsconfig ./tsconfig.web.json",
+		"dev": "pnpm --filter @yaa/desktop dev",
 		"test": "pnpm -r --filter '!yaa' test",
 		"lint:boundaries": "depcruise --config .dependency-cruiser.cjs .",
 		"lint:svelte-size": "node scripts/svelte-size.ts",

@@ -4,6 +4,7 @@ Source: `docs/spec/13-repo-conventions.md`. Packages are deep modules: read `pac
 
 ## Types
 - Strict mode, from `tsconfig.base.json`. Do not loosen it per package.
+- Three programs share it: `tsconfig.json` for Node code (main, core, scripts, plugin backends), `tsconfig.web.json` for the renderer (DOM, no Node) and `tsconfig.preload.json` for the preload. `contracts` is in both Node and web, so it uses neither DOM nor Node APIs.
 - No `any`. Use `unknown` and narrow. No non-null assertions (`!`); handle the missing case. No casts (`as`) to quiet the checker.
 - Validate data with Zod where it crosses a boundary: protocol messages, the plugin host, disk, agent output, CLI output. Infer the type from the schema (`z.infer`), so there is one definition. Inside the boundary, trust the types: no repeated checks.
 - Index signatures and arrays: `noUncheckedIndexedAccess` and `noPropertyAccessFromIndexSignature` are on, so write `record["key"]` and handle `undefined`.
