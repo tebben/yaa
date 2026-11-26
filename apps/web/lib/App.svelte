@@ -23,9 +23,18 @@ const shortcut = (id: string) => {
 		class="grid h-screen grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_minmax(0,1fr)_auto]"
 	>
 		{#if workbench.menuOpen}
-			<LeftMenu region={regions.region("menu", "vertical")} />
+			<LeftMenu
+				region={regions.region("menu", "vertical")}
+				shortcut={shortcut("menu.toggle")}
+				onhide={() => commands.run("menu.toggle")}
+			/>
 		{/if}
-		<Header region={regions.region("header", "horizontal")} />
+		<Header
+			region={regions.region("header", "horizontal")}
+			menuOpen={workbench.menuOpen}
+			menuShortcut={shortcut("menu.toggle")}
+			onshowmenu={() => commands.run("menu.toggle")}
+		/>
 		<main class="col-start-2 min-h-0 bg-surface">
 			{#if layout.dock}
 				<Dock dock={layout.dock} />

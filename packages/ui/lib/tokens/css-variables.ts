@@ -17,7 +17,8 @@ const inGroup = (
 	}));
 
 // Each token group lands in the Tailwind theme namespace that makes its
-// utilities: font sizes in `text`, line heights in `leading`, and both space
+// utilities: font sizes in `text`, line heights in `leading`, weights in
+// `font-weight`, and both space
 // and size in `spacing`, so `p-2` and `h-row` work.
 export const cssVariables = (tokens: TokenFile): CssVariable[] => {
 	const variables = [
@@ -25,6 +26,7 @@ export const cssVariables = (tokens: TokenFile): CssVariable[] => {
 		{ name: "font-mono", value: tokens.font.mono },
 		...inGroup("text", tokens.font.size),
 		...inGroup("leading", tokens.font.lineHeight),
+		...inGroup("font-weight", tokens.font.weight),
 		...inGroup("radius", tokens.radius),
 		...inGroup("spacing", tokens.space),
 		...inGroup("spacing", tokens.size),
