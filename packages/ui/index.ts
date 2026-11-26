@@ -4,5 +4,7 @@ export { default as Icon } from "./lib/Icon.svelte";
 export { default as IconButton } from "./lib/IconButton.svelte";
 export type { IconSource } from "./lib/icon-source.ts";
 export { default as Kbd } from "./lib/Kbd.svelte";
+export { default as TabStrip } from "./lib/TabStrip.svelte";
 export { default as TextField } from "./lib/TextField.svelte";
 export { default as TooltipProvider } from "./lib/TooltipProvider.svelte";
+export type { Tab } from "./lib/tab.ts";
