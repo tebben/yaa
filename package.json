@@ -10,10 +10,14 @@
 		"lint": "biome check . && node scripts/check-suppressions.ts",
 		"format": "biome check --write .",
 		"typecheck": "tsc -p . && svelte-check --tsconfig ./tsconfig.json",
-		"test": "pnpm -r test",
+		"test": "pnpm -r --filter '!yaa' test",
 		"lint:boundaries": "depcruise --config .dependency-cruiser.cjs .",
 		"lint:svelte-size": "node scripts/svelte-size.ts",
-		"check:docs": "node scripts/check-docs.ts"
+		"check:docs": "node scripts/check-docs.ts",
+		"test:changed": "pnpm -r --filter '...[origin/main]' --filter '!yaa' test",
+		"check": "pnpm run check:static && pnpm run test:changed",
+		"check:all": "pnpm run check:static && pnpm run test",
+		"check:static": "pnpm run lint && pnpm run typecheck && pnpm run lint:boundaries && pnpm run lint:svelte-size && pnpm run check:docs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.6.9",
