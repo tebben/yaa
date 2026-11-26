@@ -34,6 +34,9 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 	const regions = new Map<RegionName, Region>();
 	// Coming back to a region lands on the item that had focus there last.
 	const memory = createFocusMemory();
+	// Whether the focus edge shows: from a keyboard move until a click or
+	// Escape (docs/spec/01-ui-layout-theming.md).
+	let highlighted = $state(false);
 
 	// The region focus is in; the dock when focus is nowhere, as at start.
 	const current = (): RegionName => {
@@ -76,8 +79,19 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			return regions.get(current())?.orientation;
 		},
 		enter,
+		get highlighted() {
+			return highlighted;
+		},
+		// Shows the focus edge, for keys that move focus within a panel.
+		highlight() {
+			highlighted = true;
+		},
+		hideHighlight() {
+			highlighted = false;
+		},
 		// Moves to the panel or region in that direction, if there is one.
 		move(direction: DockDirection) {
+			highlighted = true;
 			const from = current();
 			if (from === "dock" && dock()?.focus(direction)) return;
 			const to = neighbours[from][direction];
@@ -86,6 +100,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 		},
 		// The next or previous item of the focused region, wrapping around.
 		step(step: 1 | -1) {
+			highlighted = true;
 			const region = regions.get(current());
 			if (region === undefined) return;
 			const list = focusableItems(region.element);

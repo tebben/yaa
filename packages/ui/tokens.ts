@@ -53,6 +53,7 @@ export type TokenName =
 	| "color-raised"
 	| "color-overlay"
 	| "color-hover"
+	| "color-pressed"
 	| "color-selection"
 	| "color-border"
 	| "color-border-strong"

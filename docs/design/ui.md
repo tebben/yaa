@@ -21,12 +21,11 @@ Each part of the window has its own colour token, so a theme can tune it alone. 
 | Header and footer | `chrome` |
 | Gaps around the panels | `grid` |
 | Left menu | `menu` |
-| Right rail | `rail` |
-| Panel content | `surface` |
-| Panel header, and on hover | `panelHeader`, `panelHeaderHover` |
+| Panel header, a strip above the content, and on hover | `panelHeader`, `panelHeaderHover` |
+| Panel content and the right rail, the cards on the grid | `surface`, `rail` |
 | Inputs, buttons and key caps | `raised` |
 | Palette and tooltips | `overlay`, with the `overlay` shadow and radius |
-| Hover and selected item | `hover`, `selection` |
+| Hover, pressed toggle and selected item | `hover`, `pressed`, `selection` |
 
 Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and the scrollbar. Text: `text` (primary), `textSoft` (secondary), `textMuted`. Accent: `accent` and `accentSoft`; `focus` for the focus edge.
 
@@ -38,10 +37,10 @@ Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and
 ## Layout
 - The header spans the window. It leads with the button that hides and shows the left menu and the name "yaa"; these keep their place whether the menu is open or not. While the menu is open they take its width, so the project starts in line with the leftmost panel's content. The header is bound to the **selected project**.
 - The left menu, the grid and the right rail sit between the header and the footer, which also spans the window.
-- The right rail is a card on the grid, rounded like the panels and as tall as its buttons. Open panels have a bright icon, closed panels a muted one, with no background in either state; hover and keyboard focus add the hover tint. The icon stroke stays the same in both states.
-- Panel header: icon, medium title, menu, close (x), on its own surface with a hairline under it, lighter while hovered. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
+- The right rail is a card on the grid, rounded like the panels and as tall as its buttons. Open panels have a bright icon on a quiet `pressed` tint, closed panels a muted icon with no background; hover and keyboard focus add the hover tint. The icon stroke stays the same in both states.
+- Panel header: icon, medium title, menu, close (x), on its own surface, a step darker than the content, with a hairline under it and lighter while hovered. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
 - Closing: small x button; Ctrl+W closes the tab, then the panel. No hint text about it.
-- **Focus must be obvious**: the focused panel shows the focus edge, a border in the `focus` colour, and a brighter title. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0. A setting to choose between the two lands with the settings page (proposed).
+- **Focus must be obvious**: the focused panel has a brighter title. After a key moves focus, it also shows the focus edge, a border in the `focus` colour; a click or Escape hides the edge until a key moves focus again. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0. A setting to choose between the two lands with the settings page (proposed).
 - Shortcuts are shown as key caps, one per key (`Kbd` in `packages/ui`), in tooltips and the palette.
 - Scrollbars are thin everywhere, in the `borderStrong` colour on a transparent track.
 

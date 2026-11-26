@@ -42,19 +42,30 @@ export const appCommands = ({
 		category: "View",
 		run: () => regions.move(direction),
 	})),
+	{
+		id: "focus.hideHighlight",
+		when: "focus.highlight",
+		run: regions.hideHighlight,
+	},
 	{ id: "list.next", when: "focus.list", run: () => regions.step(1) },
 	{ id: "list.previous", when: "focus.list", run: () => regions.step(-1) },
 	{
 		id: "tab.previous",
 		title: "Previous tab",
 		category: "Panel",
-		run: () => dock()?.cycleTab(-1),
+		run: () => {
+			regions.highlight();
+			dock()?.cycleTab(-1);
+		},
 	},
 	{
 		id: "tab.next",
 		title: "Next tab",
 		category: "Panel",
-		run: () => dock()?.cycleTab(1),
+		run: () => {
+			regions.highlight();
+			dock()?.cycleTab(1);
+		},
 	},
 	{
 		id: "panel.narrower",

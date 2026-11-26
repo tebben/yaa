@@ -48,12 +48,13 @@
 }
 
 @layer components {
-	/* The focus edge (docs/design/ui.md): the focused panel, or a shell region
-	   with keyboard focus, gets a border in the focus colour. The focus-top
-	   and focus-side tokens set its widths, so a theme picks a full border or
-	   a line on top. */
-	.yaa-focus-region:is(:focus-visible, :has(:focus-visible))::before,
-	.yaa-dock .dv-groupview.dv-active-group::before {
+	/* The focus edge (docs/design/ui.md): while the app shows focus, set by
+	   `data-focus-highlight` on an ancestor after a keyboard move, the
+	   focused panel or the shell region holding focus gets a border in the
+	   focus colour. The focus-top and focus-side tokens set its widths, so a
+	   theme picks a full border or a line on top. */
+	[data-focus-highlight] .yaa-focus-region:focus-within::before,
+	[data-focus-highlight] .yaa-dock .dv-groupview.dv-active-group::before {
 		content: "";
 		position: absolute;
 		inset: 0;
@@ -67,9 +68,9 @@
 		z-index: 6;
 	}
 
-	/* While a shell region shows focus, the grid's edge gives way, so one
+	/* While a shell region holds focus, the grid's edge gives way, so one
 	   place looks focused. */
-	body:has(.yaa-focus-region:focus-visible, .yaa-focus-region :focus-visible)
+	[data-focus-highlight]:has(.yaa-focus-region:focus-within)
 		.yaa-dock
 		.dv-groupview.dv-active-group::before {
 		display: none;
