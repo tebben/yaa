@@ -12,10 +12,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	createFile,
 	readFolder,
+	readText,
 	removePath,
 	renamePath,
 	type TreeWatcher,
 	watchTree,
+	writeText,
 } from "../files.ts";
 import { parseChanges, parseFiles } from "../git.ts";
 
@@ -101,6 +103,57 @@ describe("worktree file operations", () => {
 		// The link itself is the worktree's to remove.
 		await removePath(root, "link");
 		expect(await readFile(join(dir, "outside", "kept"), "utf8")).toBe("");
+	});
+});
+
+describe("reading and writing text", () => {
+	it("writes only over the version that was read, keeping a byte order mark", async () => {
+		await writeFile(join(root, "a"), "\uFEFFone");
+		const read = await readText(root, "a");
+		if (read.kind !== "text") throw new Error(read.kind);
+		expect(read.text).toBe("\uFEFFone");
+		const written = await writeText(root, "a", "\uFEFFtwo", read.version);
+		expect(written.kind).toBe("written");
+		expect(await writeText(root, "a", "three", read.version)).toEqual({
+			kind: "changed",
+			version: written.version,
+		});
+		expect(await readFile(join(root, "a"), "utf8")).toBe("\uFEFFtwo");
+	});
+
+	it("makes a file only when none is expected, and says when one is gone", async () => {
+		expect(await readText(root, "new/a")).toEqual({ kind: "missing" });
+		expect(await writeText(root, "new/a", "x", "old")).toEqual({
+			kind: "changed",
+			version: null,
+		});
+		expect((await writeText(root, "new/a", "x", null)).kind).toBe("written");
+		expect((await writeText(root, "new/a", "y", null)).kind).toBe("changed");
+	});
+
+	it("reads nothing but UTF-8 text", async () => {
+		await writeFile(join(root, "zero"), Buffer.from([97, 0, 98]));
+		await writeFile(join(root, "latin1"), Buffer.from([0xe9]));
+		expect(await readText(root, "zero")).toEqual({ kind: "binary" });
+		expect(await readText(root, "latin1")).toEqual({ kind: "binary" });
+	});
+
+	it("follows a link inside the worktree only, and never into .git", async () => {
+		await writeFile(join(dir, "outside"), "kept");
+		await mkdir(join(root, ".git"));
+		await writeFile(join(root, ".git", "config"), "kept");
+		await writeFile(join(root, "real"), "a");
+		await symlink("real", join(root, "inner"));
+		await symlink(join(dir, "outside"), join(root, "out"));
+		await symlink(".git/config", join(root, "config"));
+		const read = await readText(root, "inner");
+		if (read.kind !== "text") throw new Error(read.kind);
+		await writeText(root, "inner", "b", read.version);
+		expect(await readFile(join(root, "real"), "utf8")).toBe("b");
+		await expect(readText(root, "out")).rejects.toThrow("leads out");
+		await expect(writeText(root, "config", "x", null)).rejects.toThrow(
+			"Not a path",
+		);
 	});
 });
 

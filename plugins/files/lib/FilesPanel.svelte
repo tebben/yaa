@@ -58,7 +58,10 @@ const { files, edits } = view;
 					{row}
 					current={row.path === view.current}
 					onfocus={() => view.focused(row.path)}
-					onclick={() => view.activate(row.path)}
+					onclick={(event) =>
+						// A key press makes a click without a click count.
+						view.activate(row.path, event.detail === 0 ? "keys" : "mouse")}
+					ondblclick={() => view.activate(row.path, "double")}
 				/>
 			</li>
 		{/each}

@@ -11,11 +11,13 @@ let {
 	current,
 	onfocus,
 	onclick,
+	ondblclick,
 }: {
 	row: Row;
 	current: boolean;
 	onfocus: () => void;
-	onclick: () => void;
+	onclick: (event: MouseEvent) => void;
+	ondblclick: () => void;
 } = $props();
 
 const letters = {
@@ -35,6 +37,7 @@ const letters = {
 	title={row.path}
 	{onfocus}
 	{onclick}
+	{ondblclick}
 >
 	<span class="icon">
 		{#if row.folder}

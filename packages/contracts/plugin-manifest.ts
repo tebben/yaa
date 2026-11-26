@@ -32,6 +32,9 @@ const pluginCommand = z.strictObject({
 	// while the open worktree has the panel. Without it, it runs in the
 	// backend.
 	panel: z.string().exactOptional(),
+	// Opens the panel first when the open worktree does not have it, so the
+	// command can run whenever a worktree is open.
+	reveal: z.boolean().exactOptional(),
 });
 
 // A view in the grid. The icon is an SVG file in the plugin folder, so the
@@ -40,6 +43,8 @@ const pluginPanel = z.strictObject({
 	id: z.string(),
 	title: z.string().min(1),
 	icon: pluginPath,
+	// Files opened from anywhere in the app go to this panel.
+	opensFiles: z.boolean().exactOptional(),
 });
 
 // Running a contributed command activates the plugin anyway; onStartup
@@ -102,7 +107,13 @@ export const pluginManifest = z
 				);
 			}
 		});
-		commands.forEach(({ panel, title }, index) => {
+		commands.forEach(({ panel, title, reveal }, index) => {
+			if (panel === undefined && reveal !== undefined) {
+				issue(
+					["contributes", "commands", index, "reveal"],
+					"Only a panel's command can reveal its panel",
+				);
+			}
 			if (panel === undefined && title === undefined) {
 				issue(
 					["contributes", "commands", index, "title"],

@@ -9,6 +9,7 @@ import { build } from "esbuild";
 import { VERSION } from "svelte/compiler";
 import { sharedModulesPlugin } from "./shared-modules-plugin.ts";
 import { sveltePlugin } from "./svelte-plugin.ts";
+import { workerPlugin } from "./worker-plugin.ts";
 
 // The sources the build reads, at the plugin folder's root.
 const BACKEND_SOURCE = "main.ts";
@@ -55,7 +56,11 @@ const buildUi = async (
 		platform: "browser",
 		target: "esnext",
 		write: false,
-		plugins: [sharedModulesPlugin, sveltePlugin],
+		// A library the size of an editor is slow to load unminified.
+		minify: true,
+		// A plugin's styles may name fonts, which go into its CSS file.
+		loader: { ".ttf": "dataurl" },
+		plugins: [sharedModulesPlugin, sveltePlugin, workerPlugin],
 		logLevel: "warning",
 	});
 	const css = result.outputFiles.find(({ path }) => extname(path) === ".css");

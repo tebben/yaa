@@ -7,11 +7,12 @@ import { getPluginPanels } from "./plugin-panels.ts";
 // A panel a plugin contributes: its component once the plugin's UI module
 // has loaded. A component that throws while rendering is caught by the
 // dock's boundary around every panel.
-let { kind }: PanelProps = $props();
-// A slot keeps its kind and worktree for as long as it lives.
+let { kind, frame }: PanelProps = $props();
+// A slot keeps its kind, worktree and frame for as long as it lives.
 const mounted = getPluginPanels().mount(
 	untrack(() => kind),
 	getPanelWorktree()(),
+	untrack(() => frame),
 );
 onDestroy(mounted.dispose);
 </script>

@@ -24,10 +24,11 @@ export const panelKinds: ReadonlyMap<string, PanelKind> = new Map([
 	["workflows", { title: "Workflows", icon: Zap, component: Placeholder }],
 ]);
 
-// Changes on the left, chat on the right with the terminal under it, after
-// docs/design/mockups/Main.png without its editor.
+// Changes on the left, the editor with the terminal under it, chat on the
+// right, after docs/design/mockups/Main.png.
 export const defaultLayout: readonly DockPlacement[] = [
 	{ kind: "changes" },
-	{ kind: "chat", beside: { kind: "changes", direction: "right" } },
-	{ kind: "terminal", beside: { kind: "chat", direction: "below" } },
+	{ kind: "editor", beside: { kind: "changes", direction: "right" } },
+	{ kind: "chat", beside: { kind: "editor", direction: "right" } },
+	{ kind: "terminal", beside: { kind: "editor", direction: "below" } },
 ];

@@ -45,4 +45,12 @@ export const migrations: Migrations = [
 		layout TEXT NOT NULL,
 		saved_at INTEGER NOT NULL
 	) STRICT;`,
+	// 5: what plugins keep per worktree (docs/spec/03-plugins.md).
+	`CREATE TABLE plugin_storage (
+		plugin TEXT NOT NULL,
+		worktree_id TEXT NOT NULL REFERENCES worktrees (id) ON DELETE CASCADE,
+		key TEXT NOT NULL,
+		value TEXT NOT NULL,
+		PRIMARY KEY (plugin, worktree_id, key)
+	) STRICT;`,
 ];

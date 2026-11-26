@@ -12,6 +12,7 @@
 		"apps/web",
 		"packages/ui",
 		"apps/desktop/preload.ts",
+		"packages/plugin-api/ui.ts",
 		"plugins/*/ui.ts",
 		"plugins/*/lib/**/*.svelte.ts"
 	]

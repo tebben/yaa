@@ -21,6 +21,7 @@ import { createStepsRunner } from "./steps/worktree-steps.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
+import { createPluginStore } from "./storage/plugin-store.ts";
 
 export type CoreOptions = {
 	dataDir: string;
@@ -119,7 +120,13 @@ export const startCore = ({
 		watches.keep(new Set(allWorktrees().map(({ id }) => id)));
 	projects.onChange(unwatchGone);
 	worktrees.onChange(unwatchGone);
-	const pluginApi = createPluginApiServer({ worktree, git, watches, log });
+	const pluginApi = createPluginApiServer({
+		worktree,
+		git,
+		watches,
+		store: createPluginStore(db),
+		log,
+	});
 	const plugins = createPluginManager({
 		dir: pluginsDir,
 		log,

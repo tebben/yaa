@@ -26,6 +26,9 @@ export const createWorktreeApi = (
 		files: {
 			readDir: async (worktree, path) =>
 				(await core.request("files.readDir", { worktree, path })).entries,
+			read: (worktree, path) => core.request("files.read", { worktree, path }),
+			write: (worktree, path, text, version) =>
+				core.request("files.write", { worktree, path, text, version }),
 			async create(worktree, path) {
 				await core.request("files.create", { worktree, path });
 			},
@@ -59,3 +62,23 @@ export const createWorktreeApi = (
 		},
 	};
 };
+
+// A plugin's own storage, which the core keeps apart from other plugins'.
+export const createStorageApi = (
+	core: Client<PluginCoreProtocol>,
+	plugin: string,
+): PluginContext["storage"] => ({
+	async get(worktree, key) {
+		const at = { plugin, worktree, key };
+		const { value } = await core.request("storage.get", at);
+		return value === null ? undefined : JSON.parse(value);
+	},
+	async set(worktree, key, value) {
+		await core.request("storage.set", {
+			plugin,
+			worktree,
+			key,
+			value: value === undefined ? null : JSON.stringify(value),
+		});
+	},
+});

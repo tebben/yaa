@@ -35,7 +35,29 @@ export const dirEntry = z.object({
 	folder: z.boolean(),
 });
 
+// A file's text as it is on disk. `version` stands for its bytes: a write
+// names the one it replaces. A `binary` file is not UTF-8 text.
+export const fileContent = z.discriminatedUnion("kind", [
+	z.object({
+		kind: z.literal("text"),
+		text: z.string(),
+		version: z.string(),
+	}),
+	z.object({ kind: z.literal("binary") }),
+	z.object({ kind: z.literal("tooLarge") }),
+	z.object({ kind: z.literal("missing") }),
+]);
+
+// `changed`: nothing was written, because the file was not at the version the
+// write named. `version` is what it is at now, null when it is not there.
+export const fileWrite = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("written"), version: z.string() }),
+	z.object({ kind: z.literal("changed"), version: z.string().nullable() }),
+]);
+
 export type GitFiles = z.infer<typeof gitFiles>;
 export type GitChangeKind = z.infer<typeof gitChangeKind>;
 export type GitChange = z.infer<typeof gitChange>;
 export type DirEntry = z.infer<typeof dirEntry>;
+export type FileContent = z.infer<typeof fileContent>;
+export type FileWrite = z.infer<typeof fileWrite>;

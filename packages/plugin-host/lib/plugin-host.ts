@@ -16,7 +16,7 @@ import {
 import { createServer, type Handlers } from "@yaa/contracts/server";
 import type { CommandHandler, PluginContext } from "@yaa/plugin-api";
 import { backendModule } from "./backend-module.ts";
-import { createWorktreeApi } from "./worktree-api.ts";
+import { createStorageApi, createWorktreeApi } from "./worktree-api.ts";
 
 type Service = (method: string, params: unknown) => Promise<unknown>;
 
@@ -127,6 +127,7 @@ export const startPluginHost = (port: Port) => {
 			};
 		},
 		...api,
+		storage: createStorageApi(core, id),
 		log: createLogger(
 			(record) =>
 				server.emit("log", {

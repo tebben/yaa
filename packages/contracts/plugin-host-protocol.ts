@@ -3,7 +3,13 @@ import { defineProtocol } from "./lib/define.ts";
 import { logRecord } from "./log.ts";
 import { pluginId } from "./plugin-manifest.ts";
 import { worktree } from "./projects.ts";
-import { dirEntry, gitChange, gitFiles } from "./worktree-files.ts";
+import {
+	dirEntry,
+	fileContent,
+	fileWrite,
+	gitChange,
+	gitFiles,
+} from "./worktree-files.ts";
 
 // An event a plugin's backend sends its UI.
 export const pluginEvent = z.object({
@@ -56,6 +62,8 @@ export type PluginEvent = z.infer<typeof pluginEvent>;
 const inWorktree = { worktree: z.string() };
 const atPath = { ...inWorktree, path: z.string() };
 const done = z.object({});
+// One value a plugin keeps for a worktree, as JSON text.
+const stored = { plugin: pluginId, ...inWorktree, key: z.string().min(1) };
 
 // Requests from the plugin host to core: what the plugin API reads and does
 // in a worktree. Paths are relative to the worktree's folder, with `/`.
@@ -78,6 +86,15 @@ export const pluginCoreProtocol = defineProtocol({
 			params: z.object(atPath),
 			result: z.object({ entries: z.array(dirEntry) }),
 		},
+		"files.read": { params: z.object(atPath), result: fileContent },
+		"files.write": {
+			params: z.object({
+				...atPath,
+				text: z.string(),
+				version: z.string().nullable(),
+			}),
+			result: fileWrite,
+		},
 		"files.create": { params: z.object(atPath), result: done },
 		"files.rename": {
 			params: z.object({ ...inWorktree, from: z.string(), to: z.string() }),
@@ -87,6 +104,15 @@ export const pluginCoreProtocol = defineProtocol({
 		// `files.changed` follows for a watched worktree until it is unwatched.
 		"files.watch": { params: z.object(inWorktree), result: done },
 		"files.unwatch": { params: z.object(inWorktree), result: done },
+		"storage.get": {
+			params: z.object(stored),
+			result: z.object({ value: z.string().nullable() }),
+		},
+		// A null value removes the key.
+		"storage.set": {
+			params: z.object({ ...stored, value: z.string().nullable() }),
+			result: done,
+		},
 	},
 	events: {
 		"files.changed": z.object(inWorktree),
