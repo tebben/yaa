@@ -39,9 +39,12 @@ export const createTerminalView = ({ id, terminals, fail }: ViewOptions) => {
 	terminal.onData((data) => link?.write(data));
 	terminal.onResize(({ cols, rows }) => link?.resize({ cols, rows }));
 
-	// xterm measures its cells as it opens, which is off until the font is in.
+	// xterm measures its cells as it opens, which is off until the font is in,
+	// and keeps each glyph as first drawn, so the icons' font has to be in too:
+	// the second character asks for it.
 	const font = document.fonts.load(
 		`${options.fontSize}px ${options.fontFamily}`,
+		"a\ue0a0",
 	);
 
 	const layOut = () => {
