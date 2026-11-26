@@ -20,5 +20,6 @@ Lands in: M3.
 **Terminal**
 
 - Terminals open from the palette or a key, one or more per worktree, with the working directory set to the worktree. Core owns the PTYs, so they keep running when the user switches worktrees or the plugin host restarts.
-- The target is Ghostty's terminal core through libghostty-vt, its embeddable library for terminal state and escape-sequence parsing, with the app drawing the terminal itself. The library's API stability, its Node bindings or web build, and rendering performance inside Electron are unverified, so milestone 0 includes a spike. Fallback: xterm.js with node-pty, behind the same terminal interface, so the choice can change later.
+- The panel renders with xterm.js and its WebGL addon; core runs the PTYs with node-pty. Both sit behind one terminal interface, so the emulator can change later. Ghostty's libghostty-vt was evaluated and deferred until a maintained browser renderer exists on its 1.x ABI (`docs/decisions/0017-terminal-xterm-first.md`).
+- Core keeps a headless mirror of each terminal with the same engine, so a reloaded renderer or a second window re-attaches to the current screen and scrollback.
 - Terminal colors come from the active theme's palette.
