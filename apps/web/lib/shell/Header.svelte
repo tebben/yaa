@@ -39,6 +39,7 @@ let {
 			icon={menuOpen ? PanelLeftClose : PanelLeftOpen}
 			label={menuOpen ? "Hide left menu" : "Show left menu"}
 			shortcut={menuShortcut}
+			size="large"
 			tooltipSide="bottom"
 			onclick={ontogglemenu}
 		/>
@@ -48,20 +49,24 @@ let {
 		>
 	</div>
 	<!-- The grid's gap and a panel's inset, so the text lines up with the
-	     content of the leftmost panel. -->
-	<div class="ml-panel-gap flex min-w-0 items-center gap-2 pl-3">
+	     content of the leftmost panel. The path is medium, the step that
+	     is open brightest; a mono name, such as a branch, a size smaller so
+	     it reads as large as the rest. -->
+	<div
+		class="ml-panel-gap flex min-w-0 items-center gap-2 pl-3 text-lg font-medium"
+	>
 		{#each crumbs as crumb, index (index)}
 			{#if index > 0}
-				<span aria-hidden="true">/</span>
+				<span class="font-normal" aria-hidden="true">/</span>
 			{/if}
 			<span
 				class={[
-					"flex min-w-0 items-center gap-1.5",
-					index === crumbs.length - 1 && "text-text",
+					"flex min-w-0 items-center gap-2",
+					index === crumbs.length - 1 ? "text-text" : "text-text-soft",
 				]}
 			>
-				<Icon icon={crumb.icon} class="size-3.5 text-text-muted" />
-				<span class={["truncate", crumb.mono && "font-mono"]}
+				<Icon icon={crumb.icon} class="size-4 text-text-muted" />
+				<span class={["truncate", crumb.mono && "font-mono text-base"]}
 					>{crumb.label}</span
 				>
 			</span>

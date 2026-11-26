@@ -1,6 +1,5 @@
 <script lang="ts">
-import File from "@lucide/svelte/icons/file";
-import { Icon, TabClose } from "@yaa/ui";
+import { FileIcon, TabClose } from "@yaa/ui";
 import type { EditorPanelController } from "./editor-panel.svelte.ts";
 
 let { editor }: { editor: EditorPanelController } = $props();
@@ -30,7 +29,7 @@ let { editor }: { editor: EditorPanelController } = $props();
 					if (event.button === 1) editor.close(tab.path);
 				}}
 			>
-				<Icon icon={File} />
+				<FileIcon path={tab.path} />
 				<span class="name">{tab.name}</span>
 				{#if tab.folder}
 					<span class="folder">{tab.folder}</span>

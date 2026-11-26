@@ -30,6 +30,7 @@ let {
 			label={kind.title}
 			shortcut={shortcut(id)}
 			pressed={isOpen(id)}
+			size="large"
 			tooltipSide="bottom"
 			onclick={() => ontoggle(id)}
 			onpointerenter={() => onpeek(id)}

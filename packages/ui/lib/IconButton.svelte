@@ -7,7 +7,8 @@ import Kbd from "./Kbd.svelte";
 
 // The label names the action for the tooltip and screen readers; the
 // shortcut, when the action has one, is shown beside it. A toggle passes
-// `pressed`, shown by a bright icon. `tooltipSide` puts the tooltip where
+// `pressed`, shown by a bright icon over a short accent bar. `large` draws
+// a larger icon in the same button, for the header. `tooltipSide` puts the tooltip where
 // it covers nothing it should not, such as below a button in the header.
 // Pointer and focus handlers reach the button.
 let {
@@ -15,6 +16,7 @@ let {
 	label,
 	shortcut,
 	pressed,
+	size = "default",
 	tooltipSide = "top",
 	onclick,
 	...events
@@ -23,6 +25,7 @@ let {
 	label: string;
 	shortcut?: readonly string[] | undefined;
 	pressed?: boolean;
+	size?: "default" | "large";
 	tooltipSide?: "top" | "right" | "bottom" | "left";
 	onclick: () => void;
 } & Pick<
@@ -33,13 +36,13 @@ let {
 
 <Tooltip.Root>
 	<Tooltip.Trigger
-		class="inline-flex size-control shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:bg-pressed aria-pressed:text-text aria-pressed:hover:bg-hover"
+		class="relative inline-flex size-control shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:text-text aria-pressed:after:absolute aria-pressed:after:bottom-0.5 aria-pressed:after:left-1/2 aria-pressed:after:h-0.5 aria-pressed:after:w-2 aria-pressed:after:-translate-x-1/2 aria-pressed:after:rounded-full aria-pressed:after:bg-accent aria-pressed:after:content-['']"
 		aria-label={label}
 		aria-pressed={pressed}
 		{onclick}
 		{...events}
 	>
-		<Icon {icon} class="size-3.5" />
+		<Icon {icon} class={size === "large" ? "size-4" : "size-3.5"} />
 	</Tooltip.Trigger>
 	<Tooltip.Portal>
 		<Tooltip.Content
