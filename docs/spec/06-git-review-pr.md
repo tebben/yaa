@@ -20,7 +20,7 @@ Annotations turn review into a loop with the agent.
 
 **Commit**
 
-- A message box with stage-all, commit and a generate button. Generate sends the staged diff to a model and fills the message. Which model it uses and the prompt are settings (see Generated text).
+- A message box with stage-all, commit and a generate button. Generate sends the staged diff to a model and fills the message. Which model it uses and the prompt are settings (see Generated text in `05-agents-chat.md`).
 - Pushing and creating a pull request live in the PR/MR plugin, not here.
 
 The changes tree is part of the first version; a commit graph view is a later plugin.

@@ -1,27 +1,33 @@
 # Open questions and risks
 
-Imported from the spec. Each open question becomes a spike or a decision note in this folder.
+Each open question becomes a spike or a decision file in this folder. When one is closed, strike it through here and link the decision file.
 
+## Open questions
 
-**Open questions**
-
-- **Plugin trust:** decided: plugins get full user permissions in v1, declared in the manifest for transparency. Per-plugin permission prompts can be added later.
-- **Grid:** build a small custom dockable grid, or adopt a library? Decide in milestone 1 with a short spike.
-- **Generated text:** decided: a separately configured model, picked in settings from the added providers (see Generated text). Open: which providers can serve a one-shot call without a chat session.
-- **ACP coverage for Copilot CLI:** does it expose models, thinking effort, loaded skills, MCP list and usage? Milestone 0 answers this and decides what the chat header can show.
-- **Ghostty:** is libghostty-vt stable and fast enough inside Electron, and how is it bound to Node? Milestone 0 spike, with xterm.js as fallback.
-- **Jira authentication:** API token or OAuth, and secret storage on Linux through the system keyring.
-- **Package manager and runtime:** proposed: pnpm with Node. The backend ships inside Electron, which runs Node, and native modules such as node-pty and SQLite bindings are rebuilt for Electron's Node. Bun stays possible as a script runner or test runner later, but is not the runtime. Confirm in milestone 0 before AGENTS.md commands are written.
-- **Worktree location:** a sibling folder of the repository (assumed) or a central directory.
-- **Linux updates:** no auto-update in the first release (decided); revisit with electron-updater later.
+- **Runtime schema library:** one library in `contracts` for protocol messages, plugin manifests and settings. Decided in the repo foundation; ask before choosing.
+- **Core transport:** `utilityProcess` with a `MessagePort` (proposed) or a token-protected local WebSocket. M0 spike, see `docs/spec/00-overview.md`.
+- **Grid:** build a small custom dockable grid, or adopt a library. M0 spike.
+- **ACP coverage:** do Copilot CLI and Claude Code expose models, thinking effort, loaded skills, the MCP list, usage, resume and a one-shot call over ACP? The M0 spike decides what the chat header shows and which providers can serve generated text.
+- **Ghostty:** is libghostty-vt stable and fast enough inside Electron, and how is it bound to Node? M0 spike, with xterm.js and node-pty as fallback.
+- **Plugin UI loading:** how plugin UI shares the app's Svelte runtime and how it gets styles the app's Tailwind build does not contain. Part of the M0 hot-reload spike.
+- **SQLite binding:** `node:sqlite` in Electron's Node or `better-sqlite3`. Part of the M0 native-modules spike.
+- **Jira authentication:** API token or OAuth, with the secret in the system keyring on Linux.
+- **Workflow format:** declarative YAML or JSON with a service-call escape hatch (proposed), or TypeScript. Decide before the workflows plugin starts.
+- **Unattended runs:** which steps may be `auto` without a human, in particular push and MR creation, and how a team shares those rules. The proposed guardrails are in `docs/spec/10-workflows.md`.
 - **Other platforms:** when macOS and Windows builds start, and who tests them.
 
-* **Workflow format:** declarative YAML or JSON with a service-call escape hatch, or TypeScript. Decide before the workflows plugin starts.
-* **Unattended runs:** which steps may be `auto` without a human, in particular push and MR creation, and how a team shares those rules.
-* **Licence:** MIT or Apache-2.0. MIT is shorter; Apache-2.0 adds an explicit patent grant and a NOTICE requirement. Both work with the dependencies above, so this is a preference, and it is easy to decide before the first public release.
+## Closed
 
-**Risks**
+- ~~Licence~~: `0001-licence-mit.md`
+- ~~Package manager and runtime~~: `0002-pnpm-and-node.md`
+- ~~Linux updates~~: `0003-v1-scope.md`
+- ~~Plugin trust~~: `0004-plugin-trust.md`
+- ~~Generated text model~~: `0007-generated-text-model.md`
+- ~~Worktree location~~: `0010-worktree-location.md`
+
+## Risks
 
 - **Agent capability gaps:** each agent exposes different data. The provider interface declares capabilities, and the UI hides what an agent cannot do instead of faking it.
-- **Plugin hot reload with Svelte** needs a compiler, but only in dev mode, which keeps the production build small. The spike in milestone 0 proves it before the plugin API is frozen.
+- **Plugin hot reload with Svelte** needs a compiler, but only in dev mode, which keeps the production build small. The M0 spike proves it before the plugin API is frozen.
+- **Prompt injection in unattended runs:** ticket and PR text becomes agent input. The guardrails in `docs/spec/10-workflows.md` limit what such a run may do.
 - **Scope:** the plugin platform and the built-in plugins grow together. Milestones keep the first slice small: shell, chat and worktrees before integrations.

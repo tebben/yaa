@@ -10,15 +10,17 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | UI | Svelte 5, Bits UI, Tailwind | decided |
 | Editor | Monaco | decided |
 | Code in chat | Shiki, highlighted lazily | proposed |
-| Backend | TypeScript on Node, a separate process, typed WebSocket protocol | proposed |
+| Backend | TypeScript on Node, a separate process, typed protocol; transport in `00-overview.md` | proposed |
 | Agents | ACP first, provider-specific fallback | proposed |
-| Storage | JSON config, SQLite usage ledger | proposed |
+| Storage | JSON settings files; one SQLite database for the event log, transcripts, runs, annotations, layouts and the usage ledger, with migrations | proposed |
+| Runtime validation | one schema library in `contracts` for protocol messages, manifests and settings | open, chosen in the foundation |
 | Packaging | electron-builder | proposed |
-| Lint, format, tests | Biome, `tsc`, Vitest | proposed |
+| Lint, format, tests | Biome, `tsc`, `svelte-check`, Vitest | proposed |
 
 **Tooling and assets (proposed)**
 
-- **Package manager and runtime:** pnpm workspaces and Node, see Open questions.
+- **Package manager and runtime:** pnpm workspaces and Node (`docs/decisions/0002-pnpm-and-node.md`).
+- **SQLite binding:** Node's built-in `node:sqlite` would avoid a native module, if the Node version inside Electron ships it without a flag. Otherwise `better-sqlite3`, rebuilt for Electron. Unverified; the M0 native-modules spike decides.
 - **Icons:** `@lucide/svelte`, the Svelte 5 build of Lucide (ISC license), imported per icon so unused icons are tree-shaken. Plugins use the same set through `ui`.
 - **Fonts:** bundled with the app, not fetched, so the app works offline: Geist Sans for the interface and Geist Mono for code and the terminal. Geist is free and open source under the SIL Open Font License, so it can be bundled and redistributed. The font family is a theme token, so a theme can change it. Icons and fonts ship with their licence files.
 - **Platform:** x64 Linux only for now; arm64 is out of scope.

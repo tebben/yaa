@@ -6,7 +6,7 @@
 
 - Monaco with tabs per worktree: a reusable preview tab, pinned tabs, a dirty marker, keys for next and previous tab, close and reopen, and quick-open by fuzzy path. Diffs open as tabs too.
 - Plugins can add decorations, gutter actions and widgets, and commands scoped to the editor.
-- Vim keys are optional (see Layout, panels and keyboard model).
+- Vim keys are optional (see `01-ui-layout-theming.md`).
 
 **Files panel**
 
@@ -17,6 +17,6 @@
 
 **Terminal**
 
-- Terminals open from the palette or a key, one or more per worktree, with the working directory set to the worktree. They keep running when the user switches worktrees.
+- Terminals open from the palette or a key, one or more per worktree, with the working directory set to the worktree. Core owns the PTYs, so they keep running when the user switches worktrees or the plugin host restarts.
 - The target is Ghostty's terminal core through libghostty-vt, its embeddable library for terminal state and escape-sequence parsing, with the app drawing the terminal itself. The library's API stability, its Node bindings or web build, and rendering performance inside Electron are unverified, so milestone 0 includes a spike. Fallback: xterm.js with node-pty, behind the same terminal interface, so the choice can change later.
 - Terminal colors come from the active theme's palette.

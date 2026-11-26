@@ -17,7 +17,7 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 | Commands and keybindings | actions in the palette, default keys |
 | Settings | a schema-rendered settings page, or a custom panel |
 | Connectors | an issue-tracker or source-control implementation |
-| Agent providers | detection, models, sessions for an agent CLI |
+| Agent providers | detection, spawn configuration, capabilities and models for an agent CLI; core runs the process |
 | Chat renderers | custom rendering for a message part or tool-call kind |
 | Editor extensions | Monaco decorations, gutter actions, widgets |
 | Context menu items | actions on files, worktrees, issues and messages |
@@ -30,7 +30,13 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 **Process model**
 
-Backend plugin code runs in a separate plugin host process, so a crashing plugin does not take down the core or the agents. UI modules run in the renderer. Both are loaded lazily on their activation events.
+Backend plugin code runs in a separate plugin host process, so a crashing plugin does not take down the core or the agents. Agent processes and PTYs belong to core, not to the plugin host (see `00-overview.md`). An agent provider plugin returns detection results, spawn configuration and capabilities; core starts the process and owns the ACP connection. UI modules run in the renderer. Both are loaded lazily on their activation events.
+
+**Plugin UI in the renderer**
+
+- Plugin UI modules import `svelte` and the app's `ui` package from the app, through an import map or bundler externals, never a bundled copy. Two Svelte runtimes in one page break context and reactivity.
+- The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins therefore style with `ui` components and the token CSS variables. A plugin that needs more ships its own compiled, scoped CSS file, declared in the manifest.
+- The M0 hot-reload spike proves both points before the plugin API is frozen.
 
 **Hot reload**
 

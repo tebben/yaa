@@ -46,6 +46,8 @@ Every run carries a context object: the trigger payload (ticket, PR), the worktr
 - A run that writes code needs an explicit agent permission mode in its definition; there is no hidden default.
 - Push and PR steps only touch branches the workflow created, and never force-push.
 - A concurrency limit per project, so a burst of assigned tickets does not start twenty agents.
+- Text from a ticket, PR, review comment or CI log is untrusted input: anyone who can edit a ticket can write instructions into the agent's prompt. A run started by a sensor or event trigger therefore cannot use the allow-all permission mode, and its agent steps run with the "ask for risky actions" mode or stricter. Templates mark trigger text as quoted data in the prompt, but the permission mode is the real control.
+- A run started by a sensor stops at an approval step before its first push, unless the project explicitly opts out for that workflow.
 
 **Definition format**
 

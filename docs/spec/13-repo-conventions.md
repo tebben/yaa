@@ -10,7 +10,7 @@ apps/
   web/            Svelte renderer
 packages/
   core/           worktrees, git, event bus, plugin manager
-  contracts/      shared types and the WebSocket protocol
+  contracts/      shared types, runtime schemas and the core protocol
   plugin-api/     the typed API plugins import
   ui/             design tokens and Bits UI wrappers
 plugins/          built-in plugins: git, chat, files, terminal, github, jira, pr
@@ -51,7 +51,7 @@ worktree-switcher/
 
 1. Three layers. Pure `.ts` has no runes and is tested without Svelte. `.svelte.ts` controllers own state, derived values and actions, and talk to the typed client. `.svelte` files render and bind.
 2. The composition root creates the controller and hands slices to children. Leaf components are presentational and never do IPC.
-3. Components never call the WebSocket or IPC directly; they go through a controller and the typed client from `contracts`.
+3. Components never touch the transport (WebSocket, `MessagePort` or IPC) directly; they go through a controller and the typed client from `contracts`.
 4. Components use `ui` primitives, never Bits UI directly, and tokens for every color and spacing value.
 5. Size trigger: a `.svelte` file over about 150 lines, or a `<script>` block over about 40, is a prompt to split. These numbers are proposals; the check starts as a warning in CI, not a failure.
 6. Compose with snippets and `children`. Use context only for app-wide things, not to avoid passing props one level.
@@ -79,40 +79,17 @@ Three kinds of file, each with one job and no overlap.
 - Add a nested `AGENTS.md` only where a subtree differs, such as `plugins/` or `packages/ui`. The closest file to the edited code wins.
 - It grows by incident: when an agent makes a repeatable mistake, add a line or a rules link.
 
-Starting skeleton:
-
-```markdown
-# AGENTS.md
-
-## Commands
-- Install: `<pm> install`
-- Dev: `<pm> run dev`
-- Full check, run before finishing: `<pm> run check`
-- Package for Linux: `<pm> run package:linux`
-
-## Architecture
-- The backend owns agents, git and plugins; the UI only subscribes. See docs/spec/00-overview.md.
-- Every package and plugin is a deep module: import entry points only. See packages/README.md.
-
-## Rules: read the relevant one before editing
-- TypeScript: docs/rules/typescript.md
-- Svelte: docs/rules/svelte.md
-- Plugins: docs/rules/plugins.md
-- Testing: docs/rules/testing.md
-
-## Change style
-- Make the smallest change that solves the task; no redesigns.
-- Extend an existing primitive before writing a new one; no duplicated code.
-- Colors and spacing come from tokens, never literals.
-```
+The repo's own `AGENTS.md` at the root is the current version; edit it there rather than keeping a skeleton here.
 
 **Rules and conventions**
 
 - `typescript.md`: strict mode; no `any`, use `unknown` and narrow; named exports; no barrel files except package entry points; no deep imports across packages; one concept per file; small functions, pure where possible; no dead code; no comments that restate the code.
 - `svelte.md`: the rules in the previous section.
 - `plugins.md`: manifest fields, contribution points, tokens only, dispose everything registered, expose functions as services.
-- `testing.md`: tests import entry points only; test pure logic, contracts and the workflow engine, not components or wiring; use a fake agent, not a real one; the default check runs only the changed packages. See Testing strategy.
-- Commits: conventional commit messages and small commits. A change is done when `check` passes: lint, typecheck, boundaries, Svelte size warning, unit tests.
+- `testing.md`: tests import entry points only; test pure logic, contracts and the workflow engine, not components or wiring; use a fake agent, not a real one; the default check runs only the changed packages. See Testing strategy below.
+- `docs.md`: how specs, decisions and the plan are changed. This file exists before the foundation.
+- Commits: conventional commit messages and small commits. A change is done when `check` passes: lint, typecheck (`tsc` for `.ts`, `svelte-check` for `.svelte`, since `tsc` does not read Svelte files), boundaries, Svelte size warning, unit tests.
+- Biome's support for `.svelte` files is partial and depends on the version. The foundation checks what the installed version lints and formats in `.svelte` files and writes the answer into `docs/rules/svelte.md`.
 
 ## Testing strategy: lean on purpose
 
@@ -122,4 +99,5 @@ The goal is a fast loop, not coverage. Agents tend to write many tests and run a
 - **What does not:** Svelte components, wiring, and thin controllers. No snapshot tests, no test per component, no tests that restate the implementation.
 - **Fakes over real agents:** a fake ACP agent that replays scripted events lets the chat, state and workflow logic be tested without a model.
 - **Three tiers, run differently:** the default `check` runs lint, typecheck, boundaries and unit tests for the packages that changed. A small smoke suite (app starts, a worktree opens, a fake chat turn renders) runs in CI and on demand. End-to-end runs only before a release.
+- **Changed packages:** `check` selects packages with pnpm's filter against the main branch, `pnpm --filter "...[origin/main]"`, which also includes packages that depend on a changed one. `check:all` runs everything and is what CI runs. The foundation confirms the exact filter syntax against the installed pnpm version.
 - **Rules for agents:** do not add a test unless the change touches the logic above or fixes a bug that deserves a regression test; never run the whole suite when a package filter exists; the test counts and runtime budget go in `docs/rules/testing.md`.

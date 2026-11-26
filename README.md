@@ -8,7 +8,7 @@ Run many agents in parallel git worktrees, see which need attention, review diff
 Pre-code. Spec and design are in `docs/`; start with `docs/README.md` and `docs/plan.md`.
 
 ## Stack
-Electron, Svelte 5, Bits UI, Tailwind, Monaco, a TypeScript backend process over a typed WebSocket protocol, agents via ACP (Copilot CLI, Claude Code, Pi, Hermes).
+Electron, Svelte 5, Bits UI, Tailwind, Monaco, a TypeScript backend process behind a typed protocol, agents via ACP (Copilot CLI, Claude Code, Pi, Hermes).
 
 ## Develop
 Commands are filled in once the toolchain exists (see `AGENTS.md`).
@@ -17,4 +17,4 @@ Commands are filled in once the toolchain exists (see `AGENTS.md`).
 `docs/README.md` is the index.
 
 ## Licence
-Not decided yet (MIT or Apache-2.0).
+MIT, see `LICENSE`.

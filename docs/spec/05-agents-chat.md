@@ -14,6 +14,12 @@ The chat is the app's own interface on top of an existing agent. A provider plug
 * `authStatus()` and `login()` report the sign-in state and start sign-in.
 * `complete(prompt, model)`, optional: a one-shot call without a chat, used for generated text. A provider that cannot do it is not offered for that setting.
 
+The provider plugin implements detection, auth, model lists and the spawn configuration for `createSession`. Core starts the agent process from that configuration, holds the ACP connection and implements the session methods, so a plugin host crash does not end a session (see `00-overview.md`). Each provider also declares its capabilities (resume, skill toggling, MCP list, usage, effort levels), and the UI hides what a provider does not declare.
+
+**Fake agent**
+
+A fake ACP agent ships as a dev-only provider. It replays scripted event files (message chunks, tool calls, a permission request, usage, an error) with configurable delays. Tests use it, and developers use it to build the chat, state and workflow UI without a login or token cost.
+
 **Transport**
 
 Prefer the Agent Client Protocol (ACP), which the first target agents support: [Copilot CLI added ACP support in public preview in January 2026](https://github.blog/changelog/2026-01-28-acp-support-in-copilot-cli-is-now-in-public-preview/), and the [ACP agent list](https://agentclientprotocol.com/get-started/agents.md) shows Hermes Agent with native support and Pi through the pi-acp adapter. Pi also has its own RPC mode as a fallback. First providers: GitHub Copilot CLI and Claude Code, both over ACP. What each agent exposes over ACP (models, effort levels, loaded skills, usage) varies, so milestone 0 verifies it before the chat UI is built.

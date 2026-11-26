@@ -25,7 +25,8 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 - Svelte: docs/rules/svelte.md
 - Plugins: docs/rules/plugins.md
 - Testing: docs/rules/testing.md
-(These are written during repo foundation; until then follow docs/spec/13-repo-conventions.md.)
+- Docs, specs and decisions: docs/rules/docs.md
+(The code rules are written during repo foundation; until then follow docs/spec/13-repo-conventions.md.)
 
 ## Change style
 - Smallest change that solves the task; no redesigns.
@@ -33,4 +34,5 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 - Colours and spacing come from tokens, never literals; icons from @lucide/svelte.
 - Keep .svelte files thin: logic in .svelte.ts controllers or pure .ts.
 - Tests only for pure logic, contracts and the workflow engine; no component or wiring tests.
+- Behaviour change: update the owning spec in the same commit. Never change a decided item without asking.
 - Do not invent package names, APIs or sources; verify against docs or the registry, and say when unsure.

@@ -2,7 +2,7 @@
 
 ## Sessions, persistence and recovery
 
-- Chat transcripts, run state, annotations and layouts are stored locally and restored on start. Worktrees reopen with their tabs, terminals' working directories and chats.
+- Chat transcripts, the event log, run state, annotations and layouts are stored in one local SQLite database and restored on start. Schema changes go through numbered migrations from the first table on. Worktrees reopen with their tabs, terminals' working directories and chats.
 - A supervisor in core watches agent and plugin-host processes. A crashed agent sets the worktree to Error with the last output kept; the user or a workflow can restart it and resume the session where the agent supports resuming.
 - A turn that was running when the app closed is marked interrupted, not silently lost.
 
@@ -40,4 +40,4 @@ Core, plugin host, agent protocol and workflow logs go to one place with levels 
 ## Plugin API versions and licence
 
 - The manifest declares the plugin API version it targets, and the plugin manager refuses or warns on a mismatch. Plugins are installed by placing a folder in the plugin directory; there is no marketplace.
-- The app sends no telemetry. The licence is MIT or Apache-2.0, see Open questions. Third-party licences are collected into a generated notices file that ships with the app, and CI fails when a dependency has a licence outside an allow-list (MIT, ISC, BSD, Apache-2.0, OFL for fonts).
+- The app sends no telemetry. The licence is MIT (`docs/decisions/0001-licence-mit.md`). Third-party licences are collected into a generated notices file that ships with the app, and CI fails when a dependency has a licence outside an allow-list (MIT, ISC, BSD, Apache-2.0, OFL for fonts).

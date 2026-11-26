@@ -9,14 +9,14 @@ A connector is a plugin that implements one of two interfaces, so the rest of th
 
 **Authentication**
 
-GitHub and GitLab reuse the CLI's existing login. Jira uses an API token or OAuth, stored in the operating system keychain (assumption; see Open questions).
+GitHub and GitLab reuse the CLI's existing login. Jira uses an API token or OAuth, stored in the operating system keyring (open, see `docs/decisions/open-questions.md`).
 
 **Per-project configuration**
 
 Each project selects its connectors and their settings in project settings:
 
 - Jira site, project key or keys, an optional parent (epic) to scope to, and an optional JQL filter that overrides the rest.
-- Default ticket prefix and the branch-naming strategy (template or LLM prompt, see Projects and worktrees).
+- Default ticket prefix and the branch-naming strategy (template or LLM prompt, see `02-worktrees.md`).
 - Merge method and target branch for the source-control connector.
 
 **Issue tracker interface**
