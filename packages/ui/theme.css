@@ -1,7 +1,7 @@
 /* Generated from docs/design/tokens.json by `pnpm run tokens`. Do not edit. */
 @theme static {
 	--font-sans: "Geist Variable", sans-serif;
-	--font-mono: "Geist Mono Variable", monospace;
+	--font-mono: "Geist Mono Variable", "Symbols Nerd Font Mono", monospace;
 	--text-xs: 13.5px;
 	--text-sm: 14px;
 	--text-md: 14.5px;

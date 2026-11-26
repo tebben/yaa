@@ -33,5 +33,5 @@ Lands in: M3.
 - Core keeps a headless mirror of each terminal with the same engine, so a reloaded renderer or a second window re-attaches to the current screen and the last 5000 lines of scrollback. The mirror answers a program's queries while no view is attached.
 - A program that writes faster than its output is shown is paused, and resumed once the views and the mirror have caught up (`docs/decisions/0033-terminal-flow-and-input.md`).
 - The terminals of a worktree and each one's working directory are stored, so after a restart they open there with a new shell and an empty screen; a directory that is gone gives way to the worktree's folder. The directory is read from `/proc`, so a system without it opens them in the worktree's folder.
-- Character widths follow Unicode 11. Input methods work; the Kitty keyboard protocol is not supported. Characters Geist Mono lacks, such as CJK and emoji, come from the system's fonts.
+- Character widths follow Unicode 11. Input methods work; the Kitty keyboard protocol is not supported. Nerd Font icons come from a bundled font (see `12-stack-packaging.md`); other characters Geist Mono lacks, such as CJK and emoji, come from the system's fonts.
 - Terminal colors come from the active theme's palette.
