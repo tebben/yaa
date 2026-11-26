@@ -1,23 +1,22 @@
-import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { Readable, Writable } from "node:stream";
-import { ndJsonStream } from "@agentclientprotocol/sdk/unstable";
 import type {
 	AgentEvent,
 	QuestionAnswer,
 	SessionEvent,
 } from "@yaa/contracts/agent-events";
 import type { CoreEvent } from "@yaa/contracts/core-events";
-import { errorData, type Logger } from "@yaa/contracts/log";
+import type { Logger } from "@yaa/contracts/log";
+import type { Worktree } from "@yaa/contracts/projects";
 import { chatEvent } from "../state/chat-event.ts";
 import { type AcpSession, openAcpSession } from "./acp-session.ts";
+import type { AgentLaunch } from "./agent-launch.ts";
+import { type AgentProcess, startAgentProcess } from "./agent-process.ts";
 
 export type AgentSessionsOptions = {
-	// The fake agent's script, in dev mode only. Provider plugins replace it
-	// in M2 (docs/spec/05-agents-chat.md).
-	fakeAgent: string | null;
-	// A worktree's folder, where its agents start.
-	folder(worktree: string): string;
+	// How to start a provider's agent in a folder, from its plugin.
+	launch(provider: string, cwd: string): Promise<AgentLaunch>;
+	// A listed worktree, where its agents start; throws for one that is gone.
+	worktree(id: string): Pick<Worktree, "path" | "index">;
 	// Logs the events the worktree's state is derived from.
 	record(event: CoreEvent): void;
 	log: Logger;
@@ -29,41 +28,25 @@ export type AgentSessionsOptions = {
 type Session = {
 	acp: AcpSession;
 	worktree: string;
+	provider: string;
 	events: AgentEvent[];
-};
-
-// Runs the fake agent as its own process, as a real agent runs: Electron's
-// binary in Node mode, ACP over its stdio.
-const spawnFakeAgent = (script: string, agentLog: Logger) => {
-	const child = spawn(process.execPath, [script], {
-		env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
-		stdio: ["pipe", "pipe", "pipe"],
-	});
-	// A process that never starts closes its pipes, which fails the session's
-	// first request; the reason is logged here.
-	child.on("error", (error) =>
-		agentLog.error("agent failed", errorData(error)),
-	);
-	child.stderr.setEncoding("utf8");
-	child.stderr.on("data", (text: string) => agentLog.warn(text.trimEnd()));
-	return ndJsonStream(
-		Writable.toWeb(child.stdin),
-		Readable.toWeb(child.stdout),
-	);
 };
 
 // The agent sessions core holds, each with every event it has sent, so a
 // client that connects later reads the history (the renderer keeps no
 // business state, see docs/spec/00-overview.md).
 export const createAgentSessions = ({
-	fakeAgent,
-	folder,
+	launch,
+	worktree: listed,
 	record,
 	log,
 	agentLog,
 	emit,
 }: AgentSessionsOptions) => {
 	const sessions = new Map<string, Session>();
+	// The worktree of every agent still wanted, those of sessions being opened
+	// included.
+	const agents = new Map<AgentProcess, string>();
 
 	const session = (sessionId: string): AcpSession => {
 		const found = sessions.get(sessionId);
@@ -71,35 +54,77 @@ export const createAgentSessions = ({
 		return found.acp;
 	};
 
+	const stop = (agent: AgentProcess) => {
+		agents.delete(agent);
+		agent.stop();
+	};
+
 	return {
-		async start(worktree: string): Promise<string> {
-			if (fakeAgent === null) {
-				throw new Error("No agent available: the fake agent runs in dev mode");
-			}
-			const cwd = folder(worktree);
+		// Core starts the agent and holds its connection, so a plugin host
+		// crash does not end a session (docs/spec/00-overview.md).
+		async start(worktree: string, provider: string): Promise<string> {
+			const how = await launch(provider, listed(worktree).path);
+			// Read again: the worktree may have been finished meanwhile.
+			const { path, index } = listed(worktree);
 			const sessionId = randomUUID();
 			const events: AgentEvent[] = [];
-			const acp = await openAcpSession({
-				stream: spawnFakeAgent(fakeAgent, agentLog),
-				cwd,
-				log,
-				emit(event) {
-					events.push(event);
-					const logged = chatEvent({ worktree, chat: sessionId }, event);
-					if (logged !== undefined) record(logged);
-					emit({ sessionId, seq: events.length - 1, event });
+			const agent = startAgentProcess({
+				launch: {
+					...how,
+					env: { ...how.env, YAA_WORKTREE_INDEX: String(index) },
 				},
+				cwd: path,
+				log: agentLog,
 			});
-			sessions.set(sessionId, { acp, worktree, events });
-			log.info("agent session started", { sessionId, worktree });
+			agents.set(agent, worktree);
+			try {
+				const acp = await openAcpSession({
+					agent,
+					cwd: path,
+					log,
+					emit(event) {
+						events.push(event);
+						const logged = chatEvent({ worktree, chat: sessionId }, event);
+						if (logged !== undefined) record(logged);
+						emit({ sessionId, seq: events.length - 1, event });
+					},
+				});
+				if (!agents.has(agent)) {
+					acp.close();
+					throw new Error("The worktree was closed while its agent started");
+				}
+				sessions.set(sessionId, { acp, worktree, provider, events });
+			} catch (error) {
+				stop(agent);
+				throw error;
+			}
+			log.info("agent session started", { sessionId, worktree, provider });
 			return sessionId;
 		},
+		// Ends the sessions and agents of worktrees no longer listed.
+		keep(worktrees: ReadonlySet<string>) {
+			for (const [sessionId, { acp, worktree }] of sessions) {
+				if (worktrees.has(worktree)) continue;
+				acp.close();
+				sessions.delete(sessionId);
+			}
+			for (const [agent, worktree] of agents) {
+				if (!worktrees.has(worktree)) stop(agent);
+			}
+		},
+		// For when core exits, which leaves no time to wait for them.
+		shutdown() {
+			for (const agent of agents.keys()) agent.kill();
+		},
 		list() {
-			return [...sessions].map(([sessionId, { worktree, events }]) => ({
-				sessionId,
-				worktree,
-				events,
-			}));
+			return [...sessions].map(
+				([sessionId, { worktree, provider, events }]) => ({
+					sessionId,
+					worktree,
+					provider,
+					events,
+				}),
+			);
 		},
 		prompt(sessionId: string, text: string) {
 			session(sessionId).prompt(text);

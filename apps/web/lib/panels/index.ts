@@ -12,8 +12,8 @@ import { AgentPanel } from "../agent/index.ts";
 import Placeholder from "./Placeholder.svelte";
 
 // The app's panel kinds, in rail order: placeholders until the plugins that
-// own them arrive, and the chat's playing the fake agent until M2. A
-// plugin's panel with the same id takes its place.
+// own them arrive, and the chat's until the chat arrives in M2. A plugin's
+// panel with the same id takes its place.
 export const panelKinds: ReadonlyMap<string, PanelKind> = new Map([
 	["files", { title: "Files", icon: ListTree, component: Placeholder }],
 	["changes", { title: "Changes", icon: Diff, component: Placeholder }],

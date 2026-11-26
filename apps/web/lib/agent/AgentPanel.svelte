@@ -1,14 +1,14 @@
 <script lang="ts">
-import { Button } from "@yaa/ui";
 import type { PanelProps } from "@yaa/ui/dock";
 import { getPanelWorktree } from "../panel-worktree.ts";
 import { getAgentChat } from "./agent-chat.svelte.ts";
 import Composer from "./Composer.svelte";
+import ProviderList from "./ProviderList.svelte";
 import TranscriptEntry from "./TranscriptEntry.svelte";
 import { foldTranscript } from "./transcript.ts";
 
-// The chat panel until the chat arrives in M2: it streams turns from the
-// fake agent, in dev mode (docs/spec/05-agents-chat.md).
+// The chat panel until the chat arrives in M2: it starts a session with a
+// provider and streams its turns (docs/spec/05-agents-chat.md).
 let { kind }: PanelProps = $props();
 const agentChat = getAgentChat();
 const worktree = getPanelWorktree();
@@ -17,9 +17,9 @@ const transcript = $derived(foldTranscript(chat.events));
 </script>
 
 {#if !chat.started}
-	<div class="flex flex-col items-start gap-2 p-3 text-text-muted">
-		<p>Until the chat arrives in M2, the {kind} panel plays the fake agent.</p>
-		<Button onclick={chat.start}>Start a fake session</Button>
+	<div class="flex h-full flex-col gap-3 overflow-y-auto p-3 text-text-muted">
+		<p>Until the chat arrives in M2, the {kind} panel is a placeholder.</p>
+		<ProviderList providers={agentChat().providers} onstart={chat.start} />
 	</div>
 {:else}
 	<div class="flex h-full flex-col">
@@ -27,7 +27,7 @@ const transcript = $derived(foldTranscript(chat.events));
 			class="flex items-center gap-3 border-b border-border px-3 py-1.5 text-sm text-text-muted"
 		>
 			<span class="flex-1 truncate text-text">
-				{transcript.title ?? "Fake session"}
+				{transcript.title ?? chat.provider}
 			</span>
 			{#if transcript.usage}
 				{@const { used, size, cost } = transcript.usage}

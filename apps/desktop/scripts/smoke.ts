@@ -599,7 +599,7 @@ const NEXT_ATTENTION: Key = {
 // it end. While it waits, the worktree needs attention, and a key leads back
 // to it from the project's overview.
 const playFakeTurn = async (page: Connection) => {
-	await click(page, "Start a fake session");
+	await click(page, "Start Fake agent");
 	const composer = `document.querySelector('input[aria-label="Prompt"]')`;
 	await waitFor(page, composer);
 	await evaluate(page, `${composer}.focus()`, z.undefined());

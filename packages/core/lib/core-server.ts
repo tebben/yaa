@@ -106,8 +106,9 @@ export const createCoreServer = ({
 				terminals.resize(id, { cols, rows });
 				return {};
 			},
-			"agent.start": async ({ worktree }) => ({
-				sessionId: await agents.start(worktree),
+			"providers.status": ({ provider }) => plugins.providerStatus(provider),
+			"agent.start": async ({ worktree, provider }) => ({
+				sessionId: await agents.start(worktree, provider),
 			}),
 			"agent.sessions": () => ({ sessions: agents.list() }),
 			"agent.prompt": ({ sessionId, text }) => {

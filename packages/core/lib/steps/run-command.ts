@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { stripVTControlCharacters } from "node:util";
+import { KILL_AFTER_MS, signalGroup } from "../process-group.ts";
 
 export type RunCommand = (run: {
 	command: string;
@@ -10,9 +11,6 @@ export type RunCommand = (run: {
 	signal: AbortSignal;
 	line(text: string): void;
 }) => Promise<{ problem?: string }>;
-
-// How long a stopped command gets to end before it is killed.
-const KILL_AFTER_MS = 5000;
 
 // Runs a command with sh, without a terminal or input, so it must run
 // unattended (docs/decisions/0023-setup-output-and-sign-in-before-the-terminal.md).
@@ -31,21 +29,11 @@ export const runCommand: RunCommand = ({ command, cwd, env, signal, line }) =>
 				line(stripVTControlCharacters(text)),
 			);
 		}
-		const signalGroup = (name: NodeJS.Signals) => {
-			if (child.pid === undefined) return;
-			try {
-				process.kill(-child.pid, name);
-			} catch (error) {
-				// The group has ended already.
-				if (!(error instanceof Error && "code" in error)) throw error;
-				if (error.code !== "ESRCH") throw error;
-			}
-		};
 		let killing: NodeJS.Timeout | undefined;
 		const stop = () => {
-			signalGroup("SIGTERM");
+			signalGroup(child, "SIGTERM");
 			killing = setTimeout(() => {
-				signalGroup("SIGKILL");
+				signalGroup(child, "SIGKILL");
 				// Something that left the group may still hold the output.
 				child.stdout.destroy();
 				child.stderr.destroy();

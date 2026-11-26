@@ -1,0 +1,15 @@
+{
+	"id": "claude",
+	"version": "0.1.0",
+	"main": "dist/main.js",
+	"agent": "dist/agent.js",
+	"contributes": {
+		"providers": [
+			{
+				"id": "claude",
+				"title": "Claude Code",
+				"capabilities": ["resume", "effort", "usage"]
+			}
+		]
+	}
+}

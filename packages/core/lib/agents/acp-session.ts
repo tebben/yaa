@@ -14,9 +14,15 @@ import {
 	turnTokens,
 } from "./normalize-update.ts";
 
-export type AcpSessionOptions = {
-	// The connection to the agent: its stdio, or an in-process agent in tests.
+export type AgentConnection = {
+	// The agent's stdio, or an in-process agent in tests.
 	stream: Stream;
+	// Resolves when the agent is gone, with how it ended.
+	exited: Promise<string>;
+};
+
+export type AcpSessionOptions = {
+	agent: AgentConnection;
 	cwd: string;
 	log: Logger;
 	emit(event: AgentEvent): void;
@@ -45,7 +51,7 @@ const elicitationResponse = (
 // event. A permission request or question waits until it is answered or the
 // turn is cancelled.
 export const openAcpSession = async ({
-	stream,
+	agent: { stream, exited },
 	cwd,
 	log,
 	emit,
@@ -147,12 +153,20 @@ export const openAcpSession = async ({
 
 	const connection = app.connect(stream);
 	const { agent } = connection;
-	await agent.request("initialize", {
-		protocolVersion: PROTOCOL_VERSION,
-		clientCapabilities: { elicitation: { form: {} } },
-		clientInfo: { name: "yaa", version: "0.0.0" },
+	const open = async () => {
+		await agent.request("initialize", {
+			protocolVersion: PROTOCOL_VERSION,
+			clientCapabilities: { elicitation: { form: {} } },
+			clientInfo: { name: "yaa", version: "0.0.0" },
+		});
+		return agent.request("session/new", { cwd, mcpServers: [] });
+	};
+	const created = await open().catch(async (error: unknown) => {
+		if (!connection.signal.aborted) throw error;
+		// The connection closes before the process is seen to end, which says
+		// why.
+		throw new Error(`The agent ${await exited}`);
 	});
-	const created = await agent.request("session/new", { cwd, mcpServers: [] });
 	const { sessionId } = created;
 	if (created.configOptions != null) emit(configEvent(created.configOptions));
 
@@ -163,14 +177,21 @@ export const openAcpSession = async ({
 		for (const resolve of questions.values()) resolve({ action: "cancel" });
 	};
 
-	void connection.closed.then(() => {
-		cancelPending();
-		if (running) emit({ type: "error", message: "The agent exited" });
+	let closed = false;
+	let gone = false;
+	// An agent that ends while its session is open has crashed, whether or not
+	// a turn was running.
+	void exited.then((reason) => {
+		if (closed) return;
+		gone = true;
 		running = false;
+		cancelPending();
+		emit({ type: "error", message: `The agent ${reason}` });
 	});
 
 	return {
 		prompt(text) {
+			if (gone) throw new Error("The agent has exited");
 			if (running) throw new Error("A turn is already running");
 			running = true;
 			emit({ type: "prompt", text });
@@ -205,6 +226,8 @@ export const openAcpSession = async ({
 			answer(questions, requestId, elicitationResponse(response));
 		},
 		close() {
+			closed = true;
+			cancelPending();
 			connection.close();
 		},
 	};

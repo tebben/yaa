@@ -8,14 +8,14 @@ Core provides the shell and a set of registries. Every feature, including the gi
 
 **Package**
 
-A plugin is a folder with a manifest (`plugin.json`: id, version, activation events, contributions, dependencies on other plugins) and up to two entry modules: a backend module that runs in the plugin host process, and a UI module of Svelte components loaded in the renderer. Plugins import shared UI primitives from the app's design system so they match the look.
+A plugin is a folder with a manifest (`plugin.json`: id, version, activation events, contributions, dependencies on other plugins) and up to three entry modules: a backend module that runs in the plugin host process, a UI module of Svelte components loaded in the renderer, and, for an agent provider, an agent module that core runs as a process of its own. Plugins import shared UI primitives from the app's design system so they match the look.
 
-- The manifest schema is in `contracts`. The folder's name is the plugin's id, lower-case letters, digits and `-`. `main`, `ui` and `styles` name the built backend module, UI module and CSS file, paths inside the folder. Dependencies on other plugins arrive with services.
-- The plugin build compiles `main.ts` and `ui.ts` at the folder's root to those paths. The backend module exports `activate(context)`; the UI module exports `panels`, one component per contributed panel, which gets its panel context as the `panel` prop. The UI module is minified; CSS it imports and fonts its CSS names go into the CSS file, and `import start from "<module>?worker"` bundles a module that `start` runs in a new worker.
-- Command and panel ids are the plugin's id or start with it and a dot (`hello.greet`). A plugin binds keys only to its own commands.
+- The manifest schema is in `contracts`. The folder's name is the plugin's id, lower-case letters, digits and `-`. `main`, `ui`, `styles` and `agent` name the built backend module, UI module, CSS file and agent module, paths inside the folder. A plugin marked `devOnly` is loaded in dev mode only. Dependencies on other plugins arrive with services.
+- The plugin build compiles `main.ts`, `ui.ts` and `agent.ts` at the folder's root to those paths. The backend module exports `activate(context)`; the UI module exports `panels`, one component per contributed panel, which gets its panel context as the `panel` prop. The UI module is minified; CSS it imports and fonts its CSS names go into the CSS file, and `import start from "<module>?worker"` bundles a module that `start` runs in a new worker.
+- Command, panel and provider ids are the plugin's id or start with it and a dot (`hello.greet`). A plugin binds keys only to its own commands.
 - A command with `panel`, one of the plugin's panels, runs in that panel's UI: the panel registers its handler, and the command can run, and the palette lists it, only while the open worktree has that panel. Without a `title` it is reached by its keys only. A panel's command with `reveal` can run whenever a worktree is open: it opens the panel first. Any other command runs in the backend and needs a title.
 - A panel with `opensFiles` is where files opened from anywhere in the app go; the first plugin that declares one wins.
-- Activation events: `onStartup` activates the plugin when core starts; running a contributed command activates its plugin first (`docs/decisions/0021-plugin-host-lifecycle-and-panel-icons.md`).
+- Activation events: `onStartup` activates the plugin when core starts; running a contributed command or asking for a contributed provider activates its plugin first (`docs/decisions/0021-plugin-host-lifecycle-and-panel-icons.md`).
 - Built-in plugins live in `plugins/` and are built with the app. Core reads the plugin folders once at start. A plugin whose manifest has any problem, an id taken by an earlier plugin or a `when` that does not parse included, is not loaded, and the problems are logged.
 
 **Contribution points**
@@ -36,6 +36,8 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 - A typed context object gives access to commands, views, settings, storage, git, worktrees, agent sessions and the event bus.
 - **Worktrees** (backend): look one up by id; git's files, ignored files and uncommitted changes in it; and, in its folder, read a folder, read and write a text file, create, rename and remove, and watch for changes. A write names the version it replaces and changes nothing if the file is at another. Core does the work and refuses a path that leaves the folder or touches `.git`.
+- **Providers** (backend): register an agent for a contributed provider: detect it, read its sign-in state, and say how to start it (`05-agents-chat.md`).
+- **Programs** (backend): find a program on the PATH, and run one to its end for its output.
 - **Storage** (backend): JSON values by worktree and key, apart for each plugin, kept in the database until the worktree is finished.
 - **A panel and its backend:** the plugin defines a protocol with `defineProtocol`; the backend `serve`s it, and a panel calls it and subscribes to its events, which are the events the plugin declares. A call activates the plugin. A panel knows its worktree, is told when the backend started over after a host crash, and has everything it registered disposed when it closes (`docs/decisions/0029-worktree-plugin-api.md`).
 - **Terminals** (UI): a panel lists and watches its worktree's terminals, creates and closes them, and connects a screen to one, which core feeds and keeps in step with the program. It talks to core directly, so terminals need no backend. A panel can also mark an element as capturing the keyboard, as a terminal does (see `01-ui-layout-theming.md`).

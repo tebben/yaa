@@ -13,6 +13,7 @@ import { workerPlugin } from "./worker-plugin.ts";
 
 // The sources the build reads, at the plugin folder's root.
 const BACKEND_SOURCE = "main.ts";
+const AGENT_SOURCE = "agent.ts";
 const UI_SOURCE = "ui.ts";
 
 export const readManifest = async (dir: string): Promise<PluginManifest> =>
@@ -20,9 +21,18 @@ export const readManifest = async (dir: string): Promise<PluginManifest> =>
 		JSON.parse(await readFile(join(dir, "plugin.json"), "utf8")),
 	);
 
-const buildBackend = async (dir: string, out: string) => {
+// Bundled CommonJS code reaches Node's modules through `require`, which an
+// ES module does not have by itself.
+const REQUIRE_BANNER = [
+	'import { createRequire as yaaCreateRequire } from "node:module";',
+	"const require = yaaCreateRequire(import.meta.url);",
+].join("\n");
+
+// A module Node runs: the backend, or an agent process.
+const buildNode = async (dir: string, source: string, out: string) => {
 	await build({
-		entryPoints: [join(dir, BACKEND_SOURCE)],
+		entryPoints: [join(dir, source)],
+		banner: { js: REQUIRE_BANNER },
 		outfile: join(dir, out),
 		bundle: true,
 		platform: "node",
@@ -79,12 +89,17 @@ const buildUi = async (
 	}
 };
 
-// Builds a plugin folder's backend and UI modules to the paths its manifest
-// declares (docs/spec/03-plugins.md).
+// Builds a plugin folder's backend, UI and agent modules to the paths its
+// manifest declares (docs/spec/03-plugins.md).
 export const buildPlugin = async (dir: string): Promise<PluginManifest> => {
 	const manifest = await readManifest(dir);
 	await Promise.all([
-		manifest.main === undefined ? undefined : buildBackend(dir, manifest.main),
+		manifest.main === undefined
+			? undefined
+			: buildNode(dir, BACKEND_SOURCE, manifest.main),
+		manifest.agent === undefined
+			? undefined
+			: buildNode(dir, AGENT_SOURCE, manifest.agent),
 		manifest.ui === undefined
 			? undefined
 			: buildUi(dir, manifest.ui, manifest.styles),
@@ -96,8 +111,8 @@ export const buildPlugin = async (dir: string): Promise<PluginManifest> => {
 // the build copies into the app.
 export const builtFiles = (manifest: PluginManifest): string[] => [
 	"plugin.json",
-	...[manifest.main, manifest.ui, manifest.styles].flatMap((path) =>
-		path === undefined ? [] : [path],
+	...[manifest.main, manifest.ui, manifest.styles, manifest.agent].flatMap(
+		(path) => (path === undefined ? [] : [path]),
 	),
 	...manifest.contributes.panels.map(({ icon }) => icon),
 ];

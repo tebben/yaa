@@ -31,7 +31,12 @@ describe("plugin manifest schema", () => {
 			id: "bare",
 			version: "1.0.0",
 			activationEvents: [],
-			contributes: { commands: [], keybindings: [], panels: [] },
+			contributes: {
+				commands: [],
+				keybindings: [],
+				panels: [],
+				providers: [],
+			},
 		});
 	});
 
@@ -107,6 +112,26 @@ describe("plugin manifest schema", () => {
 		expect(inPanel("hello")).toEqual([]);
 		expect(inPanel("chat")).toContain(
 			"Expected a panel this plugin contributes",
+		);
+	});
+
+	it("accepts a provider of its own, with a backend to register it", () => {
+		const providing = (id: string, patch: object = {}) =>
+			messages({
+				id: "agent",
+				version: "1.0.0",
+				main: "dist/main.js",
+				agent: "dist/agent.js",
+				contributes: { providers: [{ id, title: "Agent" }] },
+				...patch,
+			});
+		expect(providing("agent")).toEqual([]);
+		expect(providing("claude")).toContain("Expected agent or agent.<name>");
+		expect(providing("agent", { main: undefined })).toContain(
+			"Providers need a backend module",
+		);
+		expect(providing("agent", { contributes: {} })).toContain(
+			"An agent module belongs to a provider",
 		);
 	});
 

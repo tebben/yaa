@@ -10,6 +10,11 @@ import type {
 	PayloadIn,
 	ProtocolDefinition,
 } from "@yaa/contracts/protocol";
+import type {
+	AgentSpawn,
+	AuthStatus,
+	Detection,
+} from "@yaa/contracts/providers";
 import type { Handlers } from "@yaa/contracts/server";
 import type {
 	DirEntry,
@@ -19,7 +24,7 @@ import type {
 	GitFiles,
 } from "@yaa/contracts/worktree-files";
 
-export type { Disposable };
+export type { AgentSpawn, AuthStatus, Detection, Disposable };
 
 export type CommandHandler = () => void | Promise<void>;
 
@@ -29,6 +34,21 @@ export type PluginServer<P extends ProtocolDefinition> = Disposable & {
 	emit<E extends EventName<P>>(event: E, payload: PayloadIn<P, E>): void;
 };
 
+// A connection to one agent (docs/spec/05-agents-chat.md). It says how to
+// find, sign in to and start the agent; core runs the process and speaks ACP
+// to it.
+export type AgentProvider = {
+	// Finds the installed agent and its version.
+	detect(): Promise<Detection>;
+	// Asked only of an agent `detect` found.
+	authStatus(): Promise<AuthStatus>;
+	// How to start the agent for a session in the folder.
+	spawn(session: { cwd: string }): Promise<AgentSpawn>;
+};
+
+// How a program that ran to its end ended.
+export type ProgramResult = { code: number; stdout: string; stderr: string };
+
 export type PluginContext = {
 	// The plugin's id from its manifest.
 	readonly id: string;
@@ -36,6 +56,18 @@ export type PluginContext = {
 		// Runs `handler` for a command the manifest contributes to the backend.
 		// A command without a handler fails when it runs.
 		register(command: string, handler: CommandHandler): Disposable;
+	};
+	readonly providers: {
+		// Connects an agent for a provider the manifest contributes.
+		register(provider: string, agent: AgentProvider): Disposable;
+	};
+	// The programs installed on the machine, such as an agent's CLI.
+	readonly programs: {
+		// The path of a program on the PATH, or undefined when there is none.
+		find(name: string): Promise<string | undefined>;
+		// Runs a program to its end, without input, whatever its exit code.
+		// One that cannot start or takes more than 10 seconds throws.
+		run(path: string, args: string[]): Promise<ProgramResult>;
 	};
 	// Answers the requests of the plugin's own UI, in a protocol the plugin
 	// defines with `defineProtocol`. One per plugin.

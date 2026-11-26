@@ -28,8 +28,6 @@ export type CoreOptions = {
 	dataDir: string;
 	logDir: string;
 	pluginsDir: string;
-	// The fake agent's script, or null outside dev mode.
-	fakeAgent: string | null;
 	dev: boolean;
 	// Asks main to fork a plugin host; its port arrives through
 	// `attachPluginHost`.
@@ -49,7 +47,6 @@ export const startCore = ({
 	dataDir,
 	logDir,
 	pluginsDir,
-	fakeAgent,
 	dev,
 	requestPluginHost,
 	pickFolder,
@@ -91,8 +88,8 @@ export const startCore = ({
 		home: homedir(),
 	});
 	const agents = createAgentSessions({
-		fakeAgent,
-		folder: worktrees.folder,
+		launch: (provider, cwd) => plugins.launchAgent(provider, cwd),
+		worktree: (id) => worktree(id),
 		record: states.append,
 		log,
 		agentLog: createLogger(logFile.write, "agent"),
@@ -102,6 +99,7 @@ export const startCore = ({
 	// Setup and teardown commands do not outlive the core. Main stops it with
 	// SIGTERM, which would end it without the exit handlers.
 	process.on("exit", steps.shutdown);
+	process.on("exit", () => agents.shutdown());
 	process.on("SIGTERM", () => process.exit(0));
 	const projects = createProjects({ db, git, home: homedir() });
 	const allWorktrees = () =>
@@ -119,11 +117,12 @@ export const startCore = ({
 	const terminals = createTerminals({ db, worktree, log });
 	process.on("exit", terminals.shutdown);
 	// A finished worktree, or one of a removed project, is watched no longer,
-	// and its terminals end.
+	// and its agents and terminals end.
 	const dropGone = () => {
-		const kept = new Set(allWorktrees().map(({ id }) => id));
-		watches.keep(kept);
-		terminals.keep(kept);
+		const listed = new Set(allWorktrees().map(({ id }) => id));
+		watches.keep(listed);
+		agents.keep(listed);
+		terminals.keep(listed);
 	};
 	projects.onChange(dropGone);
 	worktrees.onChange(dropGone);
@@ -136,6 +135,7 @@ export const startCore = ({
 	});
 	const plugins = createPluginManager({
 		dir: pluginsDir,
+		dev,
 		log,
 		requestHost: requestPluginHost,
 		write: logFile.write,

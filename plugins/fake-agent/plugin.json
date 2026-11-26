@@ -1,0 +1,16 @@
+{
+	"id": "fake-agent",
+	"version": "0.1.0",
+	"main": "dist/main.js",
+	"agent": "dist/agent.js",
+	"devOnly": true,
+	"contributes": {
+		"providers": [
+			{
+				"id": "fake-agent",
+				"title": "Fake agent",
+				"capabilities": ["effort", "usage"]
+			}
+		]
+	}
+}
