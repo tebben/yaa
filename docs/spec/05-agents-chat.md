@@ -20,7 +20,7 @@ The provider plugin implements detection, auth and the spawn configuration for `
 
 **Fake agent**
 
-A fake ACP agent ships as a dev-only provider (`packages/fake-agent`). It replays scripted turn files (message and thinking chunks, a plan, tool calls with output and a diff, a permission request, a question, the session title, usage, and a turn that fails), each step with its own delay. The scripts are TypeScript typed against the ACP SDK's types, and each is a slash command: a prompt naming one plays it, any other prompt plays the default. Core runs it as a process over stdio, as a real agent runs, in dev mode only; tests connect to it in-process with the delays scaled to zero. Developers use it to build the chat, state and workflow UI without a login or token cost. Until providers arrive in M2 the chat panel is a placeholder that starts a fake session and streams its turns.
+A fake ACP agent ships as a dev-only provider (`packages/fake-agent`). It replays scripted turn files (message and thinking chunks, a plan, tool calls with output and a diff, a permission request, a question, the session title, usage, and a turn that fails), each step with its own delay. The scripts are TypeScript typed against the ACP SDK's types, and each is a slash command: a prompt naming one plays it, any other prompt plays the default. Core runs it as a process over stdio, as a real agent runs, in dev mode only; tests connect to it in-process with the delays scaled to zero. Developers use it to build the chat, state and workflow UI without a login or token cost. Until providers arrive in M2 the chat panel is a placeholder that starts a fake session in its worktree and streams its turns.
 
 **Transport**
 

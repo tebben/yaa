@@ -1,5 +1,7 @@
 <script lang="ts">
 import Archive from "@lucide/svelte/icons/archive";
+import type { WorktreeState } from "@yaa/contracts/worktree-state";
+import { stateBadges } from "../worktree-state.ts";
 import BranchGraph from "./BranchGraph.svelte";
 import RowAction from "./RowAction.svelte";
 
@@ -14,6 +16,7 @@ let {
 	last,
 	selected,
 	busy,
+	state,
 	onselect,
 	onfinish,
 }: {
@@ -23,6 +26,7 @@ let {
 	last: boolean;
 	selected: boolean;
 	busy: boolean;
+	state?: WorktreeState;
 	onselect?: () => void;
 	onfinish?: (() => void) | undefined;
 } = $props();
@@ -41,12 +45,12 @@ let {
 			selected ? "text-text" : "text-text-soft",
 			busy && "text-text-muted",
 		]}
-		{title}
+		title={state ? `${title}, ${stateBadges[state].label}` : title}
 		disabled={busy || onselect === undefined}
 		aria-current={selected || undefined}
 		onclick={onselect}
 	>
-		<BranchGraph {last} {main} {busy} />
+		<BranchGraph {last} {main} {busy} state={state ?? "idle"} />
 		<span class="truncate">{branch}</span>
 	</button>
 	{#if main}

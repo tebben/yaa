@@ -2,11 +2,17 @@ import Folder from "@lucide/svelte/icons/folder";
 import GitBranch from "@lucide/svelte/icons/git-branch";
 import LayoutGrid from "@lucide/svelte/icons/layout-grid";
 import type { BranchStatus, Project } from "@yaa/contracts/projects";
+import type { WorktreeState } from "@yaa/contracts/worktree-state";
 import { focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
 import type { CoreClient } from "../core-connection.ts";
 import type { Crumb } from "../shell/index.ts";
-import { filterTree, type Place, stepWorktree } from "./project-tree.ts";
+import {
+	filterTree,
+	nextWorktree,
+	type Place,
+	stepWorktree,
+} from "./project-tree.ts";
 
 type ProjectsOptions = {
 	client: CoreClient;
@@ -20,8 +26,8 @@ type ProjectsOptions = {
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
 
-// The project list core keeps, with each project's worktrees, where the
-// grid is, and the search over the tree (docs/spec/02-worktrees.md).
+// The project list core keeps, with each project's worktrees and their
+// states, where the grid is, and the search over the tree (docs/spec/02-worktrees.md).
 export const createProjects = ({
 	client,
 	report,
@@ -30,6 +36,8 @@ export const createProjects = ({
 }: ProjectsOptions) => {
 	let projects = $state.raw<readonly Project[]>([]);
 	let place = $state.raw<Place>();
+	// The worktrees that are not idle.
+	let states = $state.raw<Partial<Record<string, WorktreeState>>>({});
 	// The status of the open worktree, once core answers.
 	let status = $state.raw<{ id: string; value: BranchStatus }>();
 	let query = $state("");
@@ -68,6 +76,15 @@ export const createProjects = ({
 			new Set(next.flatMap(({ worktrees }) => worktrees.map(({ id }) => id))),
 		);
 	};
+
+	const stateOf = (worktree: string): WorktreeState =>
+		states[worktree] ?? "idle";
+	client.subscribe("worktrees.statesChanged", (changed) => {
+		states = changed.states;
+	});
+	client.request("worktrees.states", {}).then((current) => {
+		states = current.states;
+	}, fail);
 
 	client.subscribe("projects.changed", (changed) => update(changed.projects));
 	// Until session restore, the window opens on the first project's main
@@ -135,6 +152,16 @@ export const createProjects = ({
 			collapsed = next;
 		},
 		go,
+		stateOf,
+		// To the next worktree in the tree that needs attention, if one does.
+		nextAttention() {
+			const next = nextWorktree(
+				projects,
+				place,
+				(id) => stateOf(id) === "attention",
+			);
+			if (next !== undefined) go(next);
+		},
 		// The next or previous worktree in the tree, across projects.
 		step(by: 1 | -1) {
 			const next = stepWorktree(projects, place, by);

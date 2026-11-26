@@ -1,7 +1,6 @@
 import type { AgentEvent, QuestionAnswer } from "@yaa/contracts/agent-events";
 import { createContext } from "svelte";
 import type { CoreClient } from "../core-connection.ts";
-import { foldTranscript } from "./transcript.ts";
 
 type AgentChatOptions = {
 	client: CoreClient;
@@ -19,11 +18,9 @@ export const createAgentChat = ({ client, report }: AgentChatOptions) => {
 	let sessions = $state.raw<ReadonlyMap<string, readonly AgentEvent[]>>(
 		new Map(),
 	);
-	// The session the chat shows: the one it started, or the latest.
-	let current = $state<string>();
-	const transcript = $derived(
-		foldTranscript((current && sessions.get(current)) || []),
-	);
+	// The session each worktree's chat shows: the one it started, or the
+	// latest.
+	let shown = $state.raw<ReadonlyMap<string, string>>(new Map());
 
 	const fail = (reason: unknown) => report(`Agent: ${describe(reason)}`);
 
@@ -40,49 +37,62 @@ export const createAgentChat = ({ client, report }: AgentChatOptions) => {
 			}
 		}
 		sessions = next;
-		current ??= history.at(-1)?.sessionId;
+		shown = new Map([
+			...history.map(
+				({ worktree, sessionId }) => [worktree, sessionId] as const,
+			),
+			...shown,
+		]);
 	}, fail);
 
-	// Sends to the current session.
-	const send = (action: (sessionId: string) => Promise<unknown>) => {
-		if (current !== undefined) action(current).catch(fail);
-	};
-
 	return {
-		get started() {
-			return current !== undefined;
-		},
-		get transcript() {
-			return transcript;
-		},
-		start() {
-			client.request("agent.start", {}).then(({ sessionId }) => {
-				current = sessionId;
-			}, fail);
-		},
-		prompt(text: string) {
-			send((sessionId) => client.request("agent.prompt", { sessionId, text }));
-		},
-		cancel() {
-			send((sessionId) => client.request("agent.cancel", { sessionId }));
-		},
-		answerPermission(requestId: string, optionId: string) {
-			send((sessionId) =>
-				client.request("agent.answerPermission", {
-					sessionId,
-					requestId,
-					optionId,
-				}),
-			);
-		},
-		answerQuestion(requestId: string, answer: QuestionAnswer) {
-			send((sessionId) =>
-				client.request("agent.answerQuestion", {
-					sessionId,
-					requestId,
-					answer,
-				}),
-			);
+		// The chat of one worktree.
+		in(worktree: string) {
+			// Sends to the session shown.
+			const send = (action: (sessionId: string) => Promise<unknown>) => {
+				const sessionId = shown.get(worktree);
+				if (sessionId !== undefined) action(sessionId).catch(fail);
+			};
+
+			return {
+				get started() {
+					return shown.has(worktree);
+				},
+				get events(): readonly AgentEvent[] {
+					return sessions.get(shown.get(worktree) ?? "") ?? [];
+				},
+				start() {
+					client.request("agent.start", { worktree }).then(({ sessionId }) => {
+						shown = new Map(shown).set(worktree, sessionId);
+					}, fail);
+				},
+				prompt(text: string) {
+					send((sessionId) =>
+						client.request("agent.prompt", { sessionId, text }),
+					);
+				},
+				cancel() {
+					send((sessionId) => client.request("agent.cancel", { sessionId }));
+				},
+				answerPermission(requestId: string, optionId: string) {
+					send((sessionId) =>
+						client.request("agent.answerPermission", {
+							sessionId,
+							requestId,
+							optionId,
+						}),
+					);
+				},
+				answerQuestion(requestId: string, answer: QuestionAnswer) {
+					send((sessionId) =>
+						client.request("agent.answerQuestion", {
+							sessionId,
+							requestId,
+							answer,
+						}),
+					);
+				},
+			};
 		},
 	};
 };

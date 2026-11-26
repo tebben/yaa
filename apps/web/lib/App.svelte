@@ -1,12 +1,12 @@
 <script lang="ts">
 import { keyParts } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
-import { Dock } from "@yaa/ui/dock";
 import { setAgentChat } from "./agent/index.ts";
 import { Palette } from "./palette/index.ts";
 import { setPluginPanels } from "./plugins/index.ts";
 import { ProjectMenu, ProjectOverview } from "./projects/index.ts";
 import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
+import WorktreeDock from "./WorktreeDock.svelte";
 import type { Workbench } from "./workbench.svelte.ts";
 
 let { workbench }: { workbench: Workbench } = $props();
@@ -72,12 +72,13 @@ const shortcut = (id: string) => {
 			     keep their state. -->
 			{#each layouts.docks as [id, dock] (id)}
 				<div class={["size-full", projects.worktree?.id !== id && "hidden"]}>
-					<Dock {dock} />
+					<WorktreeDock worktree={id} {dock} />
 				</div>
 			{/each}
 		</main>
 		<Footer
 			status={projects.status}
+			state={projects.worktree && projects.stateOf(projects.worktree.id)}
 			message={workbench.failure}
 			region={regions.region("footer", "horizontal")}
 		/>

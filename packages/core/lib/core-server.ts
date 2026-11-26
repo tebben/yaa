@@ -8,6 +8,7 @@ import type { PluginManager } from "./plugins/plugins.ts";
 import type { Projects } from "./projects/projects.ts";
 import type { Worktrees } from "./projects/worktrees.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
+import type { StateTracker } from "./state/state-tracker.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
 
 export type CoreServerOptions = {
@@ -19,6 +20,7 @@ export type CoreServerOptions = {
 	agents: AgentSessions;
 	projects: Projects;
 	worktrees: Worktrees;
+	states: StateTracker;
 	pickFolder(): Promise<string | null>;
 };
 
@@ -31,6 +33,7 @@ export const createCoreServer = ({
 	agents,
 	projects,
 	worktrees,
+	states,
 	pickFolder,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
@@ -60,12 +63,19 @@ export const createCoreServer = ({
 			"worktrees.finishCheck": ({ id }) => worktrees.finishCheck(id),
 			"worktrees.finish": ({ id, action, force }) =>
 				worktrees.finish(id, action, force),
+			"worktrees.states": () => ({ states: states.states() }),
+			"worktrees.setDone": ({ id, done }) => {
+				states.append({ type: "worktree.done.set", worktree: id, done });
+				return {};
+			},
 			"plugins.list": () => ({ plugins: plugins.plugins }),
 			"plugins.runCommand": async ({ command }) => {
 				await plugins.runCommand(command);
 				return {};
 			},
-			"agent.start": async () => ({ sessionId: await agents.start() }),
+			"agent.start": async ({ worktree }) => ({
+				sessionId: await agents.start(worktree),
+			}),
 			"agent.sessions": () => ({ sessions: agents.list() }),
 			"agent.prompt": ({ sessionId, text }) => {
 				agents.prompt(sessionId, text);
@@ -92,5 +102,8 @@ export const createCoreServer = ({
 		server.emit("projects.changed", { projects: projects.list() });
 	projects.onChange(projectsChanged);
 	worktrees.onChange(projectsChanged);
+	states.onChange(() =>
+		server.emit("worktrees.statesChanged", { states: states.states() }),
+	);
 	return server;
 };

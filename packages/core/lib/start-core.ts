@@ -14,6 +14,7 @@ import { createWorktrees } from "./projects/worktrees.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
 import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
+import { createStateTracker } from "./state/state-tracker.ts";
 import { createStepsRunner } from "./steps/worktree-steps.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
@@ -62,8 +63,8 @@ export const startCore = ({
 	});
 
 	const db = openDatabase(join(dataDir, "yaa.db"));
-	const events = createEventLog(db, coreEvent);
-	events.append({ type: "core.started", pid: process.pid });
+	const states = createStateTracker(createEventLog(db, coreEvent));
+	states.append({ type: "core.started", pid: process.pid });
 	const settings = watchSettingsFile({
 		dir: dataDir,
 		name: "settings.json",
@@ -82,17 +83,24 @@ export const startCore = ({
 		requestHost: requestPluginHost,
 		write: logFile.write,
 	});
+	const git = createGitService();
+	const steps = createStepsRunner({ git, events: states, log });
+	const worktrees = createWorktrees({
+		db,
+		git,
+		settings: () => settings.current().values,
+		steps,
+		home: homedir(),
+	});
 	const agents = createAgentSessions({
 		fakeAgent,
-		// No worktrees before M2; the fake agent touches no files.
-		cwd: dataDir,
+		folder: worktrees.folder,
+		record: states.append,
 		log,
 		agentLog: createLogger(logFile.write, "agent"),
 		// Sessions emit only after a client starts one, once `server` exists.
 		emit: (event) => server.emit("agent.event", event),
 	});
-	const git = createGitService();
-	const steps = createStepsRunner({ git, events, log });
 	// Setup and teardown commands do not outlive the core. Main stops it with
 	// SIGTERM, which would end it without the exit handlers.
 	process.on("exit", steps.shutdown);
@@ -106,13 +114,8 @@ export const startCore = ({
 		agents,
 		pickFolder,
 		projects: createProjects({ db, git, home: homedir() }),
-		worktrees: createWorktrees({
-			db,
-			git,
-			settings: () => settings.current().values,
-			steps,
-			home: homedir(),
-		}),
+		worktrees,
+		states,
 	});
 	log.info("core started", { pid: process.pid, dataDir });
 
