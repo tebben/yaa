@@ -12,13 +12,14 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 ## Architecture
 - Backend owns agents, git and plugins; the UI only subscribes. See docs/spec/00-overview.md.
 - Every package and plugin is a deep module: import entry points only.
+- The plugin API is unstable until M6. If a plugin needs something the API lacks, change the API (plugin-api, contracts, core) and fix the built-in plugins it breaks in the same change. Never work around it, never add compatibility shims (docs/spec/03-plugins.md).
 - Agents are reached through ACP behind one provider interface (docs/spec/05-agents-chat.md).
 - Worktree state (Idle, Running, Needs attention, Error, Done) is derived from events, never stored by hand.
 
 ## Where to look
 - What to build: docs/spec/ (index in docs/README.md)
 - How it looks: docs/design/ui.md and tokens.json. Mockups are a guide, not a spec; do not copy their markup.
-- What next: docs/plan.md. Open questions: docs/decisions/.
+- What next: docs/plan.md. Each spec section has a "Lands in" milestone; do not build later-milestone items early. Open questions: docs/decisions/.
 
 ## Rules: read the relevant one before editing
 - TypeScript: docs/rules/typescript.md

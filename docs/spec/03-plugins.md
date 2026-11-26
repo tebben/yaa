@@ -2,6 +2,8 @@
 
 ## Plugin system
 
+Lands in: M1 for the host and the first contribution points; the API grows through M4 and is frozen in M6 (`docs/decisions/0011-plugin-api-unstable-until-m6.md`). Dev-mode hot reload and the agent-authoring tools: M3.
+
 Core provides the shell and a set of registries. Every feature, including the git panel, chat, files, terminal, GitHub and Jira, is a plugin that uses the same public API, so third-party and agent-written plugins have the same power as built-in ones. Trust model for v1: plugins run with full user permissions, like VS Code extensions, and declare what they use in the manifest for transparency; per-plugin permission prompts can be added later.
 
 **Package**
@@ -37,6 +39,15 @@ Backend plugin code runs in a separate plugin host process, so a crashing plugin
 - Plugin UI modules import `svelte` and the app's `ui` package from the app, through an import map or bundler externals, never a bundled copy. Two Svelte runtimes in one page break context and reactivity.
 - The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins therefore style with `ui` components and the token CSS variables. A plugin that needs more ships its own compiled, scoped CSS file, declared in the manifest.
 - The M0 hot-reload spike proves both points before the plugin API is frozen.
+
+**API stability**
+
+The plugin API is public from M1: built-in, third-party and agent-written plugins all use it. Until the freeze in M6 it is unstable, version `0.x`, and changes whenever a plugin needs something it lacks.
+
+- A plugin that needs a capability the API does not offer gets it by changing the API: add or change the type in `plugin-api` and `contracts`, implement it in core, and update every built-in plugin that the change breaks, in the same change.
+- No workarounds: a plugin never imports core or another plugin's internals, never calls Electron, Node or the transport behind the API's back, never sends undeclared events, and never reimplements something core already does. The boundary lint enforces the import part.
+- No compatibility shims before the freeze: a changed API is changed everywhere, not kept in two versions.
+- At the freeze the API becomes `1.0`, and from then on manifests declare the version they target (see Plugin API versions in `11-platform-services.md`).
 
 **Hot reload**
 

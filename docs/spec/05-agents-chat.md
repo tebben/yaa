@@ -2,6 +2,8 @@
 
 ## Agent providers and chat
 
+Lands in: M2. Generated text: M3. Pi, Hermes and the CLI view toggle: Later.
+
 The chat is the app's own interface on top of an existing agent. A provider plugin connects one agent; the chat UI only ever sees a normalized event stream.
 
 **Provider interface**

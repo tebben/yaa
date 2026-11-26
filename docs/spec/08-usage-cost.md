@@ -2,6 +2,8 @@
 
 ## Usage and cost tracking
 
+Lands in: M4.
+
 Every chat turn is recorded so the user can see what a branch or worktree has burned.
 
 - **Sources:** the provider's usage events: tokens (input, output, cached, reasoning) when the agent reports them, and cost when it reports that. Where only tokens are known, cost is computed from a price table per provider and model. The app bundles a snapshot of a public pricing JSON, for example LiteLLM's model\_prices\_and\_context\_window.json or models.dev, refreshes it on request, and lets the user override any entry. A standard OpenTelemetry format for per-model token prices was not found, so it is not assumed; the generative-AI OpenTelemetry conventions may still be useful for exporting usage later. Where an agent reports neither, for example with per-request billing, the app records request counts and labels the figure as such.

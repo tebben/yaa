@@ -2,6 +2,8 @@
 
 ## Workflows and automations
 
+Lands in: M5.
+
 A workflow is a named definition that chains steps, started by a trigger, and runs per project or per worktree. It covers both "start a review on this PR" and "pick up my Jira ticket on its own". The engine lives in core, so run state is durable and survives a restart; the workflows plugin supplies the editor, the triggers and the runs panel.
 
 **Triggers**
@@ -51,4 +53,4 @@ Every run carries a context object: the trigger payload (ticket, PR), the worktr
 
 **Definition format**
 
-Workflows are files, one per workflow, in the user folder or in a per-project folder committed with the repo, so a team can share them. A plugin can also contribute workflows and new step types. Declarative YAML or JSON versus TypeScript is an open question; the default proposal is declarative, with a service-call step as the escape hatch.
+Workflows are files, one per workflow, in the user folder or in a per-project folder that may be committed with the repository. Features for sharing workflows or rules within a team are out of scope (`docs/decisions/0012-no-team-sharing.md`). A plugin can also contribute workflows and new step types. Declarative YAML or JSON versus TypeScript is an open question; the default proposal is declarative, with a service-call step as the escape hatch.

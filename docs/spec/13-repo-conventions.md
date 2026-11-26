@@ -2,6 +2,8 @@
 
 ## Repository layout and module boundaries
 
+Lands in: before M0 (repo foundation).
+
 One monorepo, pnpm with workspaces, strict TypeScript, Biome for lint and format, Vitest for tests. Layout:
 
 ```text
@@ -33,6 +35,8 @@ How it maps here: every workspace package and every plugin is a deep module. A p
 
 ## Svelte structure: thin components
 
+Lands in: before M0 (repo foundation).
+
 A `.svelte` file holds markup, wiring and style hooks. Behavior lives in modules beside it. Svelte supports this directly: [`.svelte.ts` files behave like ordinary modules but can use runes](https://svelte.dev/docs/svelte/svelte-js-files), so reactive state leaves the component. Such modules cannot export reassigned state, so they export factories or objects with getters and named methods. The same idea as [keeping feature pages thin and extracting pure logic early](https://skillsmp.com/creators/hiro-league/hiroleague/claude-skills-svelte-best-practice).
 
 Shape of a feature folder:
@@ -63,6 +67,8 @@ Like the deep-modules skill, the repo carries its own `setup-svelte-structure` s
 
 ## README, AGENTS.md and rules
 
+Lands in: before M0 (repo foundation).
+
 Three kinds of file, each with one job and no overlap.
 
 | File | Audience | Holds | Limit |
@@ -92,6 +98,8 @@ The repo's own `AGENTS.md` at the root is the current version; edit it there rat
 - Biome's support for `.svelte` files is partial and depends on the version. The foundation checks what the installed version lints and formats in `.svelte` files and writes the answer into `docs/rules/svelte.md`.
 
 ## Testing strategy: lean on purpose
+
+Lands in: before M0 (repo foundation).
 
 The goal is a fast loop, not coverage. Agents tend to write many tests and run all of them on every change, so the repo sets the policy explicitly.
 

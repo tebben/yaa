@@ -2,6 +2,8 @@
 
 ## Layout, panels and keyboard model
 
+Lands in: M1. The vim layer: Later.
+
 This file says what the shell does. How it looks (colours, borders, focus styling) is in `docs/design/ui.md` and `docs/design/tokens.json`.
 
 The window is a fixed shell around a user-arrangeable grid: a full-height left menu, a right rail, and between them a header, a grid of panels and a footer. The header and footer belong to the selected project and worktree, so they span only the middle, not the left menu.
@@ -37,6 +39,8 @@ The window is a fixed shell around a user-arrangeable grid: a full-height left m
 - Anything reachable with the mouse is reachable with the keyboard; this is a release criterion for each panel.
 
 ## Theming
+
+Lands in: M1 for tokens and the dark theme; M6 for the light theme, the OS setting and user themes; VS Code theme import: Later.
 
 One theme restyles the whole app: shell, panels, Monaco, code blocks in chat, diffs and the terminal.
 

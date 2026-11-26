@@ -17,6 +17,7 @@ Updating a spec:
 Adding a spec file:
 - Only for a topic that no existing file owns and that needs more than a few paragraphs. Otherwise extend the closest file.
 - Name it `NN-topic.md` with the next free number, start with a `##` heading, and add it to the index in `docs/README.md` in the same commit.
+- Every `##` section starts with a `Lands in:` line naming its milestone from `docs/plan.md`, or Later. A new or moved feature updates both the tag and the plan.
 - Never renumber existing files; other docs link to them.
 
 Closing an open question:

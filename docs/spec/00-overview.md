@@ -25,6 +25,8 @@ A keyboard-first desktop IDE where every unit of work is a git worktree with its
 
 ## Architecture
 
+Lands in: M1.
+
 The UI is a thin client: a separate backend process owns worktrees, agents, git and plugins, and the UI subscribes to its events.
 
 ```mermaid

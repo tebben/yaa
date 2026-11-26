@@ -2,6 +2,8 @@
 
 ## MCP servers and skills per worktree
 
+Lands in: M2, after the second provider.
+
 The user can switch MCP servers and skills off for one worktree in one place, without editing agent config files.
 
 - **Discovery:** the provider reports the MCP servers and skills visible to the agent at user, project and worktree level. Where an agent does not report them, the provider scans its known locations.

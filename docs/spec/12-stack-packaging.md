@@ -2,6 +2,8 @@
 
 ## Tech stack and performance
 
+Lands in: M1; targets measured from M1 on.
+
 The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 1.
 
 | Layer | Choice | Status |
@@ -46,6 +48,8 @@ These are proposed targets, measured from milestone 1 on.
 - Keep agent, git and file-watching work out of the renderer; the UI only subscribes to events.
 
 ## Packaging and distribution (Linux first)
+
+Lands in: M6.
 
 Linux is the first supported platform. The code carries no Linux-only assumptions, so macOS and Windows follow without a rewrite.
 

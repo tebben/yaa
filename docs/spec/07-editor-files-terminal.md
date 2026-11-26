@@ -2,6 +2,8 @@
 
 ## Editor, files and terminal
 
+Lands in: M3.
+
 **Editor**
 
 - Monaco with tabs per worktree: a reusable preview tab, pinned tabs, a dirty marker, keys for next and previous tab, close and reopen, and quick-open by fuzzy path. Diffs open as tabs too.

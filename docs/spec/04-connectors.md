@@ -2,9 +2,11 @@
 
 ## Connectors and issue tracker
 
+Lands in: M4: GitHub, GitLab and Jira.
+
 A connector is a plugin that implements one of two interfaces, so the rest of the app never talks to GitHub, GitLab or Jira directly.
 
-- **Source control:** create and read pull or merge requests, read CI/CD state, merge. First implementation: GitHub through the `gh` CLI. GitLab follows through `glab` or its API.
+- **Source control:** create and read pull or merge requests, read CI/CD state, merge. Implementations: GitHub through the `gh` CLI and GitLab through the `glab` CLI, both in M4. Whether `glab` covers every method or some calls need the GitLab API is checked when the connector is built.
 - **Issue tracker:** list and read issues, compute stats, build links. First implementation: Jira.
 
 **Authentication**
