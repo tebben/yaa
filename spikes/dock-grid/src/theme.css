@@ -1,0 +1,51 @@
+/* Token values copied from docs/design/tokens.json; in the app they come from generated variables. */
+:root {
+	--color-chrome: #101113;
+	--color-surface: #131417;
+	--color-raised: #181a1e;
+	--color-border: #23252a;
+	--color-text: #d4d7dd;
+	--color-text-soft: #a9afba;
+	--color-text-muted: #868c97;
+	--color-accent: #8fa0e8;
+	--color-accent-soft: #1a1d2b;
+	--size-panel-header: 30px;
+	--font-size-base: 12px;
+}
+html, body, #app { margin: 0; height: 100%; background: var(--color-chrome); color: var(--color-text); font: var(--font-size-base) system-ui, sans-serif; }
+
+/* Map yaa tokens onto dockview's variables: one theme class, no dockview theme colours left. */
+.yaa-dock {
+	color-scheme: dark;
+	--dv-group-view-background-color: var(--color-surface);
+	--dv-tabs-and-actions-container-background-color: var(--color-chrome);
+	--dv-tabs-and-actions-container-height: var(--size-panel-header);
+	--dv-tabs-and-actions-container-font-size: var(--font-size-base);
+	--dv-activegroup-visiblepanel-tab-background-color: var(--color-surface);
+	--dv-activegroup-hiddenpanel-tab-background-color: var(--color-chrome);
+	--dv-inactivegroup-visiblepanel-tab-background-color: var(--color-surface);
+	--dv-inactivegroup-hiddenpanel-tab-background-color: var(--color-chrome);
+	--dv-activegroup-visiblepanel-tab-color: var(--color-text);
+	--dv-activegroup-hiddenpanel-tab-color: var(--color-text-muted);
+	--dv-inactivegroup-visiblepanel-tab-color: var(--color-text-soft);
+	--dv-inactivegroup-hiddenpanel-tab-color: var(--color-text-muted);
+	--dv-tab-divider-color: var(--color-border);
+	--dv-separator-border: var(--color-border);
+	--dv-sash-color: transparent;
+	--dv-active-sash-color: var(--color-accent);
+	--dv-drag-over-background-color: var(--color-accent-soft);
+	--dv-drag-over-border-color: var(--color-accent);
+	--dv-border-radius: 0px;
+	--dv-tab-margin: 0;
+	--dv-spacing-padding: 0px;
+	--dv-overlay-z-index: 999;
+	--dv-tab-font-size: inherit;
+	--dv-tab-close-icon-size: inherit;
+	--dv-floating-border: 1px solid var(--color-border);
+	--dv-icon-hover-background-color: var(--color-raised);
+}
+/* Focus: 1px accent line on top of the focused group, brighter title (docs/design/ui.md). */
+.yaa-dock .dv-groupview { position: relative; }
+.yaa-dock .dv-groupview.dv-active-group::before {
+	content: ''; position: absolute; inset: 0 0 auto 0; height: 1px; background: var(--color-accent); z-index: 5;
+}
