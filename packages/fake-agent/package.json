@@ -1,0 +1,16 @@
+{
+	"name": "@yaa/fake-agent",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts",
+		"./main": "./main.ts"
+	},
+	"scripts": {
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@agentclientprotocol/sdk": "^2.12.0"
+	}
+}

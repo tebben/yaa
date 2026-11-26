@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@yaa/contracts": "workspace:*",
 		"@yaa/core": "workspace:*",
+		"@yaa/fake-agent": "workspace:*",
 		"@yaa/plugin-build": "workspace:*",
 		"@yaa/plugin-host": "workspace:*"
 	},

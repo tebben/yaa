@@ -26,6 +26,7 @@ parent.on("message", (event) => {
 				dataDir: message.dataDir,
 				logDir: message.logDir,
 				pluginsDir: message.pluginsDir,
+				fakeAgent: message.fakeAgent,
 				dev: message.dev,
 				requestPluginHost: () => send({ kind: "start-plugin-host" }),
 			});

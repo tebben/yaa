@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./index.ts",
 		"./dock": "./dock.ts",
+		"./focus": "./focus.ts",
 		"./styles.css": "./styles.css",
 		"./tokens": "./tokens.ts",
 		"./token-codegen": "./token-codegen.ts"

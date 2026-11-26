@@ -3,6 +3,7 @@ import { coreEvent } from "@yaa/contracts/core-events";
 import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
+import { createAgentSessions } from "./agents/agent-sessions.ts";
 import { createCoreServer } from "./core-server.ts";
 import { openLogFile } from "./log/log-file.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
@@ -17,6 +18,8 @@ export type CoreOptions = {
 	dataDir: string;
 	logDir: string;
 	pluginsDir: string;
+	// The fake agent's script, or null outside dev mode.
+	fakeAgent: string | null;
 	dev: boolean;
 	// Asks main to fork a plugin host; its port arrives through
 	// `attachPluginHost`.
@@ -34,6 +37,7 @@ export const startCore = ({
 	dataDir,
 	logDir,
 	pluginsDir,
+	fakeAgent,
 	dev,
 	requestPluginHost,
 }: CoreOptions): Core => {
@@ -70,12 +74,22 @@ export const startCore = ({
 		requestHost: requestPluginHost,
 		write: logFile.write,
 	});
+	const agents = createAgentSessions({
+		fakeAgent,
+		// No worktrees before M2; the fake agent touches no files.
+		cwd: dataDir,
+		log,
+		agentLog: createLogger(logFile.write, "agent"),
+		// Sessions emit only after a client starts one, once `server` exists.
+		emit: (event) => server.emit("agent.event", event),
+	});
 	const server = createCoreServer({
 		log,
 		settings,
 		keybindings,
 		layouts: createLayoutStore(db),
 		plugins,
+		agents,
 	});
 	log.info("core started", { pid: process.pid, dataDir });
 

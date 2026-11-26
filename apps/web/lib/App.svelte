@@ -2,6 +2,7 @@
 import { formatKey } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
 import { Dock } from "@yaa/ui/dock";
+import { setAgentChat } from "./agent/index.ts";
 import { Palette } from "./palette/index.ts";
 import { setPluginPanels } from "./plugins/index.ts";
 import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
@@ -10,6 +11,7 @@ import type { Workbench } from "./workbench.svelte.ts";
 let { workbench }: { workbench: Workbench } = $props();
 const { layout, regions, commands, palette } = $derived(workbench);
 setPluginPanels({ load: (kind) => workbench.plugins.panels.load(kind) });
+setAgentChat(() => workbench.agentChat);
 
 const shortcut = (id: string) => {
 	const [key] = commands.keysFor(id);

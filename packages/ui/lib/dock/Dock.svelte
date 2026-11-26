@@ -24,6 +24,7 @@ let { dock }: { dock: DockController } = $props();
 			class="size-full outline-none"
 			tabindex="-1"
 			{@attach portal(slot.element)}
+			{@attach dock.trackFocus}
 		>
 			{#if slot.kind}
 				<svelte:boundary>

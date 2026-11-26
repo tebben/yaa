@@ -199,6 +199,9 @@ importers:
       '@yaa/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@yaa/fake-agent':
+        specifier: workspace:*
+        version: link:../../packages/fake-agent
       '@yaa/plugin-build':
         specifier: workspace:*
         version: link:../../packages/plugin-build
@@ -264,6 +267,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@agentclientprotocol/sdk':
+        specifier: ^2.12.0
+        version: 2.12.0(zod@4.6.7)
       '@yaa/commands':
         specifier: workspace:*
         version: link:../commands
@@ -274,9 +280,18 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
+      '@yaa/fake-agent':
+        specifier: workspace:*
+        version: link:../fake-agent
       electron:
         specifier: 45.5.0
         version: 45.5.0(supports-color@7.2.0)
+
+  packages/fake-agent:
+    dependencies:
+      '@agentclientprotocol/sdk':
+        specifier: ^2.12.0
+        version: 2.12.0(zod@4.6.7)
 
   packages/plugin-api:
     dependencies:
@@ -363,6 +378,15 @@ importers:
         version: 5.59.1
 
 packages:
+
+  '@agentclientprotocol/sdk@2.12.0':
+    resolution: {integrity: sha512-nSkamfY4Lw9/AVBU5G5V9p82ScXhANDMBybQwcPH/9+euUtZm04/VFUMaLj4gLFEXxQEy+QP1VQiKgSRbYVIPg==}
+    peerDependencies:
+      '@modelcontextprotocol/server': ^2.4.0
+      zod: ^3.25.76 || ^4.0.0
+    peerDependenciesMeta:
+      '@modelcontextprotocol/server':
+        optional: true
 
   '@biomejs/biome@2.6.9':
     resolution: {integrity: sha512-RelCBDzTXu4DBU8c35P4iMrDO80SUjW0OgjDA7CT1z3UcCU5IclWTZ2XnMelI4frQL//xg2K2BQxAhcOKxdPQA==}
@@ -1496,6 +1520,10 @@ packages:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
+
+  '@agentclientprotocol/sdk@2.12.0(zod@4.6.7)':
+    dependencies:
+      zod: 4.6.7
 
   '@biomejs/biome@2.6.9':
     optionalDependencies:

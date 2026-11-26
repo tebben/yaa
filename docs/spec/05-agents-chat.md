@@ -2,7 +2,7 @@
 
 ## Agent providers and chat
 
-Lands in: M2. Generated text: M3. Pi, Hermes and the CLI view toggle: Later.
+Lands in: M2. The fake agent, core's ACP session and the normalized events: M1. Generated text: M3. Pi, Hermes and the CLI view toggle: Later.
 
 The chat is the app's own interface on top of an existing agent. A provider plugin connects one agent; the chat UI only ever sees a normalized event stream.
 
@@ -20,7 +20,7 @@ The provider plugin implements detection, auth and the spawn configuration for `
 
 **Fake agent**
 
-A fake ACP agent ships as a dev-only provider. It replays scripted event files (message chunks, tool calls, a permission request, usage, an error) with configurable delays. Tests use it, and developers use it to build the chat, state and workflow UI without a login or token cost.
+A fake ACP agent ships as a dev-only provider (`packages/fake-agent`). It replays scripted turn files (message and thinking chunks, a plan, tool calls with output and a diff, a permission request, a question, the session title, usage, and a turn that fails), each step with its own delay. The scripts are TypeScript typed against the ACP SDK's types, and each is a slash command: a prompt naming one plays it, any other prompt plays the default. Core runs it as a process over stdio, as a real agent runs, in dev mode only; tests connect to it in-process with the delays scaled to zero. Developers use it to build the chat, state and workflow UI without a login or token cost. Until providers arrive in M2 the chat panel is a placeholder that starts a fake session and streams its turns.
 
 **Transport**
 
@@ -39,7 +39,7 @@ Commit messages, PR descriptions and branch names come from a model the user pic
 
 **Normalized events**
 
-Message chunk, thinking chunk, tool call (start, update, end, kind, file locations, output), plan, permission request, question, available commands (slash commands and skills), session title, config options, usage (context used and size, tokens per turn, cost when the agent reports it), turn end, error. These are also the events plugins subscribe to.
+Prompt (the user's message, which starts a turn), message chunk, thinking chunk, tool call (start, update, end, kind, file locations, output), plan, permission request and its answer, question and its answer, available commands (slash commands and skills), session title, config options, usage (context used and size, cost when the agent reports it), turn end (stop reason, tokens for the turn), error. A permission request or question waits until it is answered or the turn is cancelled, which answers it as cancelled. Questions are ACP form elicitations: core advertises `elicitation.form` and turns the requested JSON Schema into text, number, yes-or-no and single or multiple choice fields. Core keeps every event of a session, numbered, so a client that connects later reads the history first. These are also the events plugins subscribe to.
 
 **Chat UI**
 
