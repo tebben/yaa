@@ -10,6 +10,7 @@ The UI stack is decided; the rest is proposed and confirmed in milestones 0 and 
 | --- | --- | --- |
 | Desktop shell | Electron, so Chromium renders the same on every OS | proposed |
 | UI | Svelte 5, Bits UI, Tailwind | decided |
+| Dock grid | `dockview-core` behind our own Svelte adapter (`docs/decisions/0016-dock-grid-dockview.md`) | decided |
 | Editor | Monaco | decided |
 | Code in chat | Shiki, highlighted lazily | proposed |
 | Backend | TypeScript on Node, a separate process, typed protocol; transport in `00-overview.md` | proposed |
