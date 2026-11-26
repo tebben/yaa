@@ -30,10 +30,13 @@ Toolchain not created yet (see docs/plan.md "Before M0"). Placeholders until the
 (The code rules are written during repo foundation; until then follow docs/spec/13-repo-conventions.md.)
 
 ## Change style
-- Smallest change that solves the task; no redesigns.
-- Extend an existing primitive before writing a new one; no duplicated code.
+- Smallest change that leaves the design right. If the existing structure does not fit the task, refactor it first, in its own commit, then build on it. Never patch around it: no special-case flags or parameters for one caller, no copied code, no shims, no casts, `any` or suppression comments to quiet the checker.
+- Replace, don't add beside: code that supersedes other code deletes it in the same change. No dead code, no commented-out code, no TODO without a reason.
+- You may change a package's entry points or `contracts` when the task needs it; say so in your summary. Changing the architecture in docs/spec/00-overview.md or anything a decision file records: ask first.
+- Extend an existing building block before writing a new one; extract on the second use.
 - Colours and spacing come from tokens, never literals; icons from @lucide/svelte.
 - Keep .svelte files thin: logic in .svelte.ts controllers or pure .ts.
 - Tests only for pure logic, contracts and the workflow engine; no component or wiring tests.
-- Behaviour change: update the owning spec in the same commit. Never change a decided item without asking.
+- Behaviour change: update the owning spec in the same commit (docs/rules/docs.md).
 - Do not invent package names, APIs or sources; verify against docs or the registry, and say when unsure.
+- Before finishing: `check` passes, you reread your own diff, and your summary lists what you were unsure about and any refactor you did.

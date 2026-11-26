@@ -7,9 +7,9 @@ Order matters. Each milestone ends on something usable and has an exit check: wh
 2. Pick the runtime schema library for `contracts` (open question; ask before choosing).
 3. Create the two structure skills: `setup-ts-deep-modules` (dependency-cruiser, entry points only, `lint:boundaries`) and our own `setup-svelte-structure` (thin `.svelte`, `.svelte.ts` controllers, pure `.ts`, `lint:svelte-size`). See `docs/spec/13-repo-conventions.md`.
 4. Write `docs/rules/*.md` (typescript, svelte, plugins, testing; `docs.md` exists) and update the commands in `AGENTS.md` once they run.
-5. `check` script: lint, typecheck (`tsc` and `svelte-check`), boundaries, svelte size, unit tests for changed packages only. `check:all` runs everything.
+5. `check` script: lint (with the strict rules in `docs/spec/13-repo-conventions.md`), typecheck (`tsc` and `svelte-check`), boundaries, svelte size, `check:docs`, unit tests for changed packages only. `check:all` runs everything.
 
-Exit: `pnpm install && pnpm run check` passes on a clean clone, and a deliberate boundary violation makes it fail.
+Exit: `pnpm install && pnpm run check` passes on a clean clone, and a deliberate boundary violation, an unexplained `@ts-ignore` and a spec section without `Lands in:` each make it fail.
 
 ## M0: spikes (answer the risky questions; write each result to `docs/decisions/`)
 - ACP with Copilot CLI and Claude Code (adapter package name may have changed): models, thinking effort, skills, MCP list, usage, resume, login, and whether a one-shot `complete()` is possible.

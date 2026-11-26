@@ -27,4 +27,10 @@ Closing an open question:
 
 Spike results follow the same steps, and the plan item for the spike is done when its decision file exists.
 
-Style: plain, specific sentences; sentence-case headings; no filler. Keep each spec file to what an implementer needs.
+Writing and editing:
+- Edit in place. Rewrite the section so it reads as if written fresh. Never append "Update:", "Note:" or change history; history lives in decision files and git.
+- Lean is not lossy. Every requirement, number, name, constraint, status marker and open item survives an edit. Removing a requirement needs the user's agreement or a decision file. After shortening text, compare old and new line by line and list anything dropped in your summary.
+- A spec holds requirements and the reason when it is not obvious. Long rationale, alternatives and spike findings go in a decision file, linked from the spec.
+- One example per point at most. No introductions, recaps or closing summaries in a section.
+- A spec section over about one screen is a prompt to split it or cut repetition, not to drop requirements.
+- Prose follows the `unslop` skill (`.claude/skills/unslop`): plain, specific sentences, sentence-case headings, no filler.

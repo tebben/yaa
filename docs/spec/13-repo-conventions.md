@@ -96,6 +96,8 @@ The repo's own `AGENTS.md` at the root is the current version; edit it there rat
 - `docs.md`: how specs, decisions and the plan are changed. This file exists before the foundation.
 - Commits: conventional commit messages and small commits. A change is done when `check` passes: lint, typecheck (`tsc` for `.ts`, `svelte-check` for `.svelte`, since `tsc` does not read Svelte files), boundaries, Svelte size warning, unit tests.
 - Biome's support for `.svelte` files is partial and depends on the version. The foundation checks what the installed version lints and formats in `.svelte` files and writes the answer into `docs/rules/svelte.md`.
+- Rules that agents tend to bend are enforced by `check`, not only written down. Lint fails on explicit `any`, on non-null assertions, and on suppression comments (`biome-ignore`, `@ts-ignore`, `@ts-expect-error`) that give no reason. The foundation maps each to the installed Biome and TypeScript options, and writes down any it cannot enforce.
+- `check:docs`, a small script, fails when a spec `##` section has no `Lands in:` line, a `docs/` path mentioned in a doc does not exist, or a spec file is missing from the index in `docs/README.md`.
 
 ## Testing strategy: lean on purpose
 
