@@ -1,11 +1,10 @@
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
-import type { LogRecord } from "@yaa/contracts/log";
+import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createCoreServer } from "./core-server.ts";
 import { openLogFile } from "./log/log-file.ts";
-import { createLogger, errorData } from "./log/logger.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
 import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";

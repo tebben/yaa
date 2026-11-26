@@ -1,8 +1,8 @@
 import { coreProtocol } from "@yaa/contracts/core-protocol";
 import type { KeybindingsState } from "@yaa/contracts/keybindings";
+import { errorData, type Logger } from "@yaa/contracts/log";
 import { createServer, type Server } from "@yaa/contracts/server";
 import type { SettingsState } from "@yaa/contracts/settings";
-import { errorData, type Logger } from "./log/logger.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
 

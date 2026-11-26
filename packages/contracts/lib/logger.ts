@@ -1,4 +1,4 @@
-import type { LogLevel, LogRecord, LogSource } from "@yaa/contracts/log";
+import type { LogLevel, LogRecord, LogSource } from "../log.ts";
 
 type Data = Record<string, unknown>;
 

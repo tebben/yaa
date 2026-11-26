@@ -24,3 +24,5 @@ export const logRecord = z.object({
 export type LogLevel = z.infer<typeof logLevel>;
 export type LogSource = z.infer<typeof logSource>;
 export type LogRecord = z.infer<typeof logRecord>;
+
+export { createLogger, errorData, type Logger } from "./lib/logger.ts";

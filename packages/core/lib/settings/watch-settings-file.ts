@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, watch } from "node:fs";
 import { join } from "node:path";
 import type { FileProblem } from "@yaa/contracts/file-problem";
-import type { Logger } from "../log/logger.ts";
+import type { Logger } from "@yaa/contracts/log";
 
 export type SettingsFile<T> = {
 	current(): T;

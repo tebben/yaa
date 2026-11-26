@@ -1,8 +1,9 @@
 import { mkdtempSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createLogger } from "@yaa/contracts/log";
 import { describe, expect, it } from "vitest";
-import { createLogger, openLogFile } from "../log.ts";
+import { openLogFile } from "../log.ts";
 
 const tempDir = () => mkdtempSync(join(tmpdir(), "yaa-log-"));
 const lines = (path: string) =>
