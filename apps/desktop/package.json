@@ -8,7 +8,8 @@
 		"dev": "node scripts/dev.ts",
 		"build": "node scripts/build.ts",
 		"start": "node scripts/build.ts && electron dist/main.js",
-		"test": "vitest run --passWithNoTests"
+		"test": "vitest run --passWithNoTests",
+		"smoke": "node scripts/build.ts && node scripts/smoke.ts"
 	},
 	"dependencies": {
 		"@yaa/contracts": "workspace:*",
@@ -20,6 +21,7 @@
 	"devDependencies": {
 		"electron": "45.5.0",
 		"esbuild": "0.28.2",
-		"vite": "^8.3.8"
+		"vite": "^8.3.8",
+		"zod": "^4.6.7"
 	}
 }

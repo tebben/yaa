@@ -13,6 +13,12 @@ const { layout, regions, commands, palette } = $derived(workbench);
 setPluginPanels({ load: (kind) => workbench.plugins.panels.load(kind) });
 setAgentChat(() => workbench.agentChat);
 
+// The window is interactive once the dock is on screen: the launch time the
+// smoke test measures (docs/spec/12-stack-packaging.md).
+$effect(() => {
+	if (layout.dock) performance.mark("yaa:interactive");
+});
+
 const shortcut = (id: string) => {
 	const [key] = commands.keysFor(id);
 	return key === undefined ? undefined : formatKey(key);

@@ -34,7 +34,7 @@ A Rust backend is not needed: the work is waiting on agents, git and the network
 
 **Performance targets**
 
-These are proposed targets, measured from milestone 1 on.
+These are proposed targets, measured from milestone 1 on. The smoke test (`docs/spec/13-repo-conventions.md`) reports launch and palette open times on every run and fails only when a step fails, since shared CI runners are too noisy to gate on (`docs/decisions/0022-smoke-test.md`). The window counts as interactive once the dock is on screen, which the renderer marks as `yaa:interactive`.
 
 | Measure | Target |
 | --- | --- |

@@ -1,0 +1,274 @@
+// The smoke test: runs the built app in dev mode, with a fresh data folder,
+// and drives its window over the DevTools protocol. The app starts, the
+// palette runs the hello plugin's command, and the fake agent plays a turn
+// into the chat panel. It prints the launch and palette open times against
+// the targets in docs/spec/12-stack-packaging.md and fails only when a step
+// fails (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which
+// builds first.
+import { type ChildProcess, spawn } from "node:child_process";
+import { once } from "node:events";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+import { z } from "zod";
+import { outDir } from "./bundle.ts";
+import { type Connection, connect, evaluate } from "./cdp.ts";
+
+const LAUNCH_TARGET_MS = 1500;
+const PALETTE_TARGET_MS = 50;
+const WARM_LAUNCHES = 3;
+const PALETTE_OPENS = 5;
+const STEP_TIMEOUT_MS = 15_000;
+
+type App = {
+	child: ChildProcess;
+	page: Connection;
+	browser: Connection;
+	launchMs: number;
+};
+
+const target = z.object({ type: z.string(), webSocketDebuggerUrl: z.string() });
+
+// Polls until `find` returns a value; the window and its DevTools endpoint
+// take a moment to appear.
+const poll = async <T>(
+	what: string,
+	find: () => Promise<T | undefined>,
+): Promise<T> => {
+	const end = Date.now() + STEP_TIMEOUT_MS;
+	while (Date.now() < end) {
+		const found = await find().catch(() => undefined);
+		if (found !== undefined) return found;
+		await delay(50);
+	}
+	throw new Error(`Timed out waiting for ${what}`);
+};
+
+// Chromium writes the port it picked, and the browser's path, here.
+const devToolsEndpoint = async (dataDir: string) => {
+	const [port, path] = (
+		await readFile(join(dataDir, "DevToolsActivePort"), "utf8")
+	).split("\n");
+	return port && path ? { port, path } : undefined;
+};
+
+// The app that is running, stopped if a step fails.
+let running: ChildProcess | undefined;
+
+const launch = async (dataDir: string): Promise<App> => {
+	await rm(join(dataDir, "DevToolsActivePort"), { force: true });
+	const launchedAt = Date.now();
+	const child = spawn(
+		"electron",
+		[
+			join(outDir, "main.js"),
+			`--user-data-dir=${dataDir}`,
+			"--remote-debugging-port=0",
+		],
+		// Dev mode echoes every log line; the log file is printed on failure.
+		{
+			stdio: ["ignore", "ignore", "inherit"],
+			env: { ...process.env, YAA_DEV: "1" },
+		},
+	);
+	running = child;
+	const { port, path } = await poll("the DevTools port", () =>
+		devToolsEndpoint(dataDir),
+	);
+	const browser = await connect(`ws://127.0.0.1:${port}${path}`);
+	const pageUrl = await poll("the window", async () => {
+		const response = await fetch(`http://127.0.0.1:${port}/json/list`);
+		const targets = z.array(target).parse(await response.json());
+		return targets.find(({ type }) => type === "page")?.webSocketDebuggerUrl;
+	});
+	const page = await connect(pageUrl);
+	// The mark App sets once the dock is on screen, in epoch milliseconds.
+	const interactiveAt = await evaluate(
+		page,
+		until(`(() => {
+			const [mark] = performance.getEntriesByName("yaa:interactive");
+			return mark && performance.timeOrigin + mark.startTime;
+		})()`),
+		z.number(),
+	);
+	return { child, page, browser, launchMs: interactiveAt - launchedAt };
+};
+
+const quit = async ({ child, page, browser }: App) => {
+	const exited = once(child, "exit");
+	page.close();
+	await browser.send("Browser.close").catch(() => undefined);
+	browser.close();
+	await exited;
+	running = undefined;
+};
+
+// An expression that resolves to the condition's value once it is truthy,
+// checked every frame, or rejects after the step timeout.
+const until = (condition: string) => `new Promise((resolve, reject) => {
+	const end = performance.now() + ${STEP_TIMEOUT_MS};
+	const check = () => {
+		const value = ${condition};
+		if (value) resolve(value);
+		else if (performance.now() > end) reject(new Error(${JSON.stringify(`Timed out waiting for ${condition}`)}));
+		else requestAnimationFrame(check);
+	};
+	check();
+})`;
+
+const buttonNamed = (name: string) =>
+	`[...document.querySelectorAll("button")].find((button) => button.textContent.trim() === ${JSON.stringify(name)})`;
+
+const PALETTE = `document.querySelector('[aria-label="Command palette"]')`;
+
+const waitFor = (page: Connection, condition: string) =>
+	evaluate(page, until(`Boolean(${condition})`), z.literal(true));
+
+const click = async (page: Connection, name: string) => {
+	await waitFor(page, buttonNamed(name));
+	await evaluate(page, `${buttonNamed(name)}.click()`, z.undefined());
+};
+
+// A key as CDP sends it. A key with text, such as Enter, also types it,
+// which is what submits a form.
+type Key = {
+	key: string;
+	code: string;
+	keyCode: number;
+	modifiers?: number;
+	text?: string;
+};
+const CTRL_SHIFT = 2 | 8;
+const OPEN_PALETTE: Key = {
+	key: "P",
+	code: "KeyP",
+	keyCode: 80,
+	modifiers: CTRL_SHIFT,
+};
+const ESCAPE: Key = { key: "Escape", code: "Escape", keyCode: 27 };
+const ENTER: Key = { key: "Enter", code: "Enter", keyCode: 13, text: "\r" };
+
+const press = async (
+	page: Connection,
+	{ key, code, keyCode, modifiers = 0, text }: Key,
+) => {
+	const event = { key, code, windowsVirtualKeyCode: keyCode, modifiers };
+	await page.send(
+		"Input.dispatchKeyEvent",
+		text === undefined
+			? { type: "rawKeyDown", ...event }
+			: { type: "keyDown", text, ...event },
+	);
+	await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...event });
+};
+
+const type = (page: Connection, text: string) =>
+	page.send("Input.insertText", { text });
+
+// From the key's event to the frame after the palette is in the DOM, so
+// its paint is included.
+const paletteOpenMs = async (page: Connection): Promise<number> => {
+	const measured = evaluate(
+		page,
+		`new Promise((resolve) => {
+			let pressedAt;
+			addEventListener("keydown", (event) => { pressedAt = event.timeStamp; }, { capture: true, once: true });
+			const observer = new MutationObserver(() => {
+				if (!${PALETTE}) return;
+				observer.disconnect();
+				requestAnimationFrame(() => setTimeout(() => resolve(performance.now() - pressedAt)));
+			});
+			observer.observe(document.body, { childList: true, subtree: true });
+		})`,
+		z.number(),
+	);
+	await press(page, OPEN_PALETTE);
+	const ms = await measured;
+	await press(page, ESCAPE);
+	await waitFor(page, `!${PALETTE}`);
+	return ms;
+};
+
+const runPluginCommand = async (page: Connection, logFile: string) => {
+	await press(page, OPEN_PALETTE);
+	await waitFor(page, PALETTE);
+	await type(page, "Say hello");
+	await press(page, ENTER);
+	await waitFor(page, `!${PALETTE}`);
+	await poll("the hello plugin's log line", async () =>
+		(await readFile(logFile, "utf8")).includes("Hello from the hello plugin")
+			? true
+			: undefined,
+	);
+};
+
+// The edit turn asks for a permission and a question; answering both lets
+// it end.
+const playFakeTurn = async (page: Connection) => {
+	await click(page, "Start a fake session");
+	const composer = `document.querySelector('input[aria-label="Prompt"]')`;
+	await waitFor(page, composer);
+	await evaluate(page, `${composer}.focus()`, z.undefined());
+	await type(page, "Make the greeting friendlier");
+	await press(page, ENTER);
+	await click(page, "Allow");
+	await click(page, "Decline");
+	await waitFor(
+		page,
+		`document.body.textContent.includes("Turn ended: end turn")`,
+	);
+};
+
+const median = (values: readonly number[]) => {
+	const sorted = [...values].sort((a, b) => a - b);
+	return sorted[Math.floor(sorted.length / 2)] ?? Number.NaN;
+};
+
+const report = (name: string, ms: number, targetMs: number) =>
+	console.log(
+		`${name}: ${Math.round(ms)} ms (target ${targetMs} ms${ms > targetMs ? ", over" : ""})`,
+	);
+
+const dataDir = await mkdtemp(join(tmpdir(), "yaa-smoke-"));
+const logFile = join(dataDir, "logs", "yaa.log");
+try {
+	const first = await launch(dataDir);
+	await runPluginCommand(first.page, logFile);
+	await playFakeTurn(first.page);
+	const paletteTimes: number[] = [];
+	for (let run = 0; run < PALETTE_OPENS; run += 1) {
+		paletteTimes.push(await paletteOpenMs(first.page));
+	}
+	await quit(first);
+
+	const warmTimes: number[] = [];
+	for (let run = 0; run < WARM_LAUNCHES; run += 1) {
+		const app = await launch(dataDir);
+		warmTimes.push(app.launchMs);
+		await quit(app);
+	}
+
+	console.log("Smoke test passed.");
+	report("First launch, new data folder", first.launchMs, LAUNCH_TARGET_MS);
+	report(
+		`Launch, median of ${WARM_LAUNCHES}`,
+		median(warmTimes),
+		LAUNCH_TARGET_MS,
+	);
+	report(
+		`Palette open, median of ${PALETTE_OPENS}`,
+		median(paletteTimes),
+		PALETTE_TARGET_MS,
+	);
+} catch (error) {
+	console.error(await readFile(logFile, "utf8").catch(() => "No log file."));
+	throw error;
+} finally {
+	if (running && running.exitCode === null && running.signalCode === null) {
+		const exited = once(running, "exit");
+		running.kill();
+		await exited;
+	}
+	await rm(dataDir, { recursive: true, force: true });
+}

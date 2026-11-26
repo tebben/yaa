@@ -10,6 +10,7 @@ Read `docs/README.md` first; it says which doc wins and where each topic lives.
 - After editing `docs/design/tokens.json`: `pnpm run tokens` regenerates the CSS variables and token types in `packages/ui`
 - Build the built-in plugins: `pnpm run plugins:build` (`pnpm run dev` builds them once at start)
 - Everything, as CI runs it: `pnpm run check:all`
+- Smoke test, which builds and launches the app and prints launch and palette open times: `pnpm run smoke` (CI runs it under `xvfb-run`)
 - Run the app in dev mode: `pnpm run dev` (Vite for the renderer, esbuild watchers for main, preload, core and plugin host; arguments go to Electron). Linux packaging (`pnpm run package:linux`) arrives in M6.
 - See what the running app shows: `pnpm run dev --remote-debugging-port=9222`, then evaluate in the page over the DevTools protocol (`http://127.0.0.1:9222/json` lists targets). DevTools code is exempt from the CSP, so test the policy with an injected `<script>`, not `eval`.
 
