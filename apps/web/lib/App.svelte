@@ -1,20 +1,32 @@
 <script lang="ts">
+import { formatKey } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
 import { Dock } from "@yaa/ui/dock";
-import type { LayoutController } from "./layout.svelte.ts";
+import { Palette } from "./palette/index.ts";
 import { panelKinds } from "./panels/index.ts";
 import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
+import type { Workbench } from "./workbench.svelte.ts";
 
-let { layout }: { layout: LayoutController } = $props();
+let { workbench }: { workbench: Workbench } = $props();
+const { layout, commands, palette } = $derived(workbench);
+
+const shortcut = (id: string) => {
+	const [key] = commands.keysFor(id);
+	return key === undefined ? undefined : formatKey(key);
+};
 </script>
+
+<svelte:window onkeydowncapture={commands.handleKey} />
 
 <TooltipProvider>
 	<div
 		class="grid h-screen grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_minmax(0,1fr)_auto]"
 	>
-		<LeftMenu />
+		{#if workbench.menuOpen}
+			<LeftMenu />
+		{/if}
 		<Header />
-		<main class="min-h-0 bg-surface">
+		<main class="col-start-2 min-h-0 bg-surface">
 			{#if layout.dock}
 				<Dock dock={layout.dock} />
 			{/if}
@@ -23,7 +35,9 @@ let { layout }: { layout: LayoutController } = $props();
 		<Rail
 			kinds={panelKinds}
 			isOpen={(kind) => layout.dock?.isOpen(kind) ?? false}
-			ontoggle={(kind) => layout.dock?.toggle(kind)}
+			shortcut={(kind) => shortcut(`panel.toggle.${kind}`)}
+			ontoggle={(kind) => commands.run(`panel.toggle.${kind}`)}
 		/>
 	</div>
+	<Palette {palette} keysFor={commands.keysFor} />
 </TooltipProvider>

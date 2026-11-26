@@ -13,6 +13,7 @@
 		"test": "vitest run --passWithNoTests"
 	},
 	"dependencies": {
+		"@yaa/commands": "workspace:*",
 		"@yaa/contracts": "workspace:*",
 		"zod": "^4.6.7"
 	},

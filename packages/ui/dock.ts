@@ -6,6 +6,7 @@ export { default as Dock } from "./lib/dock/Dock.svelte";
 export {
 	createDock,
 	type DockController,
+	type DockDirection,
 	type DockOptions,
 	type DockPlacement,
 	type PanelKind,

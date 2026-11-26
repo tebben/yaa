@@ -14,7 +14,7 @@ let {
 }: {
 	icon: LucideIcon;
 	label: string;
-	shortcut?: string;
+	shortcut?: string | undefined;
 	pressed?: boolean;
 	onclick: () => void;
 } = $props();

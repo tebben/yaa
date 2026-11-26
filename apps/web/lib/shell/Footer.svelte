@@ -5,7 +5,7 @@ let { error }: { error: string | undefined } = $props();
 </script>
 
 <footer
-	class="flex h-footer items-center border-t border-border bg-chrome px-3 text-sm"
+	class="col-start-2 flex h-footer items-center border-t border-border bg-chrome px-3 text-sm"
 >
 	{#if error}
 		<span class="truncate text-state-error">Core unreachable: {error}</span>
