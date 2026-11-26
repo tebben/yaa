@@ -66,6 +66,21 @@ Exit: you build yaa's next feature inside yaa. Two worktrees run real agents in 
 ## M3: code
 Editor (Monaco), files, git panel, diff, annotations (notes in diffs or code sent back to the agent), terminal, generated commit messages, text search, conflicts, rebase and stash. Dev-mode plugin hot reload and the agent-authoring tools.
 
+Build order, one pull request each. M3 starts when M2 has met its exit check. A step can start once the steps it names under "after" are merged, so the others can be built in parallel. Each step is a built-in plugin or extends one, and adds the plugin API it needs (`docs/spec/03-plugins.md`).
+
+1. Files panel (`docs/spec/07-editor-files-terminal.md`): the tree of the active worktree from `git ls-files` plus untracked files, kept fresh by a file watcher, with git status decorations, the ignored toggle, the fuzzy filter, and new, rename and delete. It is the first plugin that works on a worktree, so it adds the API for that: a panel knows its worktree, a UI module calls its backend and receives its events, and a backend reads worktrees and git.
+2. Editor, after 1: Monaco with a theme from the tokens, tabs per worktree (preview, pinned, dirty, next, previous, close, reopen), saving, quick-open by fuzzy path, and tabs restored on start through plugin storage. Files, and the file paths in chat, open here at the line.
+3. Terminal, after 1: node-pty and a headless mirror per terminal in core, the xterm.js panel with its WebGL addon, several terminals per worktree with `YAA_WORKTREE_INDEX` set, re-attach after a reload, working directories restored, and the theme's terminal palette. Settle what `docs/decisions/0017-terminal-xterm-first.md` left unverified: output flow control, IME, the Kitty keyboard protocol, and CJK and emoji fallback. CI gets what node-pty needs to compile (`docs/spec/12-stack-packaging.md`).
+4. Setup, teardown and sign-in in the terminal, after 3: replaces the M2 stand-ins of `docs/decisions/0023-setup-output-and-sign-in-before-the-terminal.md`.
+5. Git panel and diffs, after 2 (`docs/spec/06-git-review-pr.md`): changed files as a list or a tree, staged and unstaged, stage, unstage and discard per file and folder, diffs as editor tabs, and the commit box with stage-all and commit.
+6. Generated text, after 5: `complete()` on both providers, the model and prompt per task in `settings.json`, the commit box's generate button, and LLM-generated branch names for new worktrees.
+7. Annotations, after 5: the editor extension contribution point (gutter actions and widgets), annotations in diffs and editor tabs stored in the database, re-anchoring with stale marking as pure functions with tests, the review panel, and the key that sends the open ones to the active chat.
+8. Text search, after 2: ripgrep over the active worktree, a results panel and a key to open each hit. Decide whether ripgrep is bundled or required on the PATH.
+9. Conflicts, rebase and stash, after 5 (`docs/spec/11-platform-services.md`): the conflicted files, a three-way merge in the editor, abort, continue, rebase onto the default branch, stash, and "resolve with agent". Monaco's three-way merge support is unverified: check it first and record how the merge view is built.
+10. Dev-mode plugin hot reload, after 2: the watcher and incremental build in the plugin host, backend and UI swap, the error boundary keyed by plugin version, and the plugin manager panel with load errors and Svelte version mismatches. State that must survive a reload moves to plugin storage.
+11. Agent-authored plugins, after 10: the user and per-project plugin folders, and the skill and tools that scaffold a plugin, read the API reference, validate it, tail its logs and return each reload's result. Decide how the tools reach the agent.
+12. Exit check, after all the others: the smoke test opens a file, a diff and a terminal, and the worktree switch time is measured again with tabs and terminals open.
+
 Exit: review an agent's change in the diff, annotate two lines, send them, and see the agent fix them. An agent writes a small plugin in yaa and sees it reload.
 
 ## M4: integrations
