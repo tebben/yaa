@@ -185,10 +185,18 @@ export const createDock = ({
 		get activeKind() {
 			return activeKind;
 		},
-		focus(direction: DockDirection) {
+		// Moves focus into the active panel, as it was when focus left the grid.
+		focusActive() {
+			activate(api?.activePanel);
+		},
+		// Focuses the group beside the active one; false at the grid's edge.
+		focus(direction: DockDirection): boolean {
 			const group = api?.activeGroup;
-			if (api === undefined || group === undefined) return;
-			activate(api.adjacentGroupInDirection(group, direction)?.activePanel);
+			if (api === undefined || group === undefined) return false;
+			const next = api.adjacentGroupInDirection(group, direction);
+			if (next === undefined) return false;
+			activate(next.activePanel);
+			return true;
 		},
 		// The next or previous tab of the focused group, wrapping around.
 		cycleTab(step: 1 | -1) {

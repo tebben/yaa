@@ -13,7 +13,7 @@ Authority: this file and `tokens.json` win over the mockups. Mockups are a guide
 
 ## Layout
 - Header and footer are bound to the **selected project**; they do not span the left menu. The left menu runs full height. A right rail toggles panels.
-- Panel header: icon, title, menu, close (x). Tabs never wrap (`nowrap`, truncate with ellipsis).
+- Panel header: icon, title, menu, close (x), with a hairline under it. The menu and close show while the header is hovered. Tabs never wrap (`nowrap`, truncate with ellipsis).
 - Closing: small x button; Ctrl+W closes the tab, then the panel. No hint text about it.
 - **Focus must be obvious**: the focused panel shows a 1px accent line on top and a brighter title. Keys act on the focused panel.
 

@@ -27,6 +27,29 @@
 		cursor: pointer;
 	}
 
+	/* A shell region with keyboard focus gets the focused panel's accent
+	   line (docs/design/ui.md); the grid's then gives way, so one place
+	   looks focused. */
+	.yaa-focus-region {
+		position: relative;
+		outline: none;
+	}
+
+	.yaa-focus-region:focus-within::before {
+		content: "";
+		position: absolute;
+		inset: 0 0 auto;
+		height: 1px;
+		background-color: var(--color-focus);
+		z-index: 1;
+	}
+
+	body:has(.yaa-focus-region:focus-within)
+		.yaa-dock
+		.dv-groupview.dv-active-group::before {
+		display: none;
+	}
+
 	body {
 		background-color: var(--color-chrome);
 		color: var(--color-text);

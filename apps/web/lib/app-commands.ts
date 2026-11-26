@@ -1,5 +1,6 @@
 import type { DockController, DockDirection, PanelKind } from "@yaa/ui/dock";
 import type { Command } from "./commands/index.ts";
+import type { RegionsController } from "./focus/index.ts";
 import type { PaletteController } from "./palette/index.ts";
 
 type AppCommandsOptions = {
@@ -7,21 +8,18 @@ type AppCommandsOptions = {
 	dock(): DockController | undefined;
 	kinds: ReadonlyMap<string, PanelKind>;
 	palette: PaletteController;
+	regions: RegionsController;
 	toggleMenu(): void;
 };
 
-const directions: readonly [DockDirection, string, string][] = [
-	["left", "Left", "left"],
-	["right", "Right", "right"],
-	["up", "Up", "above"],
-	["down", "Down", "below"],
-];
+const directions: readonly DockDirection[] = ["left", "right", "up", "down"];
 
 // The shell's own commands. Plugins add theirs from M1 step 7.
 export const appCommands = ({
 	dock,
 	kinds,
 	palette,
+	regions,
 	toggleMenu,
 }: AppCommandsOptions): Command[] => [
 	{
@@ -40,12 +38,14 @@ export const appCommands = ({
 		category: "View",
 		run: toggleMenu,
 	},
-	...directions.map(([direction, suffix, label]) => ({
-		id: `panel.focus${suffix}`,
-		title: `Focus panel ${label}`,
-		category: "Panel",
-		run: () => dock()?.focus(direction),
+	...directions.map((direction) => ({
+		id: `focus.${direction}`,
+		title: `Focus ${direction}`,
+		category: "View",
+		run: () => regions.move(direction),
 	})),
+	{ id: "list.next", when: "focus.list", run: () => regions.step(1) },
+	{ id: "list.previous", when: "focus.list", run: () => regions.step(-1) },
 	{
 		id: "tab.previous",
 		title: "Previous tab",

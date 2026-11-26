@@ -1,9 +1,11 @@
 import type { Keybinding } from "@yaa/contracts/keybindings";
 
-// Shift with a letter types a capital in an input, and the palette's arrows
-// and Enter belong to it while it is open.
+// The palette's arrows and Enter belong to it while it is open. A letter,
+// with or without Shift, types in an input.
 const NOT_IN_PALETTE = "!palette.open";
-const NOT_TYPING = "!inputFocus && !palette.open";
+const IN_DOCK = "focus.region == dock && !inputFocus && !palette.open";
+const VERTICAL_LIST = "focus.list == vertical && !inputFocus";
+const HORIZONTAL_LIST = "focus.list == horizontal && !inputFocus";
 
 // The app's default keys; keybindings.json overrides them
 // (docs/spec/11-platform-services.md).
@@ -14,17 +16,21 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "arrowup", command: "palette.previous", when: "palette.open" },
 	{ key: "enter", command: "palette.run", when: "palette.open" },
 	{ key: "ctrl+b", command: "menu.toggle", when: NOT_IN_PALETTE },
-	{ key: "ctrl+h", command: "panel.focusLeft", when: NOT_IN_PALETTE },
-	{ key: "ctrl+j", command: "panel.focusDown", when: NOT_IN_PALETTE },
-	{ key: "ctrl+k", command: "panel.focusUp", when: NOT_IN_PALETTE },
-	{ key: "ctrl+l", command: "panel.focusRight", when: NOT_IN_PALETTE },
-	{ key: "shift+h", command: "tab.previous", when: NOT_TYPING },
-	{ key: "shift+k", command: "tab.previous", when: NOT_TYPING },
-	{ key: "shift+l", command: "tab.next", when: NOT_TYPING },
-	{ key: "shift+j", command: "tab.next", when: NOT_TYPING },
+	{ key: "ctrl+h", command: "focus.left", when: NOT_IN_PALETTE },
+	{ key: "ctrl+j", command: "focus.down", when: NOT_IN_PALETTE },
+	{ key: "ctrl+k", command: "focus.up", when: NOT_IN_PALETTE },
+	{ key: "ctrl+l", command: "focus.right", when: NOT_IN_PALETTE },
+	{ key: "j", command: "list.next", when: VERTICAL_LIST },
+	{ key: "k", command: "list.previous", when: VERTICAL_LIST },
+	{ key: "l", command: "list.next", when: HORIZONTAL_LIST },
+	{ key: "h", command: "list.previous", when: HORIZONTAL_LIST },
+	{ key: "shift+h", command: "tab.previous", when: IN_DOCK },
+	{ key: "shift+k", command: "tab.previous", when: IN_DOCK },
+	{ key: "shift+l", command: "tab.next", when: IN_DOCK },
+	{ key: "shift+j", command: "tab.next", when: IN_DOCK },
 	{ key: "ctrl+shift+h", command: "panel.narrower", when: NOT_IN_PALETTE },
 	{ key: "ctrl+shift+j", command: "panel.taller", when: NOT_IN_PALETTE },
 	{ key: "ctrl+shift+k", command: "panel.shorter", when: NOT_IN_PALETTE },
 	{ key: "ctrl+shift+l", command: "panel.wider", when: NOT_IN_PALETTE },
-	{ key: "ctrl+w", command: "panel.close", when: NOT_IN_PALETTE },
+	{ key: "ctrl+w", command: "panel.close", when: IN_DOCK },
 ];
