@@ -19,7 +19,10 @@ import {
 const isTextEntry = (element: Element | null) =>
 	element instanceof HTMLInputElement ||
 	element instanceof HTMLTextAreaElement ||
-	(element instanceof HTMLElement && element.isContentEditable);
+	(element instanceof HTMLElement &&
+		(element.isContentEditable ||
+			// An editor that takes text through the EditContext API.
+			("editContext" in element && Boolean(element.editContext))));
 
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
@@ -45,6 +48,10 @@ export const createWorkbench = (client: CoreClient) => {
 				.flatMap(({ worktrees }) => worktrees)
 				.find((worktree) => worktree.id === id),
 		openWorktree: () => projects.worktree?.id,
+		// Docks and the palette come later; plugins reach for them only once a
+		// panel or command runs.
+		dock: (id) => layouts.docks.get(id),
+		pick: (source) => palette.pick(source),
 	});
 	const agentChat = createAgentChat({ client, report });
 	// The app's kinds in rail order, then the plugins'; a plugin's kind with

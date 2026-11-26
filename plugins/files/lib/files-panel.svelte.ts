@@ -154,11 +154,17 @@ export const createFilesPanel = (panel: PanelContext) => {
 		focused(path: string) {
 			current = path;
 		},
-		// A click, or Enter, on a row. Files open in the editor once it exists.
-		activate(path: string) {
+		// A click, or Enter, on a row: a folder opens or closes, a file opens in
+		// the editor. A click previews it and stays here; Enter and a double
+		// click move to the editor, and a double click keeps its tab.
+		activate(path: string, by: "mouse" | "keys" | "double") {
 			current = path;
 			const row = rows.find((candidate) => candidate.path === path);
-			if (row?.folder) setExpanded(path, !row.expanded);
+			if (row === undefined) return;
+			if (!row.folder) {
+				const keep = by === "double";
+				panel.openFile({ path, keep, focus: by !== "mouse" });
+			} else if (by !== "double") setExpanded(path, !row.expanded);
 		},
 		// Enter in the filter field moves to the first match.
 		focusFirst() {

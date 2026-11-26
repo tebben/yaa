@@ -8,16 +8,20 @@ import { createServer, type Server } from "@yaa/contracts/server";
 import {
 	createFile,
 	readFolder,
+	readText,
 	removePath,
 	renamePath,
+	writeText,
 } from "../files/file-operations.ts";
 import type { WorktreeWatches } from "../files/worktree-watches.ts";
 import type { GitService } from "../git/git-service.ts";
+import type { PluginStore } from "../storage/plugin-store.ts";
 
 type PluginApiOptions = {
 	worktree(id: string): Worktree;
 	git: Pick<GitService, "files" | "ignored" | "changes">;
 	watches: WorktreeWatches;
+	store: PluginStore;
 	log: Logger;
 };
 
@@ -27,6 +31,7 @@ export const createPluginApiServer = ({
 	worktree,
 	git,
 	watches,
+	store,
 	log,
 }: PluginApiOptions): Server<PluginCoreProtocol> => {
 	const pathOf = (id: string) => worktree(id).path;
@@ -44,6 +49,14 @@ export const createPluginApiServer = ({
 			"files.readDir": async (params) => ({
 				entries: await readFolder(pathOf(params.worktree), params.path),
 			}),
+			"files.read": (params) => readText(pathOf(params.worktree), params.path),
+			"files.write": (params) =>
+				writeText(
+					pathOf(params.worktree),
+					params.path,
+					params.text,
+					params.version,
+				),
 			"files.create": async (params) => {
 				await createFile(pathOf(params.worktree), params.path);
 				return {};
@@ -62,6 +75,11 @@ export const createPluginApiServer = ({
 			},
 			"files.unwatch": (params) => {
 				watches.unwatch(params.worktree);
+				return {};
+			},
+			"storage.get": (params) => ({ value: store.get(params) ?? null }),
+			"storage.set": ({ value, ...at }) => {
+				store.set(at, value);
 				return {};
 			},
 		},

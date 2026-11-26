@@ -13,3 +13,8 @@ export {
 	migrate,
 	schemaVersion,
 } from "./lib/storage/migrate.ts";
+export {
+	createPluginStore,
+	type PluginKey,
+	type PluginStore,
+} from "./lib/storage/plugin-store.ts";

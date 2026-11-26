@@ -16,6 +16,8 @@ let { dock }: { dock: DockController } = $props();
 			<DockTab
 				kind={slot.kind}
 				title={slot.title}
+				header={dock.headerHost(slot.panelId)}
+				ownHeader={dock.hasOwnHeader(slot.panelId)}
 				onclose={() => dock.close(slot.panelId)}
 			/>
 		</div>
@@ -28,7 +30,10 @@ let { dock }: { dock: DockController } = $props();
 		>
 			{#if slot.kind}
 				<svelte:boundary>
-					<slot.kind.component kind={slot.kindId} />
+					<slot.kind.component
+						kind={slot.kindId}
+						frame={dock.frame(slot.panelId)}
+					/>
 					{#snippet failed(error)}
 						<p class="p-3 text-state-error">
 							This panel failed: {String(error)}

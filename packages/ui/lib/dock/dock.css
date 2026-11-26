@@ -53,6 +53,11 @@
    content. */
 .yaa-dock .dv-tab {
 	padding: 0;
+	/* A panel's own header, such as a row of file tabs, scrolls inside its
+	   tab instead of widening it. */
+	flex-shrink: 1;
+	min-width: 0;
+	overflow: hidden;
 }
 
 /* Panel actions stay out of sight until the header is hovered; Ctrl W

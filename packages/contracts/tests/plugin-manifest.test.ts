@@ -35,6 +35,21 @@ describe("plugin manifest schema", () => {
 		});
 	});
 
+	it("lets only a panel's command reveal its panel", () => {
+		const reveal = (command: object) => ({
+			...hello,
+			contributes: {
+				...hello.contributes,
+				keybindings: [],
+				commands: [{ id: "hello.greet", title: "Say hello", ...command }],
+			},
+		});
+		expect(messages(reveal({ panel: "hello", reveal: true }))).toEqual([]);
+		expect(messages(reveal({ reveal: true }))).toEqual([
+			"Only a panel's command can reveal its panel",
+		]);
+	});
+
 	it("rejects ids, versions and fields it does not know", () => {
 		expect(messages({ ...hello, id: "Hello" })).not.toEqual([]);
 		expect(messages({ ...hello, version: "1" })).not.toEqual([]);

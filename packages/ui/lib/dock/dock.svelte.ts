@@ -6,14 +6,25 @@ import {
 } from "dockview-core";
 import { type Component, tick, untrack } from "svelte";
 import type { Attachment } from "svelte/attachments";
+import { SvelteSet } from "svelte/reactivity";
 import { createFocusMemory } from "../focus/focus-memory.ts";
 import type { IconSource } from "../icon-source.ts";
 import { parseDockLayout } from "./dock-layout.ts";
 import { neighbour } from "./neighbour.ts";
 
+// What a panel can do with its place in the grid.
+export type PanelFrame = {
+	// Shows an element in the panel's header in place of its icon and title.
+	header: Attachment<HTMLElement>;
+	// `closeActive` asks first; true means the panel closed something of its
+	// own and stays. Returns what takes the handler off again.
+	handleClose(handler: () => boolean): () => void;
+};
+
 // What the grid passes a panel's component: the kind it renders, so one
-// component can serve several kinds, such as every plugin panel.
-export type PanelProps = { kind: string };
+// component can serve several kinds, such as every plugin panel, and its
+// frame.
+export type PanelProps = { kind: string; frame: PanelFrame };
 
 // A view the grid can show (docs/spec/01-ui-layout-theming.md). The kind's id
 // is the map key; while each kind opens at most once it is the panel id too.
@@ -71,6 +82,11 @@ export const createDock = ({
 	// Only ever pushed to and spliced, never reordered: a keyed each that moves
 	// an item would move its node back out of dockview.
 	const slots = $state<DockSlot[]>([]);
+	// By panel id: where a panel's own header goes, the panels that filled
+	// theirs, and what closes something inside one.
+	const headerHosts = new Map<string, HTMLElement>();
+	const ownHeaders = new SvelteSet<string>();
+	const closeHandlers = new Map<string, () => boolean>();
 	let open = $state<ReadonlySet<string>>(new Set());
 	let activeKind = $state<string>();
 	let api: DockviewApi | undefined;
@@ -81,6 +97,38 @@ export const createDock = ({
 	// The latest layout, so attaching again (a remount, hot reload in dev)
 	// restores the grid as it was, not as it was loaded.
 	let latest = layout;
+
+	const headerHost = (panelId: string) => {
+		let host = headerHosts.get(panelId);
+		if (host === undefined) {
+			host = document.createElement("div");
+			host.className = "h-full min-w-0";
+			headerHosts.set(panelId, host);
+		}
+		return host;
+	};
+
+	const frame = (panelId: string): PanelFrame => ({
+		header: (node) =>
+			untrack(() => {
+				const host = headerHost(panelId);
+				host.append(node);
+				ownHeaders.add(panelId);
+				return () => {
+					node.remove();
+					// When the grid rebuilds, a successor may have filled it.
+					if (host.childElementCount === 0) ownHeaders.delete(panelId);
+				};
+			}),
+		handleClose(handler) {
+			closeHandlers.set(panelId, handler);
+			return () => {
+				if (closeHandlers.get(panelId) === handler) {
+					closeHandlers.delete(panelId);
+				}
+			};
+		},
+	});
 
 	const renderer = (part: DockSlot["part"]) => {
 		const element = document.createElement("div");
@@ -203,6 +251,11 @@ export const createDock = ({
 		attach,
 		// Attached to each panel's content root by Dock.svelte.
 		trackFocus: memory.track,
+		frame,
+		headerHost,
+		hasOwnHeader(panelId: string) {
+			return ownHeaders.has(panelId);
+		},
 		isOpen(kind: string) {
 			return open.has(kind);
 		},
@@ -247,10 +300,13 @@ export const createDock = ({
 			const size = group.api[axis] + step * RESIZE_STEP * api[axis];
 			group.api.setSize(axis === "width" ? { width: size } : { height: size });
 		},
-		// Closes the focused tab and focuses the panel that takes its place.
+		// Closes the focused tab and focuses the panel that takes its place,
+		// unless that panel closed something of its own instead.
 		closeActive() {
 			if (api === undefined) return;
-			api.activePanel?.api.close();
+			const active = api.activePanel;
+			if (active !== undefined && closeHandlers.get(active.id)?.()) return;
+			active?.api.close();
 			activate(api.activePanel);
 		},
 		reset() {
@@ -261,6 +317,22 @@ export const createDock = ({
 		},
 		close(panelId: string) {
 			api?.getPanel(panelId)?.api.close();
+		},
+		// Brings the kind's panel into view, opening it at the right edge of the
+		// grid when it is not there. With `takeOver` it becomes the active panel,
+		// for focus to move into; without, the active one stays, unless the two
+		// share a group.
+		show(kind: string, takeOver: boolean) {
+			if (api === undefined) return;
+			const active = api.activePanel;
+			if (api.getPanel(kind) === undefined) {
+				add(api, kind, { direction: "right" });
+			}
+			const panel = api.getPanel(kind);
+			panel?.api.setActive();
+			if (!takeOver && active && active.group !== panel?.group) {
+				active.api.setActive();
+			}
 		},
 		// Closes the kind's panel, or opens it at the right edge of the grid.
 		toggle(kind: string) {

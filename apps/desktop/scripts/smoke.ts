@@ -3,9 +3,11 @@
 // project (added beforehand: the system's folder picker cannot be driven),
 // its overview opens, search finds it, its main checkout opens, a worktree
 // is created and finished, the rail opens the files panel at the right edge,
-// which follows the folder and makes and deletes a file, the palette runs the
-// hello plugin's command, and the fake agent plays a turn into the chat panel,
-// with the worktree's state following it. It prints the launch and palette
+// which follows the folder and makes and deletes a file, a file opens from it
+// in the editor, is edited and saved, and another by quick open, the palette
+// runs the hello plugin's command, and the fake agent plays a turn into the chat
+// panel, with the worktree's state following it. A restart brings the editor's
+// tabs back. It prints the launch and palette
 // open times against the targets in docs/spec/12-stack-packaging.md and fails
 // only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
@@ -264,7 +266,7 @@ const NEW_FILE: Key = { key: "n", code: "KeyN", keyCode: 78, text: "n" };
 const DELETE_FILE: Key = { key: "d", code: "KeyD", keyCode: 68, text: "d" };
 
 const fileRow = (path: string) =>
-	`(${DOCK}).querySelector('button[title="${path}"]')`;
+	`(${DOCK}).querySelector('[aria-label="Files"] button[title="${path}"]')`;
 
 // In the files panel the rail opened: a file made outside the app appears,
 // and one is created and deleted by keys.
@@ -298,6 +300,54 @@ const useFilesPanel = async (page: Connection, repo: string) => {
 		},
 		() => undefined,
 	);
+};
+
+const CTRL = 2;
+const SAVE: Key = { key: "s", code: "KeyS", keyCode: 83, modifiers: CTRL };
+const QUICK_OPEN: Key = {
+	key: "p",
+	code: "KeyP",
+	keyCode: 80,
+	modifiers: CTRL,
+};
+
+const editorTab = (path: string) =>
+	`(${DOCK}).querySelector('[role="tab"][title="${path}"]')`;
+
+const editorShows = (text: string) =>
+	`(${DOCK}).querySelector(".monaco-editor .view-lines")?.textContent.includes(${JSON.stringify(text)})`;
+
+// A click in the files panel previews a file; Enter moves into the editor,
+// where it is typed into and saved by keys; quick open opens another.
+const useEditor = async (page: Connection, repo: string) => {
+	const first = join(repo, "first.ts");
+	await writeFile(first, "export const first = 1;\n");
+	await writeFile(join(repo, "second.ts"), "export const second = 2;\n");
+	await clickElement(page, fileRow("first.ts"));
+	await waitFor(page, editorShows("first"));
+	await waitFor(page, `document.activeElement === ${fileRow("first.ts")}`);
+	await press(page, ENTER);
+	await waitFor(page, `document.activeElement?.closest(".monaco-editor")`);
+	await type(page, "typed");
+	await press(page, SAVE);
+	await poll("the saved file", async () =>
+		(await readFile(first, "utf8")).startsWith("typedexport")
+			? true
+			: undefined,
+	);
+	await press(page, QUICK_OPEN);
+	await waitFor(
+		page,
+		`document.querySelector('[role="dialog"][aria-label="Go to file"]')`,
+	);
+	await type(page, "second");
+	await waitFor(
+		page,
+		`document.querySelector('[role="option"]')?.textContent.includes("second.ts")`,
+	);
+	await press(page, ENTER);
+	await waitFor(page, editorShows("second"));
+	await waitFor(page, editorTab("first.ts"));
 };
 
 // A repository with one commit on main, added as a project to the data
@@ -512,6 +562,8 @@ try {
 	console.log("The rail opened a panel at the right edge.");
 	await useFilesPanel(first.page, join(dataDir, "repo"));
 	console.log("The files panel followed the folder, made and deleted a file.");
+	await useEditor(first.page, join(dataDir, "repo"));
+	console.log("The editor opened, saved and quick-opened files.");
 	await runPluginCommand(first.page, logFile);
 	console.log("The palette ran the hello plugin's command.");
 	await playFakeTurn(first.page);
@@ -527,6 +579,8 @@ try {
 	for (let run = 0; run < WARM_LAUNCHES; run += 1) {
 		const app = await launch(dataDir);
 		warmTimes.push(app.launchMs);
+		await waitFor(app.page, editorTab("first.ts"));
+		await waitFor(app.page, editorShows("second"));
 		await quit(app);
 		console.log(`The app started again (${run + 1}/${WARM_LAUNCHES}).`);
 	}

@@ -5,6 +5,7 @@ import * as z from "zod";
 import {
 	createEventLog,
 	createLayoutStore,
+	createPluginStore,
 	migrate,
 	openDatabase,
 	schemaVersion,
@@ -87,6 +88,25 @@ describe("event log", () => {
 		]);
 		log.append({ type: "core.started", pid: 2 });
 		expect(() => createEventLog(db, narrower).read()).toThrow();
+	});
+});
+
+describe("plugin store", () => {
+	it("keeps values apart by plugin and worktree, and drops them with the worktree", () => {
+		const db = openDatabase(":memory:");
+		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0);`);
+		const store = createPluginStore(db);
+		const at = { plugin: "editor", worktree: "a", key: "tabs" };
+		store.set(at, "first");
+		store.set(at, "second");
+		expect(store.get(at)).toBe("second");
+		expect(store.get({ ...at, plugin: "files" })).toBeUndefined();
+		store.set(at, null);
+		expect(store.get(at)).toBeUndefined();
+		store.set(at, "kept");
+		db.exec("DELETE FROM worktrees WHERE id = 'a'");
+		expect(store.get(at)).toBeUndefined();
 	});
 });
 

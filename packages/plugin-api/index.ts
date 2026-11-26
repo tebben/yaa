@@ -13,6 +13,8 @@ import type {
 import type { Handlers } from "@yaa/contracts/server";
 import type {
 	DirEntry,
+	FileContent,
+	FileWrite,
 	GitChange,
 	GitFiles,
 } from "@yaa/contracts/worktree-files";
@@ -57,6 +59,18 @@ export type PluginContext = {
 	readonly files: {
 		// The folder's entries; "" is the worktree's folder itself.
 		readDir(worktree: string, path: string): Promise<DirEntry[]>;
+		// A file's text; one that is not there, not UTF-8 text or too large to
+		// open says so.
+		read(worktree: string, path: string): Promise<FileContent>;
+		// Writes the text over the file at `version`, as `read` gave it, or
+		// makes the file when `version` is null. A file at another version is
+		// left alone and reported.
+		write(
+			worktree: string,
+			path: string,
+			text: string,
+			version: string | null,
+		): Promise<FileWrite>;
 		// A new empty file, with the folders its path needs.
 		create(worktree: string, path: string): Promise<void>;
 		// Moves a file or folder; never over something that exists.
@@ -66,6 +80,15 @@ export type PluginContext = {
 		// Calls `listener` after files change in the worktree, ignored folders
 		// aside, or after git's view of it does, as on staging.
 		watch(worktree: string, listener: () => void): Promise<Disposable>;
+	};
+	// JSON values the plugin keeps per worktree, across restarts, until the
+	// worktree is finished. State that must survive a reload goes here.
+	readonly storage: {
+		// Undefined when nothing is kept under the key. Check what comes back:
+		// an earlier version of the plugin may have stored it.
+		get(worktree: string, key: string): Promise<unknown>;
+		// Undefined removes the key.
+		set(worktree: string, key: string, value: unknown): Promise<void>;
 	};
 	// Lines go to the app's log file, tagged with the plugin's id.
 	readonly log: Logger;

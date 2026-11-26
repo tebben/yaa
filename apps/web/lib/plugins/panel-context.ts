@@ -6,14 +6,21 @@ import {
 	resultSchema,
 	safeParse,
 } from "@yaa/contracts/protocol";
-import type { PanelContext } from "@yaa/plugin-api/ui";
+import type { OpenFile, PanelContext, PickSource } from "@yaa/plugin-api/ui";
+import type { PanelFrame } from "@yaa/ui/dock";
 import type { CoreClient } from "../core-connection.ts";
-import type { PanelCommands } from "./panel-commands.ts";
+import type { PanelHandlers } from "./panel-handlers.ts";
 
 type PanelContextOptions = {
 	client: CoreClient;
-	commands: PanelCommands;
+	// What panels registered for their commands and for files to open.
+	commands: PanelHandlers<void>;
+	files: PanelHandlers<OpenFile>;
+	openFile(file: OpenFile): void;
+	pick(source: PickSource): void;
+	frame: PanelFrame;
 	plugin: string;
+	kind: string;
 	// The commands the plugin contributes to this panel.
 	declared: ReadonlySet<string>;
 	worktree: Worktree;
@@ -24,7 +31,12 @@ type PanelContextOptions = {
 export const createPanelContext = ({
 	client,
 	commands,
+	files,
+	openFile,
+	pick,
+	frame,
 	plugin,
+	kind,
 	declared,
 	worktree,
 }: PanelContextOptions): { context: PanelContext; dispose(): void } => {
@@ -79,6 +91,12 @@ export const createPanelContext = ({
 				return track(commands.register(worktree.id, command, handler));
 			},
 		},
+		header: frame.header,
+		handleClose: (handler) => track({ dispose: frame.handleClose(handler) }),
+		openFile,
+		handleOpenFile: (handler) =>
+			track(files.register(worktree.id, kind, handler)),
+		pick,
 	};
 
 	return {

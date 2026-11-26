@@ -69,6 +69,11 @@ export type TokenName =
 	| "color-state-attention"
 	| "color-state-error"
 	| "color-state-done"
+	| "color-syntax-keyword"
+	| "color-syntax-string"
+	| "color-syntax-number"
+	| "color-syntax-comment"
+	| "color-syntax-type"
 	| "color-diff-added"
 	| "color-diff-removed"
 	| "color-diff-changed";

@@ -1,14 +1,21 @@
+import { createHash } from "node:crypto";
 import {
 	lstat,
 	mkdir,
 	readdir,
+	readFile,
 	realpath,
 	rename,
 	rm,
+	stat,
 	writeFile,
 } from "node:fs/promises";
-import { dirname, join, sep } from "node:path";
-import type { DirEntry } from "@yaa/contracts/worktree-files";
+import { dirname, join, relative, sep } from "node:path";
+import type {
+	DirEntry,
+	FileContent,
+	FileWrite,
+} from "@yaa/contracts/worktree-files";
 
 const isCode = (error: unknown, code: string) =>
 	error instanceof Error && "code" in error && error.code === code;
@@ -50,6 +57,83 @@ const inside = async (root: string, path: string): Promise<string> => {
 		throw new Error(`${path} leads out of the worktree`);
 	}
 	return target;
+};
+
+// A file to read or write. Following a link must not leave the worktree.
+const fileInside = async (root: string, path: string): Promise<string> => {
+	const target = await inside(root, path);
+	if (!(await exists(target))) return target;
+	if (!(await lstat(target)).isSymbolicLink()) return target;
+	const real = await realpath(root);
+	// A link to nothing throws here: writing would make a file wherever it
+	// points.
+	const pointed = await realpath(target);
+	if (!pointed.startsWith(real + sep)) {
+		throw new Error(`${path} leads out of the worktree`);
+	}
+	// Checked as a path of its own, so a link cannot reach into `.git`.
+	return inside(real, relative(real, pointed).split(sep).join("/"));
+};
+
+// Larger files are not opened as text.
+const MAX_TEXT_BYTES = 10 * 1024 * 1024;
+
+const versionOf = (bytes: Uint8Array) =>
+	createHash("sha256").update(bytes).digest("hex");
+
+// The file's bytes, or null when it is not there.
+const bytesOf = (path: string) =>
+	readFile(path).catch((error: unknown) => {
+		if (isCode(error, "ENOENT")) return null;
+		throw error;
+	});
+
+// A byte order mark stays in the text, so writing it back keeps it.
+const utf8 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+
+const decode = (bytes: Uint8Array): string | undefined => {
+	if (bytes.includes(0)) return undefined;
+	try {
+		return utf8.decode(bytes);
+	} catch {
+		return undefined;
+	}
+};
+
+export const readText = async (
+	root: string,
+	path: string,
+): Promise<FileContent> => {
+	const target = await fileInside(root, path);
+	if (!(await exists(target))) return { kind: "missing" };
+	const found = await stat(target);
+	// Reading a pipe or a device would never end.
+	if (!found.isFile()) throw new Error(`${path} is not a file`);
+	if (found.size > MAX_TEXT_BYTES) return { kind: "tooLarge" };
+	const bytes = await bytesOf(target);
+	if (bytes === null) return { kind: "missing" };
+	const text = decode(bytes);
+	return text === undefined
+		? { kind: "binary" }
+		: { kind: "text", text, version: versionOf(bytes) };
+};
+
+// Writes over the file at `version`, or makes it when `version` is null and
+// it is not there. The file keeps its mode, and a link stays a link.
+export const writeText = async (
+	root: string,
+	path: string,
+	text: string,
+	version: string | null,
+): Promise<FileWrite> => {
+	const target = await fileInside(root, path);
+	const current = await bytesOf(target);
+	const found = current === null ? null : versionOf(current);
+	if (found !== version) return { kind: "changed", version: found };
+	const bytes = Buffer.from(text, "utf8");
+	if (current === null) await mkdir(dirname(target), { recursive: true });
+	await writeFile(target, bytes, { flag: current === null ? "wx" : "w" });
+	return { kind: "written", version: versionOf(bytes) };
 };
 
 export const readFolder = async (

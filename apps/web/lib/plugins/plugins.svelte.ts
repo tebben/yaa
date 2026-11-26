@@ -2,12 +2,13 @@ import { pluginFileUrl } from "@yaa/contracts/app-urls";
 import type { Keybinding } from "@yaa/contracts/keybindings";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
-import type { PanelKind } from "@yaa/ui/dock";
+import type { OpenFile, PickSource } from "@yaa/plugin-api/ui";
+import type { DockController, PanelKind } from "@yaa/ui/dock";
 import type { Command } from "../commands/index.ts";
 import type { CoreClient } from "../core-connection.ts";
 import PluginPanel from "./PluginPanel.svelte";
-import { createPanelCommands } from "./panel-commands.ts";
 import { createPanelContext } from "./panel-context.ts";
+import { createPanelHandlers } from "./panel-handlers.ts";
 import type { PluginPanels } from "./plugin-panels.ts";
 import { loadPluginUi, type PluginUiModule } from "./plugin-ui.ts";
 
@@ -19,6 +20,10 @@ type PluginsOptions = {
 	worktree(id: string): Worktree | undefined;
 	// The worktree whose grid is open, if one is.
 	openWorktree(): string | undefined;
+	// A worktree's dock, once it is there.
+	dock(worktree: string): DockController | undefined;
+	// Opens the palette on a plugin's list.
+	pick(source: PickSource): void;
 };
 
 const message = (error: unknown) =>
@@ -32,8 +37,13 @@ export const createPlugins = ({
 	report,
 	worktree,
 	openWorktree,
+	dock,
+	pick,
 }: PluginsOptions) => {
-	const panelCommands = createPanelCommands();
+	const panelCommands = createPanelHandlers<void>();
+	const panelFiles = createPanelHandlers<OpenFile>();
+	// The panel kind that opens files: the first a plugin declares.
+	let opener: string | undefined;
 	const manifests = client
 		.request("plugins.list", {})
 		.then(({ plugins }) => plugins);
@@ -43,7 +53,10 @@ export const createPlugins = ({
 	manifests.then(
 		(plugins) => {
 			for (const plugin of plugins) {
-				for (const { id } of plugin.contributes.panels) owners.set(id, plugin);
+				for (const { id, opensFiles } of plugin.contributes.panels) {
+					owners.set(id, plugin);
+					if (opensFiles) opener ??= id;
+				}
 			}
 		},
 		// `kinds` and the contributions report an unreachable core.
@@ -68,8 +81,18 @@ export const createPlugins = ({
 		return component;
 	};
 
+	const openFile = (worktree: string, file: OpenFile) => {
+		const shown = dock(worktree);
+		if (opener === undefined || shown === undefined) {
+			report(`Nothing can open ${file.path}`);
+			return;
+		}
+		shown.show(opener, file.focus ?? true);
+		panelFiles.deliver(worktree, opener, file);
+	};
+
 	const panels: PluginPanels = {
-		mount(kind, id) {
+		mount(kind, id, frame) {
 			const plugin = owners.get(kind);
 			if (plugin === undefined) {
 				throw new Error(`No plugin contributes the panel ${kind}`);
@@ -79,7 +102,14 @@ export const createPlugins = ({
 			const { context, dispose } = createPanelContext({
 				client,
 				commands: panelCommands,
+				files: panelFiles,
+				openFile: (file) => openFile(found.id, file),
+				pick: (source) => {
+					if (openWorktree() === found.id) pick(source);
+				},
+				frame,
 				plugin: plugin.id,
+				kind,
 				declared: new Set(
 					plugin.contributes.commands.flatMap((command) =>
 						command.panel === kind ? [command.id] : [],
@@ -119,14 +149,26 @@ export const createPlugins = ({
 			keybindings: readonly Keybinding[];
 		} {
 			return {
-				commands: contributes.commands.map(({ panel, ...command }) => {
+				commands: contributes.commands.map(({ panel, reveal, ...command }) => {
 					if (panel !== undefined) {
-						const handler = () =>
-							panelCommands.find(openWorktree(), command.id);
+						// The open worktree, when the command can run there.
+						const target = () => {
+							const open = openWorktree();
+							if (open === undefined) return undefined;
+							const there = reveal
+								? dock(open) !== undefined
+								: panelCommands.handles(open, command.id);
+							return there ? open : undefined;
+						};
 						return {
 							...command,
-							enabled: () => handler() !== undefined,
-							run: () => handler()?.(),
+							enabled: () => target() !== undefined,
+							run: () => {
+								const open = target();
+								if (open === undefined) return;
+								if (reveal) dock(open)?.show(panel, true);
+								panelCommands.deliver(open, command.id);
+							},
 						};
 					}
 					return {

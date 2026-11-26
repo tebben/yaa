@@ -9,6 +9,7 @@ export {
 	type DockDirection,
 	type DockOptions,
 	type DockPlacement,
+	type PanelFrame,
 	type PanelKind,
 	type PanelProps,
 } from "./lib/dock/dock.svelte.ts";

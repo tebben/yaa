@@ -67,6 +67,11 @@
 	--color-state-attention: #ffb454;
 	--color-state-error: #d95757;
 	--color-state-done: #70bf56;
+	--color-syntax-keyword: #c4a7f2;
+	--color-syntax-string: #a3d18c;
+	--color-syntax-number: #f0b183;
+	--color-syntax-comment: #737d8f;
+	--color-syntax-type: #82d0c8;
 	--color-diff-added: rgba(112, 191, 86, 0.13);
 	--color-diff-removed: rgba(242, 109, 120, 0.13);
 	--color-diff-changed: rgba(115, 184, 255, 0.13);

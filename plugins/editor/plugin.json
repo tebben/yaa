@@ -1,0 +1,113 @@
+{
+	"id": "editor",
+	"version": "0.1.0",
+	"main": "dist/main.js",
+	"ui": "dist/ui.js",
+	"styles": "dist/ui.css",
+	"contributes": {
+		"commands": [
+			{
+				"id": "editor.quickOpen",
+				"title": "Go to file",
+				"category": "Editor",
+				"panel": "editor",
+				"reveal": true
+			},
+			{
+				"id": "editor.save",
+				"title": "Save file",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.nextTab",
+				"title": "Next editor tab",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.previousTab",
+				"title": "Previous editor tab",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.closeTab",
+				"title": "Close editor tab",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.reopenTab",
+				"title": "Reopen closed editor tab",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.keepTab",
+				"title": "Keep editor tab open",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.cancel",
+				"panel": "editor"
+			}
+		],
+		"keybindings": [
+			{
+				"key": "ctrl+p",
+				"command": "editor.quickOpen",
+				"when": "!palette.open"
+			},
+			{
+				"key": "ctrl+s",
+				"command": "editor.save",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+tab",
+				"command": "editor.nextTab",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+pagedown",
+				"command": "editor.nextTab",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+shift+tab",
+				"command": "editor.previousTab",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+pageup",
+				"command": "editor.previousTab",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+w",
+				"command": "editor.closeTab",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "ctrl+shift+t",
+				"command": "editor.reopenTab",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			},
+			{
+				"key": "escape",
+				"command": "editor.cancel",
+				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+			}
+		],
+		"panels": [
+			{
+				"id": "editor",
+				"title": "Editor",
+				"icon": "icon.svg",
+				"opensFiles": true
+			}
+		]
+	}
+}

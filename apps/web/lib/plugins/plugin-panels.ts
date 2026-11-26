@@ -1,4 +1,5 @@
 import type { PanelContext, PanelProps } from "@yaa/plugin-api/ui";
+import type { PanelFrame } from "@yaa/ui/dock";
 import type { Component } from "svelte";
 import { createContext } from "svelte";
 
@@ -14,7 +15,7 @@ export type MountedPanel = {
 // What a plugin panel needs from the app. App-wide, so it travels by context
 // into every dock slot.
 export type PluginPanels = {
-	mount(kind: string, worktree: string): MountedPanel;
+	mount(kind: string, worktree: string, frame: PanelFrame): MountedPanel;
 };
 
 export const [getPluginPanels, setPluginPanels] = createContext<PluginPanels>();

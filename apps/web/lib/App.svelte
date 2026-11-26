@@ -13,7 +13,8 @@ let { workbench }: { workbench: Workbench } = $props();
 const { layouts, regions, commands, palette, projects, worktrees } =
 	$derived(workbench);
 setPluginPanels({
-	mount: (kind, worktree) => workbench.plugins.panels.mount(kind, worktree),
+	mount: (kind, worktree, frame) =>
+		workbench.plugins.panels.mount(kind, worktree, frame),
 });
 setAgentChat(() => workbench.agentChat);
 
