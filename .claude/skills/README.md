@@ -5,7 +5,7 @@ Copied into the repo and owned here, so upstream changes never alter agent behav
 | Skill | Source | Commit | Local changes |
 | --- | --- | --- | --- |
 | `svelte-code-writer`, `svelte-core-bestpractices` | `sveltejs/ai-tools`, `tools/skills/` (MIT) | `f9d22f2` | none |
-| `setup-ts-deep-modules` | `mattpocock/skills`, `skills/in-progress/` (MIT) | `6f7f783` | none; run once in the repo foundation |
+| `setup-ts-deep-modules` | `mattpocock/skills`, `skills/in-progress/` (MIT) | `6f7f783` | ran once in the repo foundation; the generated `.dependency-cruiser.cjs` covers three package roots (`apps`, `packages`, `plugins`) and adds layering rules |
 | `improve-codebase-architecture`, `codebase-design` | `mattpocock/skills`, `skills/engineering/` (MIT) | `6f7f783` | glossary and ADR paths point to `docs/glossary.md` and `docs/decisions/` |
 | `diagnosing-bugs` | `mattpocock/skills`, `skills/engineering/` (MIT) | `6f7f783` | same paths; regression tests follow `docs/rules/testing.md` |
 | `grill-me`, `grilling` | `mattpocock/skills`, `skills/productivity/` (MIT) | `6f7f783` | none |
