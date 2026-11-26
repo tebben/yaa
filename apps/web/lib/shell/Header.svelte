@@ -1,39 +1,46 @@
 <script lang="ts">
+import PanelLeftClose from "@lucide/svelte/icons/panel-left-close";
 import PanelLeftOpen from "@lucide/svelte/icons/panel-left-open";
 import { IconButton } from "@yaa/ui";
 import type { Attachment } from "svelte/attachments";
 
-// Shows the selected project and worktree, with plugin slots, once projects
-// arrive in M2. While the left menu is hidden, the button that shows it
-// again leads the header, where the menu's own button was.
+// Spans the window. It leads with the button that hides or shows the left
+// menu and the name, which keep their place either way; while the menu is
+// open they take its width, so the project lines up with the grid. The
+// project and worktree, with plugin slots, arrive with projects in M2.
 let {
 	region,
 	menuOpen,
 	menuShortcut,
-	onshowmenu,
+	ontogglemenu,
 }: {
 	region: Attachment<HTMLElement>;
 	menuOpen: boolean;
-	menuShortcut: string | undefined;
-	onshowmenu: () => void;
+	menuShortcut: readonly string[] | undefined;
+	ontogglemenu: () => void;
 } = $props();
 </script>
 
 <header
 	{@attach region}
-	class={[
-		"yaa-focus-region col-start-2 flex h-header items-center gap-1.5 border-b border-border bg-chrome pr-3 text-text-muted",
-		menuOpen ? "pl-3" : "pl-1.5",
-	]}
+	class="yaa-focus-region col-span-3 col-start-1 row-start-1 flex h-header items-center border-b border-border bg-chrome pr-3 text-text-muted"
 >
-	{#if !menuOpen}
+	<div
+		class={["flex shrink-0 items-center gap-1.5 pl-1.5", menuOpen && "w-menu"]}
+	>
 		<IconButton
-			icon={PanelLeftOpen}
-			label="Show left menu"
+			icon={menuOpen ? PanelLeftClose : PanelLeftOpen}
+			label={menuOpen ? "Hide left menu" : "Show left menu"}
 			shortcut={menuShortcut}
 			tooltipSide="bottom"
-			onclick={onshowmenu}
+			onclick={ontogglemenu}
 		/>
-	{/if}
-	No project selected
+		<span
+			class="text-wordmark leading-none font-semibold tracking-[-0.035em] text-text select-none"
+			>yaa</span
+		>
+	</div>
+	<!-- The grid's gap and a panel's inset, so the text lines up with the
+	     content of the leftmost panel. -->
+	<span class="ml-panel-gap truncate pl-3">No project selected</span>
 </header>

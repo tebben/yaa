@@ -18,6 +18,12 @@
 @layer base {
 	html {
 		color-scheme: dark;
+		/* One thin scrollbar everywhere; the colour is inherited. */
+		scrollbar-color: var(--color-border-strong) transparent;
+	}
+
+	* {
+		scrollbar-width: thin;
 	}
 
 	/* Tailwind's preflight gives buttons the default cursor; anything that
@@ -27,33 +33,45 @@
 		cursor: pointer;
 	}
 
-	/* A shell region with keyboard focus gets the focused panel's accent
-	   line (docs/design/ui.md); the grid's then gives way, so one place
-	   looks focused. */
 	.yaa-focus-region {
 		position: relative;
 		outline: none;
 	}
 
-	.yaa-focus-region:focus-within::before {
-		content: "";
-		position: absolute;
-		inset: 0 0 auto;
-		height: 1px;
-		background-color: var(--color-focus);
-		z-index: 1;
-	}
-
-	body:has(.yaa-focus-region:focus-within)
-		.yaa-dock
-		.dv-groupview.dv-active-group::before {
-		display: none;
-	}
-
 	body {
+		overflow: hidden;
 		background-color: var(--color-chrome);
 		color: var(--color-text);
 		font-size: var(--text-base);
 		line-height: var(--leading-base);
+	}
+}
+
+@layer components {
+	/* The focus edge (docs/design/ui.md): the focused panel, or a shell region
+	   with keyboard focus, gets a border in the focus colour. The focus-top
+	   and focus-side tokens set its widths, so a theme picks a full border or
+	   a line on top. */
+	.yaa-focus-region:is(:focus-visible, :has(:focus-visible))::before,
+	.yaa-dock .dv-groupview.dv-active-group::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border: 0 solid var(--color-focus);
+		border-width: var(--spacing-focus-top) var(--spacing-focus-side)
+			var(--spacing-focus-side);
+		border-radius: inherit;
+		pointer-events: none;
+		/* Above dockview's separator line, which it draws at z-index 5 over
+		   the top edge of every view after the first in a column. */
+		z-index: 6;
+	}
+
+	/* While a shell region shows focus, the grid's edge gives way, so one
+	   place looks focused. */
+	body:has(.yaa-focus-region:focus-visible, .yaa-focus-region :focus-visible)
+		.yaa-dock
+		.dv-groupview.dv-active-group::before {
+		display: none;
 	}
 }

@@ -30,13 +30,13 @@ export const createFocusMemory = () => {
 		}) satisfies Attachment<HTMLElement>,
 		// Focuses the item that had focus last, or else the first item, or else
 		// the container.
-		enter(container: HTMLElement) {
+		enter(container: HTMLElement, options?: FocusOptions) {
 			const item = last.get(container);
 			const remembered =
 				item?.isConnected === true && container.contains(item)
 					? item
 					: undefined;
-			(remembered ?? focusableItems(container)[0] ?? container).focus();
+			(remembered ?? focusableItems(container)[0] ?? container).focus(options);
 		},
 	};
 };

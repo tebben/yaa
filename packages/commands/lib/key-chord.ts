@@ -43,6 +43,7 @@ export const normalizeKey = (key: string): string => {
 const capitalize = (part: string) =>
 	part.charAt(0).toUpperCase() + part.slice(1);
 
-// `ctrl+shift+p` as `Ctrl+Shift+P`, for tooltips and the palette.
-export const formatKey = (key: string): string =>
-	key.split("+").map(capitalize).join("+");
+// `ctrl+shift+p` as the keys to show, `["Ctrl", "Shift", "P"]`, for
+// tooltips and the palette.
+export const keyParts = (key: string): string[] =>
+	key.split("+").map(capitalize);

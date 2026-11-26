@@ -59,7 +59,6 @@ export type DockSlot = {
 const theme = {
 	name: "yaa",
 	className: "yaa-dock",
-	gap: 0,
 	colorScheme: "dark",
 } as const;
 
@@ -163,7 +162,12 @@ export const createDock = ({
 				createComponent: () => renderer("content"),
 				createTabComponent: () => renderer("tab"),
 				defaultTabComponent: "yaa",
-				theme,
+				theme: {
+					...theme,
+					gap: Number.parseFloat(
+						getComputedStyle(element).getPropertyValue("--spacing-panel-gap"),
+					),
+				},
 				singleTabMode: "fullwidth",
 				disableFloatingGroups: true,
 			});
@@ -258,7 +262,7 @@ export const createDock = ({
 		close(panelId: string) {
 			api?.getPanel(panelId)?.api.close();
 		},
-		// Closes the kind's panel, or opens it beside the focused group.
+		// Closes the kind's panel, or opens it at the right edge of the grid.
 		toggle(kind: string) {
 			if (api === undefined) return;
 			const hadFocus = root?.contains(document.activeElement) === true;
@@ -271,8 +275,7 @@ export const createDock = ({
 				settle(active === panel ? api.activePanel : active, hadFocus);
 				return;
 			}
-			const group = api.activeGroup;
-			add(api, kind, group && { referenceGroup: group, direction: "right" });
+			add(api, kind, { direction: "right" });
 			// The new panel's content renders on the next tick; dockview may
 			// have moved the focused element out of the page meanwhile.
 			void tick().then(() => settle(api?.getPanel(kind), hadFocus));

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { formatKey } from "@yaa/commands/key-chord";
+import { keyParts } from "@yaa/commands/key-chord";
 import { TooltipProvider } from "@yaa/ui";
 import { Dock } from "@yaa/ui/dock";
 import { setAgentChat } from "./agent/index.ts";
@@ -21,7 +21,7 @@ $effect(() => {
 
 const shortcut = (id: string) => {
 	const [key] = commands.keysFor(id);
-	return key === undefined ? undefined : formatKey(key);
+	return key === undefined ? undefined : keyParts(key);
 };
 </script>
 
@@ -32,19 +32,15 @@ const shortcut = (id: string) => {
 		class="grid h-screen grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_minmax(0,1fr)_auto]"
 	>
 		{#if workbench.menuOpen}
-			<LeftMenu
-				region={regions.region("menu", "vertical")}
-				shortcut={shortcut("menu.toggle")}
-				onhide={() => commands.run("menu.toggle")}
-			/>
+			<LeftMenu region={regions.region("menu", "vertical")} />
 		{/if}
 		<Header
 			region={regions.region("header", "horizontal")}
 			menuOpen={workbench.menuOpen}
 			menuShortcut={shortcut("menu.toggle")}
-			onshowmenu={() => commands.run("menu.toggle")}
+			ontogglemenu={() => commands.run("menu.toggle")}
 		/>
-		<main class="col-start-2 min-h-0 bg-surface">
+		<main class="col-start-2 row-start-2 min-h-0 bg-grid p-panel-gap">
 			{#if layout.dock}
 				<Dock dock={layout.dock} />
 			{/if}

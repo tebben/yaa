@@ -10,17 +10,17 @@ export type Orientation = "vertical" | "horizontal";
 type Region = { element: HTMLElement; orientation: Orientation };
 
 // Which region lies in each direction, after the grid in App.svelte: the
-// menu runs full height on the left, the rail on the right, the header and
-// footer between them above and below the dock.
+// header runs across the top and the footer across the bottom; between them
+// are the menu, the dock and the rail.
 const neighbours: Record<
 	RegionName,
 	Partial<Record<DockDirection, RegionName>>
 > = {
-	menu: { right: "dock" },
-	header: { left: "menu", right: "rail", down: "dock" },
+	menu: { right: "dock", up: "header", down: "footer" },
+	header: { down: "dock" },
 	dock: { left: "menu", right: "rail", up: "header", down: "footer" },
-	footer: { left: "menu", right: "rail", up: "dock" },
-	rail: { left: "dock" },
+	footer: { up: "dock" },
+	rail: { left: "dock", up: "header", down: "footer" },
 };
 
 type RegionsOptions = {
@@ -50,7 +50,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			dock()?.focusActive();
 			return;
 		}
-		memory.enter(region.element);
+		memory.enter(region.element, { focusVisible: true });
 	};
 
 	return {
@@ -94,7 +94,7 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			// From the region itself, down goes to the first item, up to the last.
 			const next =
 				index < 0 ? (step > 0 ? 0 : -1) : (index + step) % list.length;
-			list.at(next)?.focus();
+			list.at(next)?.focus({ focusVisible: true });
 		},
 	};
 };

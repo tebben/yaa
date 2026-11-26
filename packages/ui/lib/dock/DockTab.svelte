@@ -14,11 +14,11 @@ let {
 	$props();
 </script>
 
-<div class="flex h-full min-w-0 items-center gap-1.5 pr-1 pl-2.5">
+<div class="flex h-full min-w-0 items-center gap-2 pr-1.5 pl-3">
 	{#if kind}
 		<Icon icon={kind.icon} class="size-3.5 shrink-0" />
 	{/if}
-	<span class="flex-1 truncate">{title}</span>
+	<span class="flex-1 truncate font-medium">{title}</span>
 	<span class="yaa-tab-actions flex">
 		<IconButton icon={X} label="Close" onclick={onclose} />
 	</span>

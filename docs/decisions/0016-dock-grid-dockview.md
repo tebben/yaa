@@ -1,6 +1,6 @@
 # 0016 Dock grid: dockview-core with our own Svelte adapter
 
-Status: decided, 2026-11-26. M0 spike, branch `spike/dock-grid` (spike app and probe scripts in `spikes/dock-grid/`, kept for reference, not merged).
+Status: decided, 2026-11-26. Panel spacing is superseded by `docs/decisions/0024-panel-spacing.md`. M0 spike, branch `spike/dock-grid` (spike app and probe scripts in `spikes/dock-grid/`, kept for reference, not merged).
 
 Context: the centre grid must let users drag panels to rearrange, split, tab and resize them, save a layout per project, restyle from tokens, and move focus and panels by keyboard (`docs/spec/01-ui-layout-theming.md`). The question was whether an existing docking library fits Svelte 5 or whether we build our own.
 

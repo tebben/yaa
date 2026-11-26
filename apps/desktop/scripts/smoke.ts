@@ -1,10 +1,10 @@
 // The smoke test: runs the built app in dev mode, with a fresh data folder,
 // and drives its window over the DevTools protocol. The app starts, the
-// palette runs the hello plugin's command, and the fake agent plays a turn
-// into the chat panel. It prints the launch and palette open times against
-// the targets in docs/spec/12-stack-packaging.md and fails only when a step
-// fails (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which
-// builds first.
+// palette runs the hello plugin's command, the rail opens a panel at the
+// right edge, and the fake agent plays a turn into the chat panel. It prints
+// the launch and palette open times against the targets in
+// docs/spec/12-stack-packaging.md and fails only when a step fails
+// (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
 import { type ChildProcess, spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -190,6 +190,52 @@ const press = async (
 const type = (page: Connection, text: string) =>
 	page.send("Input.insertText", { text });
 
+const clickElement = async (page: Connection, element: string) => {
+	await waitFor(page, element);
+	const { x, y } = await evaluate(
+		page,
+		`(() => {
+			const rect = (${element}).getBoundingClientRect();
+			return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+		})()`,
+		z.object({ x: z.number(), y: z.number() }),
+	);
+	await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+	await page.send("Input.dispatchMouseEvent", {
+		type: "mousePressed",
+		x,
+		y,
+		button: "left",
+		clickCount: 1,
+	});
+	await page.send("Input.dispatchMouseEvent", {
+		type: "mouseReleased",
+		x,
+		y,
+		button: "left",
+		clickCount: 1,
+	});
+};
+
+const checkRailPlacement = async (page: Connection) => {
+	const changes = `[...document.querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Changes")`;
+	const files = `document.querySelector('[aria-label="Panels"] button[aria-label="Files"]')`;
+	const filesTab = `[...document.querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Files")`;
+	await clickElement(page, changes);
+	await clickElement(page, files);
+	await waitFor(page, filesTab);
+	await waitFor(
+		page,
+		`(() => {
+			const panel = (${filesTab}).closest(".dv-groupview").getBoundingClientRect();
+			const grid = document.querySelector(".yaa-dock").getBoundingClientRect();
+			return Math.abs(panel.right - grid.right) < 1 &&
+				Math.abs(panel.top - grid.top) < 1 &&
+				Math.abs(panel.bottom - grid.bottom) < 1;
+		})()`,
+	);
+};
+
 // From the key's event to the frame after the palette is in the DOM, so
 // its paint is included. The listeners go in before the key is sent: input
 // reaches the page through the browser process, so it can overtake an
@@ -261,6 +307,8 @@ const logFile = join(dataDir, "logs", "yaa.log");
 try {
 	const first = await launch(dataDir);
 	console.log("The app started.");
+	await checkRailPlacement(first.page);
+	console.log("The rail opened a panel at the right edge.");
 	await runPluginCommand(first.page, logFile);
 	console.log("The palette ran the hello plugin's command.");
 	await playFakeTurn(first.page);
