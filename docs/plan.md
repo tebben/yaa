@@ -45,7 +45,21 @@ Build order, one pull request each:
 Exit: the app starts, panels can be arranged and focused by keyboard, the palette runs a command from a plugin, and the fake agent streams a turn into a placeholder panel. Measure launch time and palette open time.
 
 ## M2: worktrees and chat (first product slice)
-Projects, worktree create, switch and finish, setup hooks, the per-repository git queue, the first real provider end to end (Claude Code, which the M0 spike showed is better covered by ACP: `docs/decisions/0014-acp-coverage.md`), chat with composer, parallel agents, derived state with the combining rules, attention overview, session restore, permission modes, debug panel. Then the second provider, then MCP and skills per worktree.
+Projects, worktree create, switch and finish, setup hooks, the per-repository git queue, the first real provider end to end (Claude Code, which the M0 spike showed is better covered by ACP: `docs/decisions/0014-acp-coverage.md`), chat with composer, parallel agents, derived state with the combining rules, attention overview, session restore, permission modes, debug panel. Then the second provider, then MCP and skills per worktree. The terminal stays in M3; until then setup output and agent sign-in work without it (`docs/decisions/0023-setup-output-and-sign-in-before-the-terminal.md`).
+
+Build order, one pull request each:
+1. Projects and the git service: add a project by folder, the project list in the left menu, stored in the database; core's git service with the per-repository queue for shared-state operations.
+2. Worktrees: create from the default or any branch with the naming template and default prefix, the stable `YAA_WORKTREE_INDEX`, switch by key and from the left menu with each worktree's own layout, and finish with the warnings for uncommitted or unpushed work.
+3. Setup and teardown steps: files copied by glob and commands run in the worktree, output logged per worktree, a failed step sets Error.
+4. Derived state: the pure reducer from events to each source's state and the combining order, with unit tests; badges in the left menu and footer, and the key that jumps to the next worktree that needs attention. The fake agent drives it until step 5.
+5. Provider contribution point (plugin-api, contracts, core): detection, auth state, spawn configuration and capabilities; core starts the agent in the worktree and supervises it. The Claude Code provider plugin, with sign-in per decision 0023. The fake agent becomes a dev-mode provider behind the same interface.
+6. Chat panel, replacing the placeholder: virtualized transcript with markdown, lazily highlighted code, collapsible thinking, tool calls, inline diffs and plans, rendered once per animation frame; composer with model, effort and mode pickers from config options, slash commands and attachments; the header; several chats per worktree. File paths open the editor from M3.
+7. Session restore and recovery: worktrees reopen with their layout and chats, a running turn is marked interrupted, a crashed agent sets Error and resumes where the agent supports it.
+8. Permission modes per worktree, shown in the chat header.
+9. Debug panel: the logs with level, source and worktree filters.
+10. Copilot CLI provider, including how it detects a signed-out state (unverified in `docs/spec/05-agents-chat.md`).
+11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`).
+12. Exit check: the smoke test opens a worktree, measure worktree switch time and chat streaming.
 
 Exit: you build yaa's next feature inside yaa. Two worktrees run real agents in parallel; one asking a permission question shows Needs attention, and a key jumps to it. Measure worktree switch time and chat streaming.
 
