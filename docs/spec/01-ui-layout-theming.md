@@ -27,7 +27,7 @@ The window is a fixed shell around a user-arrangeable grid: a full-height left m
 
 **Command palette**
 
-- One keystroke opens it, Ctrl Shift P by default. It lists every registered command that has a title and whose `when` condition holds where the palette was opened (project, worktree, focused panel), each with its first key and its category. Typing filters the list: the typed characters must appear in order in the category and title, case and spaces ignored, and a run of characters or a match at the start of a word ranks higher. Arrow keys move the selection, Enter runs the selected command after the palette closes and focus has returned, Escape or a click outside closes it. These keys are commands too, bound with `when: palette.open`.
+- One keystroke opens it, Ctrl Shift P by default. It lists every registered command that has a title and whose `when` condition holds where the palette was opened (project, worktree, focused panel), each with its first key and its category. Typing filters the list: the typed characters must appear in order in the category and title, case and spaces ignored, and a run of characters or a match at the start of a word ranks higher. The arrow keys, Ctrl J and K, and Ctrl N and P move the selection, Enter runs the selected command after the palette closes and focus has returned, Escape or a click outside closes it. These keys are commands too, bound with `when: palette.open`.
 - Plugins register commands, and may register a settings page that the palette's settings entry lists next to core settings. Plugin settings are rendered from a schema by default, or from a custom panel.
 
 **Keyboard model**

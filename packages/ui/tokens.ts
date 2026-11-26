@@ -15,6 +15,7 @@ export type TokenName =
 	| "radius-panel"
 	| "radius-control"
 	| "radius-chip"
+	| "spacing-0"
 	| "spacing-1"
 	| "spacing-2"
 	| "spacing-3"
