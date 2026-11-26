@@ -1,0 +1,7 @@
+export {
+	createGitService,
+	type GitService,
+} from "./lib/git/git-service.ts";
+export { parseStatus } from "./lib/git/parse-status.ts";
+export { mainWorktree } from "./lib/git/parse-worktree-list.ts";
+export type { RunGit } from "./lib/git/run-git.ts";

@@ -18,7 +18,8 @@
 		"./plugin-host-protocol": "./plugin-host-protocol.ts",
 		"./plugin-ui": "./plugin-ui.ts",
 		"./app-urls": "./app-urls.ts",
-		"./agent-events": "./agent-events.ts"
+		"./agent-events": "./agent-events.ts",
+		"./projects": "./projects.ts"
 	},
 	"scripts": {
 		"test": "vitest run --passWithNoTests"

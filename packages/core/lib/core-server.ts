@@ -5,6 +5,7 @@ import { createServer, type Server } from "@yaa/contracts/server";
 import type { SettingsState } from "@yaa/contracts/settings";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
+import type { Projects } from "./projects/projects.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
 
@@ -18,6 +19,8 @@ export type CoreServerOptions = {
 	layouts: LayoutStore;
 	plugins: PluginManager;
 	agents: AgentSessions;
+	projects: Projects;
+	pickFolder(): Promise<string | null>;
 };
 
 export const createCoreServer = ({
@@ -27,6 +30,8 @@ export const createCoreServer = ({
 	layouts,
 	plugins,
 	agents,
+	projects,
+	pickFolder,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
 		coreProtocol,
@@ -38,6 +43,14 @@ export const createCoreServer = ({
 				layouts.save(APP_LAYOUT, layout);
 				return {};
 			},
+			"projects.list": () => ({ projects: projects.list() }),
+			"projects.add": ({ path }) => projects.add(path),
+			"dialog.pickFolder": async () => ({ path: await pickFolder() }),
+			"projects.remove": ({ id }) => {
+				projects.remove(id);
+				return {};
+			},
+			"projects.status": ({ id }) => projects.status(id),
 			"plugins.list": () => ({ plugins: plugins.plugins }),
 			"plugins.runCommand": async ({ command }) => {
 				await plugins.runCommand(command);
@@ -66,5 +79,8 @@ export const createCoreServer = ({
 	);
 	settings.onChange((state) => server.emit("settings.changed", state));
 	keybindings.onChange((state) => server.emit("keybindings.changed", state));
+	projects.onChange((list) =>
+		server.emit("projects.changed", { projects: list }),
+	);
 	return server;
 };

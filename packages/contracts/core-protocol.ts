@@ -3,6 +3,7 @@ import { agentEvent, questionAnswer, sessionEvent } from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
 import { pluginManifest } from "./plugin-manifest.ts";
+import { addProjectResult, branchStatus, project } from "./projects.ts";
 import { settingsState } from "./settings.ts";
 
 // Requests and events between the core and the renderer. The plugin host
@@ -13,7 +14,7 @@ export const coreProtocol = defineProtocol({
 		"keybindings.get": { params: z.object({}), result: keybindingsState },
 		// The dock layout as the renderer serialized it. Core stores it as
 		// opaque text; the renderer validates it before restoring it. One
-		// layout until projects arrive in M2, which makes it per project.
+		// layout until worktrees arrive (M2), which gives each its own.
 		"layout.get": {
 			params: z.object({}),
 			result: z.object({ layout: z.string().nullable() }),
@@ -21,6 +22,34 @@ export const coreProtocol = defineProtocol({
 		"layout.save": {
 			params: z.object({ layout: z.string() }),
 			result: z.object({}),
+		},
+		// The project list in the order projects were added;
+		// `projects.changed` carries it again after each change.
+		"projects.list": {
+			params: z.object({}),
+			result: z.object({ projects: z.array(project) }),
+		},
+		// Adds the repository holding the folder, by its main checkout. A
+		// leading ~ is the home folder.
+		"projects.add": {
+			params: z.object({ path: z.string() }),
+			result: addProjectResult,
+		},
+		// The system's folder picker, shown by Electron main: the folder
+		// chosen, or null when cancelled.
+		"dialog.pickFolder": {
+			params: z.object({}),
+			result: z.object({ path: z.string().nullable() }),
+		},
+		// Takes the project off the list; its folder stays as it is.
+		"projects.remove": {
+			params: z.object({ id: z.string() }),
+			result: z.object({}),
+		},
+		// The status of the project's main checkout.
+		"projects.status": {
+			params: z.object({ id: z.string() }),
+			result: branchStatus,
 		},
 		// The plugins core loaded, with what they contribute.
 		"plugins.list": {
@@ -79,6 +108,7 @@ export const coreProtocol = defineProtocol({
 		// Sent when a save changes what the file resolves to.
 		"settings.changed": settingsState,
 		"keybindings.changed": keybindingsState,
+		"projects.changed": z.object({ projects: z.array(project) }),
 	},
 });
 

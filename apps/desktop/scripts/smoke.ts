@@ -1,17 +1,22 @@
 // The smoke test: runs the built app in dev mode, with a fresh data folder,
-// and drives its window over the DevTools protocol. The app starts, the
+// and drives its window over the DevTools protocol. The app starts with a
+// project (added beforehand: the system's folder picker cannot be driven),
+// its overview opens, search finds it, its default branch opens, the
 // palette runs the hello plugin's command, the rail opens a panel at the
 // right edge, and the fake agent plays a turn into the chat panel. It prints
 // the launch and palette open times against the targets in
 // docs/spec/12-stack-packaging.md and fails only when a step fails
 // (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { appOrigin } from "@yaa/contracts/app-urls";
+import { createGitService } from "@yaa/core/git";
+import { createProjects } from "@yaa/core/projects";
+import { openDatabase } from "@yaa/core/storage";
 import { z } from "zod";
 import { outDir } from "./bundle.ts";
 import { type Connection, connect, evaluate } from "./cdp.ts";
@@ -171,6 +176,7 @@ const OPEN_PALETTE: Key = {
 	modifiers: CTRL_SHIFT,
 };
 const ESCAPE: Key = { key: "Escape", code: "Escape", keyCode: 27 };
+const SLASH: Key = { key: "/", code: "Slash", keyCode: 191, text: "/" };
 const ENTER: Key = { key: "Enter", code: "Enter", keyCode: 13, text: "\r" };
 
 const press = async (
@@ -234,6 +240,57 @@ const checkRailPlacement = async (page: Connection) => {
 				Math.abs(panel.bottom - grid.bottom) < 1;
 		})()`,
 	);
+};
+
+// A repository with one commit on main, added as a project to the data
+// folder the app is about to use.
+const addRepo = async (dataDir: string, dir: string) => {
+	await mkdir(dir);
+	const git = (...args: string[]) =>
+		execFileSync("git", ["-C", dir, ...args], { stdio: "ignore" });
+	git("init", "--initial-branch=main");
+	git(
+		"-c",
+		"user.name=yaa",
+		"-c",
+		"user.email=yaa@localhost",
+		"commit",
+		"--allow-empty",
+		"--message=start",
+	);
+	const db = openDatabase(join(dataDir, "yaa.db"));
+	const projects = createProjects({
+		db,
+		git: createGitService(),
+		home: homedir(),
+	});
+	const added = await projects.add(dir);
+	db.close();
+	if ("problem" in added) throw new Error(added.problem);
+};
+
+const MENU = `document.querySelector('nav[aria-label="Projects"]')`;
+const SEARCH = `document.querySelector('input[aria-label="Search projects"]')`;
+
+const menuButton = (text: string) =>
+	`[...${MENU}.querySelectorAll("button")].find((button) => button.textContent.includes(${JSON.stringify(text)}))`;
+
+// Opens the project's overview, searches the tree, and opens the default
+// branch, which shows the dock.
+const openProject = async (page: Connection) => {
+	await clickElement(page, menuButton("repo"));
+	await waitFor(
+		page,
+		`document.querySelector('[aria-label="Project overview"]')`,
+	);
+	await press(page, SLASH);
+	await waitFor(page, `document.activeElement === ${SEARCH}`);
+	await type(page, "zzz");
+	await waitFor(page, `${MENU}.textContent.includes("Nothing matches")`);
+	await press(page, ESCAPE);
+	await waitFor(page, `${SEARCH}.value === ""`);
+	await clickElement(page, menuButton("main"));
+	await waitFor(page, `document.querySelector('[aria-label="Panels"]')`);
 };
 
 // From the key's event to the frame after the palette is in the DOM, so
@@ -305,8 +362,11 @@ const report = (name: string, ms: number, targetMs: number) =>
 const dataDir = await mkdtemp(join(tmpdir(), "yaa-smoke-"));
 const logFile = join(dataDir, "logs", "yaa.log");
 try {
+	await addRepo(dataDir, join(dataDir, "repo"));
 	const first = await launch(dataDir);
 	console.log("The app started.");
+	await openProject(first.page);
+	console.log("The project's overview, search and default branch opened.");
 	await checkRailPlacement(first.page);
 	console.log("The rail opened a panel at the right edge.");
 	await runPluginCommand(first.page, logFile);

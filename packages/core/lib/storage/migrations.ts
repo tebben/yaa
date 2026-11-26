@@ -16,4 +16,12 @@ export const migrations: Migrations = [
 		layout TEXT NOT NULL,
 		saved_at INTEGER NOT NULL
 	) STRICT;`,
+	// 3: the project list (docs/spec/02-worktrees.md), in the order added.
+	`CREATE TABLE projects (
+		id TEXT PRIMARY KEY,
+		path TEXT NOT NULL UNIQUE,
+		name TEXT NOT NULL,
+		default_branch TEXT NOT NULL,
+		added_at INTEGER NOT NULL
+	) STRICT;`,
 ];
