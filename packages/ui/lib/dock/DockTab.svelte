@@ -1,5 +1,6 @@
 <script lang="ts">
 import { X } from "@lucide/svelte";
+import Icon from "../Icon.svelte";
 import IconButton from "../IconButton.svelte";
 import type { PanelKind } from "./dock.svelte.ts";
 
@@ -15,7 +16,7 @@ let {
 
 <div class="flex h-full min-w-0 items-center gap-1.5 pr-1 pl-2.5">
 	{#if kind}
-		<kind.icon class="size-3.5 shrink-0" aria-hidden="true" />
+		<Icon icon={kind.icon} class="size-3.5 shrink-0" />
 	{/if}
 	<span class="flex-1 truncate">{title}</span>
 	<span class="yaa-tab-actions flex">

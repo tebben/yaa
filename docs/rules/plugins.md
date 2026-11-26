@@ -3,8 +3,10 @@
 Source: `docs/spec/03-plugins.md`. The plugin API lands in M1 and stays unstable (`0.x`) until M6 (`docs/decisions/0011-plugin-api-unstable-until-m6.md`).
 
 ## Package
-- A plugin is a folder in `plugins/` with a manifest (`plugin.json`) and up to two entry modules: a backend module (plugin host) and a UI module (Svelte, renderer).
-- Manifest fields: id, version, activation events, contributions, dependencies on other plugins. The manifest is validated against its schema in `contracts`.
+- A plugin is a folder in `plugins/` with a manifest (`plugin.json`) and up to two entry modules: `main.ts`, the backend (plugin host), exporting `activate(context)`, and `ui.ts`, the UI (Svelte, renderer), exporting `panels`. `plugins/hello` is the example.
+- Manifest fields: id (the folder's name), version, activation events, `main`, `ui` and `styles` (the built files), contributions. Dependencies on other plugins arrive with services. The schema is in `contracts` (`plugin-manifest.ts`).
+- Command and panel ids are `<plugin id>` or `<plugin id>.<name>`. A panel's icon is an SVG file in the plugin folder.
+- Build with `pnpm run plugins:build` (all built-in plugins) or `yaa-plugin-build <folder>`; the output goes to the paths the manifest names.
 - A plugin is a deep module: other code sees only its manifest and entry modules (`packages/README.md`).
 
 ## Using the API
@@ -18,7 +20,7 @@ Source: `docs/spec/03-plugins.md`. The plugin API lands in M1 and stays unstable
 ## Lifecycle and state
 - Every registration returns a disposable. Dispose everything you register, so deactivation and hot reload clean up.
 - Keep state in plugin storage, not module memory, so a reload is invisible.
-- Load on activation events, not at startup.
+- Load on activation events, not at startup. A contributed command activates its plugin when it runs; list `onStartup` only when the plugin must run before anything asks for it.
 
 ## Look
 - Style with `ui` components and token CSS variables. No colour or spacing literals. Icons from `@lucide/svelte` through `ui`.

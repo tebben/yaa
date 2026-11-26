@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
-import type { LogRecord } from "@yaa/contracts/log";
+import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createCoreServer } from "./core-server.ts";
 import { openLogFile } from "./log/log-file.ts";
-import { createLogger, errorData } from "./log/logger.ts";
+import { createPluginManager } from "./plugins/plugins.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
 import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
@@ -13,15 +13,30 @@ import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
 
-export type CoreOptions = { dataDir: string; logDir: string; dev: boolean };
+export type CoreOptions = {
+	dataDir: string;
+	logDir: string;
+	pluginsDir: string;
+	dev: boolean;
+	// Asks main to fork a plugin host; its port arrives through
+	// `attachPluginHost`.
+	requestPluginHost(): void;
+};
 
 export type Core = {
 	connect(port: Port): void;
+	attachPluginHost(port: Port): void;
 	// A line logged by another process.
 	log(record: LogRecord): void;
 };
 
-export const startCore = ({ dataDir, logDir, dev }: CoreOptions): Core => {
+export const startCore = ({
+	dataDir,
+	logDir,
+	pluginsDir,
+	dev,
+	requestPluginHost,
+}: CoreOptions): Core => {
 	const logFile = openLogFile({
 		dir: logDir,
 		level: dev ? "debug" : "info",
@@ -49,13 +64,24 @@ export const startCore = ({ dataDir, logDir, dev }: CoreOptions): Core => {
 		resolve: resolveKeybindings,
 		log,
 	});
+	const plugins = createPluginManager({
+		dir: pluginsDir,
+		log,
+		requestHost: requestPluginHost,
+		write: logFile.write,
+	});
 	const server = createCoreServer({
 		log,
 		settings,
 		keybindings,
 		layouts: createLayoutStore(db),
+		plugins,
 	});
 	log.info("core started", { pid: process.pid, dataDir });
 
-	return { connect: server.connect, log: logFile.write };
+	return {
+		connect: server.connect,
+		attachPluginHost: plugins.attachHost,
+		log: logFile.write,
+	};
 };

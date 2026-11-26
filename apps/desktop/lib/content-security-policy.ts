@@ -1,4 +1,7 @@
-// The renderer's CSP. Scripts only from the app itself. Inline styles are
+import { pluginsOrigin } from "@yaa/contracts/app-urls";
+
+// The renderer's CSP. Scripts only from the app itself and its plugin
+// folders, which also serve plugin styles and icons. Inline styles are
 // allowed because Svelte transitions, dockview's sashes and Vite's dev CSS
 // set them; scripts are the part that matters. In dev mode, connect-src also
 // allows the Vite dev server's HMR socket, and nothing else.
@@ -10,9 +13,9 @@ export const contentSecurityPolicy = (devServerUrl: string | undefined) => {
 	}
 	return [
 		"default-src 'self'",
-		"script-src 'self'",
-		"style-src 'self' 'unsafe-inline'",
-		"img-src 'self' data:",
+		`script-src 'self' ${pluginsOrigin}`,
+		`style-src 'self' 'unsafe-inline' ${pluginsOrigin}`,
+		`img-src 'self' data: ${pluginsOrigin}`,
 		"font-src 'self'",
 		`connect-src ${connect.join(" ")}`,
 		"object-src 'none'",

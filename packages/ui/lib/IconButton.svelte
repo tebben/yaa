@@ -1,20 +1,21 @@
 <script lang="ts">
-import type { LucideIcon } from "@lucide/svelte";
 import { Tooltip } from "bits-ui";
+import Icon from "./Icon.svelte";
+import type { IconSource } from "./icon-source.ts";
 
 // The label names the action for the tooltip and screen readers; the
 // shortcut, when the action has one, is shown beside it. A toggle passes
 // `pressed`. In a column of buttons, such as the rail, `tooltipSide` puts
 // the tooltip beside the column so it covers none of the others.
 let {
-	icon: Icon,
+	icon,
 	label,
 	shortcut,
 	pressed,
 	tooltipSide = "top",
 	onclick,
 }: {
-	icon: LucideIcon;
+	icon: IconSource;
 	label: string;
 	shortcut?: string | undefined;
 	pressed?: boolean;
@@ -30,7 +31,7 @@ let {
 		aria-pressed={pressed}
 		{onclick}
 	>
-		<Icon class="size-3.5" aria-hidden="true" />
+		<Icon {icon} class="size-3.5" />
 	</Tooltip.Trigger>
 	<Tooltip.Portal>
 		<Tooltip.Content

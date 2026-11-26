@@ -27,7 +27,7 @@ let { dock }: { dock: DockController } = $props();
 		>
 			{#if slot.kind}
 				<svelte:boundary>
-					<slot.kind.component />
+					<slot.kind.component kind={slot.kindId} />
 					{#snippet failed(error)}
 						<p class="p-3 text-state-error">
 							This panel failed: {String(error)}

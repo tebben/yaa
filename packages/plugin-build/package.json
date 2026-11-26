@@ -1,0 +1,20 @@
+{
+	"name": "@yaa/plugin-build",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./index.ts"
+	},
+	"bin": {
+		"yaa-plugin-build": "./cli.ts"
+	},
+	"scripts": {
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@yaa/contracts": "workspace:*",
+		"esbuild": "0.28.2",
+		"svelte": "~5.59.1"
+	}
+}

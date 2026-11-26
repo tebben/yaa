@@ -1,5 +1,8 @@
 <script lang="ts">
-// Stands in for a panel until a plugin contributes it.
+import type { PanelProps } from "@yaa/ui/dock";
+
+// Stands in for a panel until the plugin that owns it contributes it.
+let { kind }: PanelProps = $props();
 </script>
 
-<p class="p-3 text-text-muted">Nothing here yet.</p>
+<p class="p-3 text-text-muted">The {kind} panel arrives with its plugin.</p>

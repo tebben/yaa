@@ -1,4 +1,3 @@
-import type { LucideIcon } from "@lucide/svelte";
 import {
 	createDockview,
 	type DockviewApi,
@@ -7,14 +6,19 @@ import {
 } from "dockview-core";
 import { type Component, untrack } from "svelte";
 import type { Attachment } from "svelte/attachments";
+import type { IconSource } from "../icon-source.ts";
 import { parseDockLayout } from "./dock-layout.ts";
+
+// What the grid passes a panel's component: the kind it renders, so one
+// component can serve several kinds, such as every plugin panel.
+export type PanelProps = { kind: string };
 
 // A view the grid can show (docs/spec/01-ui-layout-theming.md). The kind's id
 // is the map key; while each kind opens at most once it is the panel id too.
 export type PanelKind = {
 	title: string;
-	icon: LucideIcon;
-	component: Component;
+	icon: IconSource;
+	component: Component<PanelProps>;
 };
 
 type Direction = "left" | "right" | "above" | "below" | "within";

@@ -1,10 +1,11 @@
 import * as z from "zod";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
+import { pluginManifest } from "./plugin-manifest.ts";
 import { settingsState } from "./settings.ts";
 
-// Requests and events between the core and its clients: the renderer now,
-// the plugin host from M1 step 7.
+// Requests and events between the core and the renderer. The plugin host
+// has its own protocol (plugin-host-protocol.ts).
 export const coreProtocol = defineProtocol({
 	requests: {
 		"settings.get": { params: z.object({}), result: settingsState },
@@ -18,6 +19,16 @@ export const coreProtocol = defineProtocol({
 		},
 		"layout.save": {
 			params: z.object({ layout: z.string() }),
+			result: z.object({}),
+		},
+		// The plugins core loaded, with what they contribute.
+		"plugins.list": {
+			params: z.object({}),
+			result: z.object({ plugins: z.array(pluginManifest) }),
+		},
+		// Runs a plugin's command in the plugin host, activating it first.
+		"plugins.runCommand": {
+			params: z.object({ command: z.string() }),
 			result: z.object({}),
 		},
 	},

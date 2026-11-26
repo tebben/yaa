@@ -1,0 +1,14 @@
+{
+	"id": "hello",
+	"version": "0.1.0",
+	"main": "dist/main.js",
+	"ui": "dist/ui.js",
+	"styles": "dist/ui.css",
+	"contributes": {
+		"commands": [
+			{ "id": "hello.greet", "title": "Say hello", "category": "Hello" }
+		],
+		"keybindings": [{ "key": "ctrl+alt+h", "command": "hello.greet" }],
+		"panels": [{ "id": "hello", "title": "Hello", "icon": "icon.svg" }]
+	}
+}

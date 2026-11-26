@@ -1,11 +1,17 @@
 // Dev mode: the Vite dev server for the renderer, esbuild watchers for main,
-// preload and core, and an Electron process restarted after each rebuild.
+// preload, core and plugin host, and an Electron process restarted after
+// each rebuild. The built-in plugins are built once at start and loaded
+// from the repository; rebuilding them on change comes with hot reload in
+// M3 (docs/spec/03-plugins.md).
 // Arguments are passed to Electron: pnpm run dev --remote-debugging-port=9222
 import { type ChildProcess, spawn } from "node:child_process";
 import { join } from "node:path";
+import { buildPlugin } from "@yaa/plugin-build";
 import { context, type Plugin } from "esbuild";
 import { createServer } from "vite";
-import { bundles, outDir, webRoot } from "./bundle.ts";
+import { bundles, outDir, pluginDirs, pluginsRoot, webRoot } from "./bundle.ts";
+
+await Promise.all(pluginDirs().map(buildPlugin));
 
 const server = await createServer({
 	root: webRoot,
@@ -22,7 +28,11 @@ const startElectron = () => {
 	const args = [join(outDir, "main.js"), ...process.argv.slice(2)];
 	const child = spawn("electron", args, {
 		stdio: "inherit",
-		env: { ...process.env, YAA_DEV_SERVER_URL: devServerUrl },
+		env: {
+			...process.env,
+			YAA_DEV_SERVER_URL: devServerUrl,
+			YAA_PLUGINS_DIR: pluginsRoot,
+		},
 	});
 	child.on("exit", (code, signal) => {
 		// Closed by the user, not by a restart: end dev mode too.
@@ -44,7 +54,7 @@ const restartElectron = () => {
 	}
 };
 
-// The three bundles finish in quick succession: restart once after them.
+// The bundles finish in quick succession: restart once after them.
 const restartOnBuild: Plugin = {
 	name: "restart-electron",
 	setup(build) {

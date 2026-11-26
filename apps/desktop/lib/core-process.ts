@@ -1,3 +1,4 @@
+import type { LogRecord } from "@yaa/contracts/log";
 import {
 	fromCoreMessage,
 	type ToCoreMessage,
@@ -11,6 +12,10 @@ import {
 export type CoreProcess = {
 	// Hands the core one end of a new channel; it serves the protocol on it.
 	connect(port: MessagePortMain): void;
+	// Hands the core its end of the channel to a new plugin host.
+	connectPluginHost(port: MessagePortMain): void;
+	// A line main logs; it reaches the core once it is ready.
+	log(record: LogRecord): void;
 	// Called after the core exited and a new one was forked, so every open
 	// page can be given a port to it.
 	onRestart(listener: () => void): void;
@@ -23,6 +28,8 @@ type StartOptions = {
 	// The core exited before it was ready. Forking it again would fail the
 	// same way, so this ends the restarts.
 	onStartupFailure(code: number): void;
+	// The core asked for a plugin host.
+	onStartPluginHost(): void;
 };
 
 // Forks the core and forks it again whenever it exits. Main stays out of the
@@ -31,6 +38,7 @@ export const startCoreProcess = ({
 	entry,
 	start,
 	onStartupFailure,
+	onStartPluginHost,
 }: StartOptions): CoreProcess => {
 	let child: UtilityProcess;
 	let ready = false;
@@ -53,9 +61,16 @@ export const startCoreProcess = ({
 		child.once("spawn", () => child.postMessage(start));
 		child.on("message", (raw) => {
 			const message = fromCoreMessage.parse(raw);
-			if (message.kind === "ready") {
-				ready = true;
-				for (const { message, port } of waiting.splice(0)) send(message, port);
+			switch (message.kind) {
+				case "ready":
+					ready = true;
+					for (const { message, port } of waiting.splice(0)) {
+						send(message, port);
+					}
+					return;
+				case "start-plugin-host":
+					onStartPluginHost();
+					return;
 			}
 		});
 		child.on("exit", (code) => {
@@ -90,6 +105,12 @@ export const startCoreProcess = ({
 	return {
 		connect(port) {
 			send({ kind: "connect" }, port);
+		},
+		connectPluginHost(port) {
+			send({ kind: "plugin-host" }, port);
+		},
+		log(record) {
+			send({ kind: "log", record });
 		},
 		onRestart(listener) {
 			restartListeners.add(listener);
