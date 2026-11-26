@@ -1,6 +1,6 @@
 {
-  "name": "@yaa/web",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module"
+	"name": "@yaa/web",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module"
 }

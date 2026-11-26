@@ -1,14 +1,19 @@
 {
-  "name": "yaa",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@12.11.2",
-  "engines": {
-    "node": ">=24"
-  },
-  "scripts": {},
-  "devDependencies": {
-    "@types/node": "^24.19.3",
-    "typescript": "~6.0.3"
-  }
+	"name": "yaa",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.11.2",
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"lint": "biome check . && node scripts/check-suppressions.ts",
+		"format": "biome check --write .",
+		"typecheck": "tsc -p ."
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.9",
+		"@types/node": "^24.19.3",
+		"typescript": "~6.0.3"
+	}
 }
