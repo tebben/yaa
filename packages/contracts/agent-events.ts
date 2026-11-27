@@ -200,6 +200,14 @@ export const agentEvent = z.discriminatedUnion("type", [
 			}),
 		),
 	}),
+	// The MCP servers and skills the session opened with, for a provider that
+	// lists them; sent each time the agent starts for the chat
+	// (docs/spec/09-mcp-skills.md).
+	z.object({
+		type: z.literal("context"),
+		mcpServers: z.array(z.string()),
+		skills: z.array(z.string()),
+	}),
 	z.object({ type: z.literal("title"), title: z.string() }),
 	// The session's config options, grouped by category (model,
 	// thought_level, mode); sent again whenever the agent changes them.

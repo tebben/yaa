@@ -8,7 +8,14 @@
 			{
 				"id": "claude",
 				"title": "Claude Code",
-				"capabilities": ["resume", "effort", "usage"],
+				"capabilities": [
+					"resume",
+					"effort",
+					"usage",
+					"discovery",
+					"mcp-toggling",
+					"skill-toggling"
+				],
 				"permissionModes": {
 					"option": "mode",
 					"values": {

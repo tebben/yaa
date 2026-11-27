@@ -17,6 +17,7 @@ import type { PanelFrame } from "@yaa/ui/dock";
 import { captureKeys } from "../commands/index.ts";
 import type { CoreConnection } from "../core-connection.ts";
 import type { TerminalLinks } from "../terminals/index.ts";
+import { createPanelAgentContext } from "./panel-agent-context.ts";
 import { createPanelAgents } from "./panel-agents.ts";
 import type { PanelHandlers } from "./panel-handlers.ts";
 import { createPanelLogs } from "./panel-logs.ts";
@@ -102,6 +103,11 @@ export const createPanelContext = ({
 			client,
 			worktree: worktree.id,
 			providers,
+			track,
+		}),
+		agentContext: createPanelAgentContext({
+			core,
+			worktree: worktree.id,
 			track,
 		}),
 		async pickFiles() {

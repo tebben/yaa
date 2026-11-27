@@ -51,7 +51,7 @@ let {
 {:else if item.kind === "stopped"}
 	<p class="note">{stoppedText(item.reason)}</p>
 {:else if item.kind === "resumed"}
-	<p class="note">Agent started again, resuming the session</p>
+	<p class="note">Agent started again</p>
 {:else if item.kind === "error"}
 	<p class="error">{item.message}</p>
 {/if}

@@ -4,11 +4,15 @@ import * as z from "zod";
 // The plugin host checks what a plugin returns against these.
 
 // What a provider declares in its manifest; the UI hides the rest.
+// `discovery`: it lists the MCP servers and skills its agent loads;
+// `mcp-toggling` and `skill-toggling`: its agent leaves out the ones yaa
+// switches off (docs/spec/09-mcp-skills.md).
 export const providerCapability = z.enum([
 	"resume",
 	"effort",
 	"usage",
-	"mcp-list",
+	"discovery",
+	"mcp-toggling",
 	"skill-toggling",
 ]);
 
@@ -30,10 +34,39 @@ export const authStatus = z.discriminatedUnion("state", [
 	z.strictObject({ state: z.literal("unknown") }),
 ]);
 
+// Where the agent finds an MCP server or a skill: its config for the user,
+// its config for this repository, or a file in the worktree's folder.
+export const contextLevel = z.enum(["user", "project", "worktree"]);
+
+// An MCP server or skill an agent's configuration names.
+export const discoveredItem = z.strictObject({
+	name: z.string().min(1),
+	level: contextLevel,
+	// The file or folder that names it, for the user to look at.
+	source: z.string(),
+	description: z.string().optional(),
+	// False when the agent's own configuration leaves it out, such as a
+	// project's MCP server the user has not approved; yaa cannot turn it on.
+	active: z.boolean(),
+});
+
+export const discovery = z.strictObject({
+	mcpServers: z.array(discoveredItem),
+	skills: z.array(discoveredItem),
+});
+
+// What yaa switches off for one session, by name.
+export const switchedOff = z.strictObject({
+	mcpServers: z.array(z.string()),
+	skills: z.array(z.string()),
+});
+
 const launch = {
 	args: z.array(z.string()).optional(),
 	// Added to the environment core starts the agent in.
 	env: z.record(z.string(), z.string()).optional(),
+	// Sent as `_meta` with the ACP request that opens or resumes the session.
+	sessionMeta: z.record(z.string(), z.unknown()).optional(),
 };
 
 // How core starts the agent process, which speaks ACP over its stdio.
@@ -67,3 +100,7 @@ export type Detection = z.infer<typeof detection>;
 export type AuthStatus = z.infer<typeof authStatus>;
 export type AgentSpawn = z.infer<typeof agentSpawn>;
 export type ProviderStatus = z.infer<typeof providerStatus>;
+export type ContextLevel = z.infer<typeof contextLevel>;
+export type DiscoveredItem = z.infer<typeof discoveredItem>;
+export type Discovery = z.infer<typeof discovery>;
+export type SwitchedOff = z.infer<typeof switchedOff>;

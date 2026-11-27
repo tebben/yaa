@@ -65,6 +65,15 @@ export const optionsSummary = (
 	});
 };
 
+const counted = (count: number, one: string) =>
+	`${count} ${one}${count === 1 ? "" : "s"}`;
+
+// The MCP servers and skills the agent started with, as the chat's header
+// counts them; nothing for a provider that lists none.
+export const contextSummary = ({ context }: Transcript): string | undefined =>
+	context &&
+	`${context.mcpServers.length} MCP · ${counted(context.skills.length, "skill")}`;
+
 // How a turn that did not finish ended, as the transcript says it.
 export const stoppedText = (
 	reason: Extract<TranscriptItem, { kind: "stopped" }>["reason"],

@@ -67,6 +67,9 @@ export const createPanelAgents = ({
 	async cancel(sessionId) {
 		await client.request("agent.cancel", { sessionId });
 	},
+	async restart(sessionId) {
+		await client.request("agent.restart", { sessionId });
+	},
 	async setConfig(sessionId, configId, value) {
 		await client.request("agent.setConfig", { sessionId, configId, value });
 	},

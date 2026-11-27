@@ -444,6 +444,9 @@ importers:
       '@yaa/plugin-api':
         specifier: workspace:*
         version: link:../../packages/plugin-api
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@yaa/plugin-build':
         specifier: workspace:*
@@ -554,6 +557,28 @@ importers:
 
   plugins/hello:
     dependencies:
+      '@yaa/plugin-api':
+        specifier: workspace:*
+        version: link:../../packages/plugin-api
+      '@yaa/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+    devDependencies:
+      '@yaa/plugin-build':
+        specifier: workspace:*
+        version: link:../../packages/plugin-build
+      svelte:
+        specifier: ~5.59.1
+        version: 5.59.1
+
+  plugins/mcp-skills:
+    dependencies:
+      '@lucide/svelte':
+        specifier: ~1.79.0
+        version: 1.79.0(svelte@5.59.1)
+      '@yaa/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@yaa/plugin-api':
         specifier: workspace:*
         version: link:../../packages/plugin-api

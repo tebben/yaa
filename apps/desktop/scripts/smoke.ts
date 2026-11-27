@@ -710,7 +710,7 @@ const resumeChat = async (page: Connection) => {
 	await press(page, ENTER);
 	await waitFor(page, `${CHAT}.value === "/markdown "`);
 	await press(page, ENTER);
-	await waitFor(page, `(${DOCK}).textContent.includes("resuming the session")`);
+	await waitFor(page, `(${DOCK}).textContent.includes("Agent started again")`);
 	await waitFor(page, `(${DOCK}).querySelector("pre code span[style]")`);
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };

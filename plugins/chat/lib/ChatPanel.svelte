@@ -23,7 +23,12 @@ const header = panel.header;
 <div class="chat">
 	{#if chat.shown}
 		{@const { id, transcript } = chat.shown}
-		<p class="agent">{chat.agent.join(" · ")}</p>
+		<p class="agent">
+			<span class="options">{chat.agent.join(" · ")}</span>
+			{#if chat.counts}
+				<span class="counts">{chat.counts}</span>
+			{/if}
+		</p>
 		{#if transcript.plan.length > 0}
 			<Plan entries={transcript.plan} />
 		{/if}
@@ -71,14 +76,22 @@ const header = panel.header;
 }
 
 .agent {
+	display: flex;
 	flex: none;
-	overflow: hidden;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	column-gap: var(--spacing-3);
 	padding: var(--spacing-1_5) var(--spacing-3);
 	border-bottom: 1px solid var(--color-border);
 	color: var(--color-text-muted);
 	font-size: var(--text-sm);
-	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.options {
+	overflow: hidden;
+	min-width: 0;
+	text-overflow: ellipsis;
 }
 
 .start {

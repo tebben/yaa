@@ -2,6 +2,7 @@
 // `copilot` CLI, which speaks ACP itself with `--acp`. Sign-in is the CLI's
 // own; yaa stores no credentials.
 import type { PluginBackend } from "@yaa/plugin-api";
+import { parseDiscovery } from "./lib/discovery.ts";
 import { parseVersion } from "./lib/parse-cli.ts";
 
 const MISSING =
@@ -11,6 +12,26 @@ export const activate: PluginBackend["activate"] = ({
 	providers,
 	programs,
 }) => {
+	const installed = async () => {
+		const path = await programs.find("copilot");
+		if (path === undefined) throw new Error(MISSING);
+		return path;
+	};
+	// What `copilot <kind> list` finds for a session in the folder.
+	const list = async (cwd: string, kind: "mcp" | "skill") => {
+		const { code, stdout, stderr } = await programs.run(await installed(), [
+			"-C",
+			cwd,
+			kind,
+			"list",
+			"--json",
+		]);
+		if (code !== 0) {
+			throw new Error(`\`copilot ${kind} list\` failed: ${stderr || stdout}`);
+		}
+		return stdout;
+	};
+
 	providers.register("copilot", {
 		async detect() {
 			const path = await programs.find("copilot");
@@ -31,10 +52,24 @@ export const activate: PluginBackend["activate"] = ({
 		async authStatus() {
 			return { state: "unknown" };
 		},
-		async spawn() {
-			const path = await programs.find("copilot");
-			if (path === undefined) throw new Error(MISSING);
-			return { run: "command", command: path, args: ["--acp"] };
+		async discover({ cwd }) {
+			const [mcpServers, skills] = await Promise.all([
+				list(cwd, "mcp"),
+				list(cwd, "skill"),
+			]);
+			return parseDiscovery({ mcpServers, skills });
+		},
+		// It takes no list of skills to leave out
+		// (docs/decisions/0040-switching-mcp-servers-and-skills.md).
+		async spawn({ off }) {
+			return {
+				run: "command",
+				command: await installed(),
+				args: [
+					"--acp",
+					...off.mcpServers.flatMap((name) => ["--disable-mcp-server", name]),
+				],
+			};
 		},
 	});
 };
