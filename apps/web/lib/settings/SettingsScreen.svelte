@@ -1,6 +1,7 @@
 <script lang="ts">
 import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
 import { Icon } from "@yaa/ui";
+import AgentsPage from "./AgentsPage.svelte";
 import SettingRow from "./SettingRow.svelte";
 import type { SettingsController } from "./settings.svelte.ts";
 
@@ -37,6 +38,9 @@ let { settings }: { settings: SettingsController } = $props();
 				<h1 class="text-title font-medium text-text">{page.title}</h1>
 				<p class="text-text-soft">{page.description}</p>
 			</header>
+			{#if page.view === "agents"}
+				<AgentsPage agents={settings.agents} />
+			{/if}
 			{#each page.groups as group (group.title)}
 				<section class="flex flex-col gap-2">
 					<h2 class="px-3 font-medium text-text">{group.title}</h2>

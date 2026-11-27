@@ -4,6 +4,7 @@ export {
 	type AgentConnection,
 	openAcpSession,
 } from "./lib/agents/acp-session.ts";
+export { createAgentInspector } from "./lib/agents/agent-inspector.ts";
 export {
 	type AgentLaunch,
 	nodeLaunch,

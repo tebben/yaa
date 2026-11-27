@@ -60,10 +60,13 @@ const describe = (error: unknown) =>
 // ACP's error for a session the agent opens only once the user signs in.
 const AUTH_REQUIRED = -32000;
 
+// The agent opens no session until the user signs in.
+export class SignInRequired extends Error {}
+
 // Says how to sign in, in the words of the methods the agent offers, such as
 // Copilot CLI's "Run `copilot login` in the terminal".
 const signInNeeded = (methods: readonly AuthMethod[]) =>
-	new Error(
+	new SignInRequired(
 		[
 			"The agent needs you to sign in.",
 			...methods.map(({ name, description }) => description ?? name),

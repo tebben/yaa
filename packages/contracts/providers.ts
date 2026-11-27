@@ -95,6 +95,28 @@ export const providerStatus = z.discriminatedUnion("state", [
 	}),
 ]);
 
+// An agent as the settings screen shows it: whether a session opens with it,
+// and the models it then offers.
+export const agentReport = z.discriminatedUnion("state", [
+	z.object({ state: z.literal("missing"), problem: z.string() }),
+	// `how` says how to sign in.
+	z.object({
+		state: z.literal("signed-out"),
+		version: z.string(),
+		how: z.string(),
+	}),
+	z.object({
+		state: z.literal("connected"),
+		version: z.string(),
+		account: z.string().optional(),
+		models: z.array(z.object({ value: z.string(), label: z.string() })),
+		// The model a new session starts on.
+		model: z.string().optional(),
+	}),
+	z.object({ state: z.literal("failed"), problem: z.string() }),
+]);
+
+export type AgentReport = z.infer<typeof agentReport>;
 export type ProviderCapability = z.infer<typeof providerCapability>;
 export type Detection = z.infer<typeof detection>;
 export type AuthStatus = z.infer<typeof authStatus>;

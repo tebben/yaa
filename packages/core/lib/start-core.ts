@@ -7,6 +7,7 @@ import type { PickTarget } from "@yaa/contracts/process-control";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
 import { createAgentContext } from "./agents/agent-context.ts";
+import { createAgentInspector } from "./agents/agent-inspector.ts";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
 import { createCoreServer } from "./core-server.ts";
 import { createWorktreeWatches } from "./files/worktree-watches.ts";
@@ -107,10 +108,18 @@ export const startCore = ({
 		// Sessions emit only after a client starts one, once `server` exists.
 		emit: (event) => server.emit("agent.event", event),
 	});
+	const agentInspector = createAgentInspector({
+		status: (provider) => plugins.providerStatus(provider),
+		launch: (provider, cwd, off) => plugins.launchAgent(provider, cwd, off),
+		dir: join(dataDir, "agent-scratch"),
+		log,
+		agentLog: createLogger(write, "agent"),
+	});
 	// Setup and teardown commands do not outlive the core. Main stops it with
 	// SIGTERM, which would end it without the exit handlers.
 	process.on("exit", steps.shutdown);
 	process.on("exit", () => agents.shutdown());
+	process.on("exit", agentInspector.shutdown);
 	process.on("SIGTERM", () => process.exit(0));
 	const projects = createProjects({ db, git, home: homedir() });
 	const allWorktrees = () =>
@@ -198,6 +207,7 @@ export const startCore = ({
 		discover: (provider, folders) => plugins.discover(provider, folders),
 	});
 	const server = createCoreServer({
+		agentInspector,
 		agentContext,
 		log,
 		recentLogs,

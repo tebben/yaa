@@ -293,7 +293,8 @@ const checkPanelBarPlacement = async (page: Connection) => {
 const PANEL_GAP = `document.querySelector('input[aria-label="Panel spacing"]')`;
 
 // The settings screen: a change applies to the page and lands in
-// settings.json, and a reset takes it out again.
+// settings.json, a reset takes it out again, and the Agents page shows the
+// fake agent's models.
 const useSettings = async (page: Connection, dataDir: string) => {
 	const settingsFile = join(dataDir, "settings.json");
 	const gap = (value: string) =>
@@ -321,6 +322,11 @@ const useSettings = async (page: Connection, dataDir: string) => {
 		(await readFile(settingsFile, "utf8")).includes("appearance.panelGap")
 			? undefined
 			: true,
+	);
+	await click(page, "Agents");
+	await waitFor(
+		page,
+		`document.querySelector('section[aria-label="Fake agent"]')?.textContent.includes("Fake Small")`,
 	);
 	await clickElement(
 		page,
@@ -987,7 +993,9 @@ try {
 	await checkPanelBarPlacement(first.page);
 	console.log("The panel bar opened a panel at the right edge.");
 	await useSettings(first.page, dataDir);
-	console.log("A setting changed the page and settings.json, and reset.");
+	console.log(
+		"A setting changed the page and settings.json, and reset; the agents showed.",
+	);
 	await useFilesPanel(first.page, join(dataDir, "repo"));
 	console.log("The files panel followed the folder, made and deleted a file.");
 	await useEditor(first.page, join(dataDir, "repo"));

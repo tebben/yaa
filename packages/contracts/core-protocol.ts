@@ -26,7 +26,7 @@ import {
 	place,
 	project,
 } from "./projects.ts";
-import { providerStatus } from "./providers.ts";
+import { agentReport, providerStatus } from "./providers.ts";
 import { settingChange, settingsState } from "./settings.ts";
 import {
 	terminal,
@@ -223,6 +223,12 @@ export const coreProtocol = defineProtocol({
 		"providers.status": {
 			params: z.object({ provider: z.string() }),
 			result: providerStatus,
+		},
+		// Opens a session without a prompt to see whether the provider's agent
+		// is connected and which models it offers; takes seconds.
+		"providers.inspect": {
+			params: z.object({ provider: z.string() }),
+			result: agentReport,
 		},
 		// What each provider that lists them finds for the worktree's agents,
 		// read anew on each call (docs/spec/09-mcp-skills.md).
