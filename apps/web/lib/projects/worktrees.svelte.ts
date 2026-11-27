@@ -1,3 +1,4 @@
+import type { Worktree } from "@yaa/contracts/projects";
 import { coreSettings } from "@yaa/contracts/settings";
 import type { NamingRules } from "@yaa/contracts/worktree-name";
 import * as z from "zod";
@@ -8,6 +9,7 @@ import {
 	branchPick,
 	finishPick,
 	namePick,
+	permissionModePick,
 	settledPick,
 } from "./worktree-picks.ts";
 
@@ -105,6 +107,15 @@ export const createWorktrees = ({
 		},
 		setDone(id: string, done: boolean) {
 			client.request("worktrees.setDone", { id, done }).catch(fail);
+		},
+		pickPermissionMode({ id, permissionMode }: Worktree) {
+			palette.pick(
+				permissionModePick(permissionMode, (mode) => {
+					client
+						.request("worktrees.setPermissionMode", { id, mode })
+						.catch(fail);
+				}),
+			);
 		},
 		// From the default branch.
 		create: (project: string) => named(project),

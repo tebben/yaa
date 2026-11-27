@@ -134,6 +134,14 @@ export const createPluginManager = ({
 			await providing(provider);
 			return host.client().request("provider.status", { provider });
 		},
+		// How the provider's agent takes the worktree's permission mode, if it
+		// does.
+		permissionModes(provider: string) {
+			return providers
+				.get(provider)
+				?.contributes.providers.find(({ id }) => id === provider)
+				?.permissionModes;
+		},
 		// The command that starts a provider's agent in the folder.
 		async launchAgent(provider: string, cwd: string): Promise<AgentLaunch> {
 			const owner = await providing(provider);

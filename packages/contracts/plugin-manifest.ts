@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { keybinding } from "./keybindings.ts";
+import { permissionModeMapping } from "./permission-modes.ts";
 import { providerCapability } from "./providers.ts";
 
 // plugin.json (docs/spec/03-plugins.md). Core reads it from disk and sends it
@@ -54,6 +55,8 @@ const pluginProvider = z.strictObject({
 	id: z.string(),
 	title: z.string().min(1),
 	capabilities: z.array(providerCapability).default([]),
+	// Without it, the agent runs in its own mode whatever the worktree's.
+	permissionModes: permissionModeMapping.exactOptional(),
 });
 
 // Running a contributed command activates the plugin anyway; onStartup

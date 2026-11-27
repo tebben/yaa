@@ -92,6 +92,7 @@ export const startCore = ({
 	});
 	const agents = createAgentSessions({
 		launch: (provider, cwd) => plugins.launchAgent(provider, cwd),
+		permissionModes: (provider) => plugins.permissionModes(provider),
 		worktree: (id) => worktree(id),
 		store: createChatStore(db),
 		record: states.append,

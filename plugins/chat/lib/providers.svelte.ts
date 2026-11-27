@@ -36,6 +36,9 @@ export const createProviders = (
 		},
 		title: (provider: string) =>
 			listed.find(({ id }) => id === provider)?.title ?? provider,
+		// How the provider applies the worktree's permission mode, if it does.
+		permissionModes: (provider: string) =>
+			listed.find(({ id }) => id === provider)?.permissionModes,
 		status: (provider: string) => statuses.get(provider),
 		checking: (provider: string) => checking.has(provider),
 		check,

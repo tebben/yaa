@@ -10,6 +10,7 @@ One line per term. Code, specs and agents use these names; add a term when a new
 - **Settled worktree:** a finished worktree kept on disk with its branch and chats, with nothing running in it, until it is reopened or removed.
 - **Provider:** a plugin that connects one agent CLI; supplies detection, spawn configuration and capabilities.
 - **Capability:** something a provider declares it supports, such as resume or skill toggling; the UI hides what is not declared.
+- **Permission mode:** how far a worktree's agents go without asking: ask for everything, ask for risky actions, or allow all.
 - **Session:** one running agent process with its ACP connection, owned by core, shown as a chat.
 - **Turn:** one user message and the agent's work until it ends, fails or is cancelled.
 - **Worktree state:** Idle, Running, Needs attention, Error or Done, derived from events.

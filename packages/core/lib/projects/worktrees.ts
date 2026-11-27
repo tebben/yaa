@@ -2,11 +2,13 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
+import type { PermissionMode } from "@yaa/contracts/permission-modes";
 import type {
 	BranchStatus,
 	CreateWorktreeResult,
 	FinishAction,
 	FinishCheck,
+	Worktree,
 } from "@yaa/contracts/projects";
 import type { CoreSettings } from "@yaa/contracts/settings";
 import { worktreeName } from "@yaa/contracts/worktree-name";
@@ -39,6 +41,7 @@ export type Worktrees = {
 	): Promise<{ problem?: string }>;
 	// Puts a settled worktree back in use.
 	reopen(id: string): { problem?: string };
+	setPermissionMode(id: string, mode: PermissionMode): void;
 	onChange(listener: () => void): void;
 };
 
@@ -99,6 +102,9 @@ export const createWorktrees = ({
 	const deleteById = db.prepare("DELETE FROM worktrees WHERE id = ?");
 	const setSettled = db.prepare(
 		"UPDATE worktrees SET settled_at = ? WHERE id = ?",
+	);
+	const setMode = db.prepare(
+		"UPDATE worktrees SET permission_mode = ? WHERE id = ?",
 	);
 	const listeners = new Set<() => void>();
 	const changed = () => {
@@ -203,12 +209,13 @@ export const createWorktrees = ({
 			} catch (error) {
 				return { problem: describe(error) };
 			}
-			const added = {
+			const added: Worktree = {
 				id: newId(),
 				branch: planned.branch,
 				path,
 				index: nextIndex(repo.id),
 				settled: false,
+				permissionMode: "ask",
 			};
 			insert.run(added.id, repo.id, added.branch, path, added.index, now());
 			changed();
@@ -319,6 +326,12 @@ export const createWorktrees = ({
 			setSettled.run(null, id);
 			changed();
 			return {};
+		},
+		setPermissionMode(id, mode) {
+			if (Number(setMode.run(mode, id).changes) === 0) {
+				throw new Error(`No worktree ${id}`);
+			}
+			changed();
 		},
 		onChange(listener) {
 			listeners.add(listener);

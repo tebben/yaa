@@ -16,7 +16,7 @@ Lands in: M1 for the database, migrations and the event log; M2 for the rest.
 
 Lands in: M2 for permission modes; M4 for the keyring, with the first secret (Jira).
 
-- Each worktree has an agent permission mode (ask for everything, ask for risky actions, allow all) applied through the provider where the agent supports it, and shown in the chat header next to the model.
+- Each worktree has an agent permission mode (ask for everything, ask for risky actions, allow all), "ask for everything" until set from the palette. A provider applies it where the agent supports it, by mapping each mode to values of one of the agent's config options in its manifest. Core sets it when a chat's agent starts or resumes and when the worktree's mode changes; an agent that offers none of a mode's values stays in its own mode. The chat header shows, next to the model, the mode the agent is really in (`docs/decisions/0038-permission-modes.md`).
 - Permission requests from agents are events, so they can be answered in the chat, in a panel, or by a workflow step.
 - Secrets (Jira token, API keys) are stored in the operating system keyring, never in the JSON config or the repository.
 

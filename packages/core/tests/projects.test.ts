@@ -94,6 +94,7 @@ const main = {
 	path: "/repo",
 	index: 0,
 	settled: false,
+	permissionMode: "ask",
 };
 
 describe("projects", () => {
@@ -178,6 +179,7 @@ describe("worktrees", () => {
 				path: "/home/me/wt/repo/PROJ-482-fix-tile-cache",
 				index: 1,
 				settled: false,
+				permissionMode: "ask",
 			},
 		});
 		expect(shared).toEqual([
