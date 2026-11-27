@@ -218,6 +218,19 @@ const type = (page: Connection, text: string) =>
 
 const clickElement = async (page: Connection, element: string) => {
 	await waitFor(page, element);
+	await evaluate(
+		page,
+		`void (${element}).scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" })`,
+		z.undefined(),
+	);
+	await waitFor(
+		page,
+		`(() => {
+			const target = (${element});
+			const rect = target.getBoundingClientRect();
+			return target.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+		})()`,
+	);
 	const { x, y } = await evaluate(
 		page,
 		`(() => {
@@ -419,6 +432,12 @@ const useEditor = async (page: Connection, repo: string) => {
 };
 
 const useMarkdownPreview = async (page: Connection, repo: string) => {
+	await page.send("Emulation.setDeviceMetricsOverride", {
+		width: 1280,
+		height: 900,
+		deviceScaleFactor: 1,
+		mobile: false,
+	});
 	await writeFile(
 		join(repo, "preview.md"),
 		"# Heading\n\n![pixel](pixel.png)\n\n![remote](https://example.invalid/a.png)\n\n```mermaid\ngraph TD\nA-->B\n```\n",
@@ -482,6 +501,7 @@ const useMarkdownPreview = async (page: Connection, repo: string) => {
 	await press(page, toggle);
 	await waitFor(page, `document.activeElement?.closest(".monaco-editor")`);
 	await waitFor(page, editorShows("Unsaved"));
+	await page.send("Emulation.clearDeviceMetricsOverride");
 };
 
 // Optional, as after a reload no dock is there for a moment.
