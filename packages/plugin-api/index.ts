@@ -14,6 +14,9 @@ import type {
 	AgentSpawn,
 	AuthStatus,
 	Detection,
+	DiscoveredItem,
+	Discovery,
+	SwitchedOff,
 } from "@yaa/contracts/providers";
 import type { Handlers } from "@yaa/contracts/server";
 import type {
@@ -24,7 +27,16 @@ import type {
 	GitFiles,
 } from "@yaa/contracts/worktree-files";
 
-export type { AgentSpawn, AuthStatus, Detection, Disposable };
+export type {
+	AgentSpawn,
+	AuthStatus,
+	Detection,
+	DirEntry,
+	DiscoveredItem,
+	Discovery,
+	Disposable,
+	SwitchedOff,
+};
 
 export type CommandHandler = () => void | Promise<void>;
 
@@ -42,8 +54,13 @@ export type AgentProvider = {
 	detect(): Promise<Detection>;
 	// Asked only of an agent `detect` found.
 	authStatus(): Promise<AuthStatus>;
-	// How to start the agent for a session in the folder.
-	spawn(session: { cwd: string }): Promise<AgentSpawn>;
+	// How to start the agent for a session in the folder. `off` names what
+	// yaa switches off, which a provider with `mcp-toggling` or
+	// `skill-toggling` has the agent leave out (docs/spec/09-mcp-skills.md).
+	spawn(session: { cwd: string; off: SwitchedOff }): Promise<AgentSpawn>;
+	// For a provider with `discovery`: the MCP servers and skills the agent's
+	// configuration names for a session in the folder.
+	discover?(session: { cwd: string }): Promise<Discovery>;
 };
 
 // How a program that ran to its end ended.
@@ -68,6 +85,14 @@ export type PluginContext = {
 		// Runs a program to its end, without input, whatever its exit code.
 		// One that cannot start or takes more than 10 seconds throws.
 		run(path: string, args: string[]): Promise<ProgramResult>;
+	};
+	// Files outside the worktrees, read only, such as an agent's own
+	// configuration. Paths are absolute; a leading ~ is the home folder.
+	readonly userFiles: {
+		// The file's text, or undefined when there is no such file.
+		read(path: string): Promise<string | undefined>;
+		// The folder's entries, none when there is no such folder.
+		readDir(path: string): Promise<DirEntry[]>;
 	};
 	// Answers the requests of the plugin's own UI, in a protocol the plugin
 	// defines with `defineProtocol`. One per plugin.

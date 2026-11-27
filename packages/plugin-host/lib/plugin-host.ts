@@ -20,8 +20,10 @@ import type {
 	PluginContext,
 } from "@yaa/plugin-api";
 import { backendModule } from "./backend-module.ts";
+import { discovery } from "@yaa/contracts/providers";
 import { createProgramsApi } from "./programs.ts";
 import { providerStatusOf } from "./provider-status.ts";
+import { createUserFilesApi } from "./user-files.ts";
 import { createStorageApi, createWorktreeApi } from "./worktree-api.ts";
 
 type Service = (method: string, params: unknown) => Promise<unknown>;
@@ -65,6 +67,7 @@ export const startPluginHost = (port: Port) => {
 		return found;
 	};
 	const programs = createProgramsApi();
+	const userFiles = createUserFilesApi();
 	const { serving, calling } = splitPort(port);
 	const core = createClient(pluginCoreProtocol);
 	const api = createWorktreeApi(core);
@@ -93,8 +96,15 @@ export const startPluginHost = (port: Port) => {
 			},
 			"provider.status": (params) =>
 				providerStatusOf(provider(params.provider)),
-			"provider.spawn": async (params) =>
-				provider(params.provider).spawn({ cwd: params.cwd }),
+			"provider.spawn": async ({ provider: id, cwd, off }) =>
+				provider(id).spawn({ cwd, off }),
+			"provider.discover": async ({ provider: id, cwd }) => {
+				const { discover } = provider(id);
+				if (discover === undefined) {
+					throw new Error(`Provider ${id} lists no MCP servers or skills`);
+				}
+				return discovery.parse(await discover({ cwd }));
+			},
 			"plugin.call": async ({ id, method, params }) => {
 				const service = services.get(id);
 				if (service === undefined) {
@@ -138,6 +148,7 @@ export const startPluginHost = (port: Port) => {
 		commands: { register: registrar(id, declared.commands, handlers) },
 		providers: { register: registrar(id, declared.providers, providers) },
 		programs,
+		userFiles,
 		serve(protocol, served) {
 			if (services.has(id)) throw new Error(`Plugin ${id} serves twice`);
 			const service = serviceOf(id, protocol, served);

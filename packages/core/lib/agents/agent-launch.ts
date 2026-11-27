@@ -4,6 +4,9 @@ export type AgentLaunch = {
 	args: string[];
 	// Added to core's own environment.
 	env: Record<string, string>;
+	// Not for the process: sent as `_meta` with the ACP request that opens or
+	// resumes the session.
+	sessionMeta?: Record<string, unknown>;
 };
 
 // Runs a script with Electron's binary in Node mode. The variable that

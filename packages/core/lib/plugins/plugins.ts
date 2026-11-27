@@ -3,6 +3,7 @@ import { errorData, type Logger, type LogRecord } from "@yaa/contracts/log";
 import type { PluginEvent } from "@yaa/contracts/plugin-host-protocol";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
 import type { Port } from "@yaa/contracts/protocol";
+import type { SwitchedOff } from "@yaa/contracts/providers";
 import { type AgentLaunch, nodeLaunch } from "../agents/agent-launch.ts";
 import { createPluginHostSupervisor } from "./plugin-host-supervisor.ts";
 import { readPluginFolders } from "./read-plugin-folders.ts";
@@ -134,20 +135,35 @@ export const createPluginManager = ({
 			await providing(provider);
 			return host.client().request("provider.status", { provider });
 		},
-		// The command that starts a provider's agent in the folder.
-		async launchAgent(provider: string, cwd: string): Promise<AgentLaunch> {
+		// The MCP servers and skills the provider's agent would load in the
+		// folder.
+		async discover(provider: string, cwd: string) {
+			await providing(provider);
+			return host.client().request("provider.discover", { provider, cwd });
+		},
+		// The command that starts a provider's agent in the folder, with what
+		// yaa switches off.
+		async launchAgent(
+			provider: string,
+			cwd: string,
+			off: SwitchedOff,
+		): Promise<AgentLaunch> {
 			const owner = await providing(provider);
 			const spawn = await host
 				.client()
-				.request("provider.spawn", { provider, cwd });
-			const { args = [], env = {} } = spawn;
+				.request("provider.spawn", { provider, cwd, off });
+			const { args = [], env = {}, sessionMeta } = spawn;
+			const meta = sessionMeta === undefined ? {} : { sessionMeta };
 			if (spawn.run === "command") {
-				return { command: spawn.command, args, env };
+				return { command: spawn.command, args, env, ...meta };
 			}
 			if (owner.agent === undefined) {
 				throw new Error(`Plugin ${owner.id} declares no agent module`);
 			}
-			return nodeLaunch(join(dir, owner.id, owner.agent), args, env);
+			return {
+				...nodeLaunch(join(dir, owner.id, owner.agent), args, env),
+				...meta,
+			};
 		},
 		async runCommand(command: string) {
 			const owner = owners.get(command);

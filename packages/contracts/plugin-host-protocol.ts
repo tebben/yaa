@@ -3,7 +3,12 @@ import { defineProtocol } from "./lib/define.ts";
 import { logRecord } from "./log.ts";
 import { pluginId } from "./plugin-manifest.ts";
 import { worktree } from "./projects.ts";
-import { agentSpawn, providerStatus } from "./providers.ts";
+import {
+	agentSpawn,
+	discovery,
+	providerStatus,
+	switchedOff,
+} from "./providers.ts";
 import {
 	dirEntry,
 	fileContent,
@@ -47,10 +52,21 @@ export const pluginHostProtocol = defineProtocol({
 			params: z.object({ provider: z.string() }),
 			result: providerStatus,
 		},
-		// How to start the provider's agent for a session in the folder.
+		// How to start the provider's agent for a session in the folder, with
+		// what yaa switches off.
 		"provider.spawn": {
-			params: z.object({ provider: z.string(), cwd: z.string() }),
+			params: z.object({
+				provider: z.string(),
+				cwd: z.string(),
+				off: switchedOff,
+			}),
 			result: agentSpawn,
+		},
+		// The MCP servers and skills the agent would load in the folder, read
+		// anew on each call.
+		"provider.discover": {
+			params: z.object({ provider: z.string(), cwd: z.string() }),
+			result: discovery,
 		},
 		// A request from a plugin's UI to what its backend serves. The
 		// plugin's own protocol types `params` and `result`.

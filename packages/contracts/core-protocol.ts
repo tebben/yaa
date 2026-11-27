@@ -1,5 +1,11 @@
 import * as z from "zod";
 import {
+	contextKind,
+	contextLayer,
+	layeredToggles,
+	providerDiscovery,
+} from "./agent-context.ts";
+import {
 	agentEvent,
 	promptAttachment,
 	questionAnswer,
@@ -197,6 +203,30 @@ export const coreProtocol = defineProtocol({
 			params: z.object({ provider: z.string() }),
 			result: providerStatus,
 		},
+		// What each provider that lists them finds for the worktree's agents,
+		// read anew on each call (docs/spec/09-mcp-skills.md).
+		"context.discover": {
+			params: z.object({ worktree: z.string() }),
+			result: z.object({ providers: z.array(providerDiscovery) }),
+		},
+		// What is switched off for the worktree, at each layer;
+		// `context.changed` says when any layer changes.
+		"context.toggles": {
+			params: z.object({ worktree: z.string() }),
+			result: layeredToggles,
+		},
+		// Switches an item, or without `name` the whole list, at a layer of the
+		// worktree; without `enabled` the layer stops setting it.
+		"context.set": {
+			params: z.object({
+				worktree: z.string(),
+				layer: contextLayer,
+				kind: contextKind,
+				name: z.string().optional(),
+				enabled: z.boolean().optional(),
+			}),
+			result: z.object({}),
+		},
 		// Starts the provider's agent in a worktree, with a session on it.
 		"agent.start": {
 			params: z.object({ worktree: z.string(), provider: z.string() }),
@@ -236,6 +266,13 @@ export const coreProtocol = defineProtocol({
 			}),
 			result: z.object({}),
 		},
+		// Ends the chat's agent and starts it again on the same session, so it
+		// picks up what changed, such as the MCP servers switched off.
+		// Refused while a turn runs.
+		"agent.restart": {
+			params: z.object({ sessionId: z.string() }),
+			result: z.object({}),
+		},
 		"agent.cancel": {
 			params: z.object({ sessionId: z.string() }),
 			result: z.object({}),
@@ -273,6 +310,7 @@ export const coreProtocol = defineProtocol({
 		"keybindings.changed": keybindingsState,
 		"projects.changed": z.object({ projects: z.array(project) }),
 		"worktrees.statesChanged": worktreeStates,
+		"context.changed": z.object({}),
 	},
 });
 

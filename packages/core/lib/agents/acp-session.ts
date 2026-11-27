@@ -32,6 +32,9 @@ export type AcpSessionOptions = {
 	cwd: string;
 	// The agent's id of a session to resume instead of starting one.
 	resume?: string;
+	// Sent as `_meta` with the request that opens or resumes the session,
+	// from the provider.
+	meta?: Record<string, unknown> | undefined;
 	log: Logger;
 	emit(event: AgentEvent): void;
 };
@@ -66,9 +69,15 @@ export const openAcpSession = async ({
 	agent: { stream, exited },
 	cwd,
 	resume,
+	meta,
 	log,
 	emit,
 }: AcpSessionOptions): Promise<AcpSession> => {
+	const setup = {
+		cwd,
+		mcpServers: [],
+		...(meta === undefined ? {} : { _meta: meta }),
+	};
 	const permissions = new Map<
 		string,
 		(response: RequestPermissionResponse) => void
@@ -181,10 +190,7 @@ export const openAcpSession = async ({
 		});
 		const images = agentCapabilities?.promptCapabilities?.image === true;
 		if (resume === undefined) {
-			const session = await agent.request("session/new", {
-				cwd,
-				mcpServers: [],
-			});
+			const session = await agent.request("session/new", setup);
 			return { ...session, images };
 		}
 		// Resuming keeps the agent's context without replaying it; an agent that
@@ -192,16 +198,15 @@ export const openAcpSession = async ({
 		// (docs/decisions/0014-acp-coverage.md).
 		if (agentCapabilities?.sessionCapabilities?.resume != null) {
 			const session = await agent.request("session/resume", {
+				...setup,
 				sessionId: resume,
-				cwd,
-				mcpServers: [],
 			});
 			return { ...session, sessionId: resume, images };
 		}
 		if (agentCapabilities?.loadSession === true) {
 			replaying = true;
 			const session = await agent
-				.request("session/load", { sessionId: resume, cwd, mcpServers: [] })
+				.request("session/load", { ...setup, sessionId: resume })
 				.finally(() => {
 					replaying = false;
 				});
