@@ -1,0 +1,21 @@
+{
+	"name": "@yaa/plugin-copilot",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./main": "./main.ts",
+		"./cli": "./cli.ts",
+		"./plugin.json": "./plugin.json"
+	},
+	"scripts": {
+		"build": "yaa-plugin-build .",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@yaa/plugin-api": "workspace:*"
+	},
+	"devDependencies": {
+		"@yaa/plugin-build": "workspace:*"
+	}
+}
