@@ -1,4 +1,4 @@
-# 0040 Keybinding scope comes from the command and the palette
+# 0041 Keybinding scope comes from the command and the palette
 
 Status: decided, 2026-11-27.
 
