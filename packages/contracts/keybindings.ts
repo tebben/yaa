@@ -20,6 +20,9 @@ export const keybinding = z.strictObject({
 	key,
 	command,
 	when: z.string().min(1).optional(),
+	// A panel's command has its keys only while that panel is focused, unless
+	// the binding says it works anywhere.
+	global: z.boolean().optional(),
 });
 
 // keybindings.json as core resolved it, sent to clients.

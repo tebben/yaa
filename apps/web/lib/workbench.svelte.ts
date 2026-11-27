@@ -98,10 +98,13 @@ export const createWorkbench = (core: CoreConnection) => {
 		inputFocus: isTextEntry(document.activeElement),
 		textField: isTextField(document.activeElement),
 		"focus.parked": isParked(document.activeElement),
-		"palette.open": palette.open,
 		"settings.open": settings.open,
 	});
-	const commands = createCommands({ client, context });
+	const commands = createCommands({
+		client,
+		context,
+		paletteOpen: () => palette.open,
+	});
 	const palette = createPalette({
 		commands: () => commands.listed(context()),
 		keysFor: commands.keysFor,

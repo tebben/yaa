@@ -1,5 +1,5 @@
 // What the app knows at the moment a key is pressed or the palette opens:
-// `panel.kind`, `inputFocus`, `palette.open`. Plugins add keys under their
+// `panel.kind`, `inputFocus`, `worktree.open`. Plugins add keys under their
 // own namespace.
 export type ContextValue = string | boolean | undefined;
 export type Context = Readonly<Record<string, ContextValue>>;

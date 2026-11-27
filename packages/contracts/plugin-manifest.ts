@@ -175,7 +175,16 @@ export const pluginManifest = z
 				}
 			}
 		});
-		keybindings.forEach(({ command }, index) => {
+		keybindings.forEach(({ command, global }, index) => {
+			if (
+				global !== undefined &&
+				commands.some(({ id, panel }) => id === command && panel === undefined)
+			) {
+				issue(
+					["contributes", "keybindings", index, "global"],
+					"Only a panel's command has keys bound to its panel",
+				);
+			}
 			if (!commandIds.has(command)) {
 				issue(
 					["contributes", "keybindings", index, "command"],

@@ -16,11 +16,11 @@ describe("parseWhen", () => {
 	});
 
 	it("compares with == and != against bare or quoted values", () => {
-		const context = { "panel.kind": "terminal", "palette.open": true };
+		const context = { "panel.kind": "terminal", "worktree.open": true };
 		expect(holds("panel.kind == terminal", context)).toBe(true);
 		expect(holds("panel.kind == 'chat'", context)).toBe(false);
 		expect(holds("panel.kind != chat", context)).toBe(true);
-		expect(holds("palette.open == true", context)).toBe(true);
+		expect(holds("worktree.open == true", context)).toBe(true);
 	});
 
 	it("combines with !, && before ||, and parentheses", () => {

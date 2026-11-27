@@ -179,6 +179,7 @@ export const createPlugins = ({
 						};
 						return {
 							...command,
+							panel,
 							enabled: () => target() !== undefined,
 							run: () => {
 								const open = target();
