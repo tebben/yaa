@@ -35,7 +35,8 @@ export const createChatPanel = (panel: PanelContext) => {
 	let chosen = $state<string>();
 	// Whether the panel asks which agent a new chat is with.
 	let asking = $state(false);
-	let starting = $state(false);
+	// The provider whose chat is starting.
+	let starting = $state<string>();
 
 	const shown = $derived(
 		asking ? undefined : (sessions.get(chosen ?? "") ?? sessions.all.at(-1)),
@@ -52,8 +53,8 @@ export const createChatPanel = (panel: PanelContext) => {
 	};
 
 	const start = async (provider: string) => {
-		if (starting) return;
-		starting = true;
+		if (starting !== undefined) return;
+		starting = provider;
 		failure = undefined;
 		try {
 			const id = await panel.agents.start(provider);
@@ -62,7 +63,7 @@ export const createChatPanel = (panel: PanelContext) => {
 		} catch (reason) {
 			failed(reason);
 		} finally {
-			starting = false;
+			starting = undefined;
 		}
 	};
 
