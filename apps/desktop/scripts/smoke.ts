@@ -793,7 +793,7 @@ const NEXT_WORKTREE: Key = {
 	modifiers: ALT,
 };
 
-// The window's size while timing, as CI's screen is smaller than a real one.
+// One window size for every timing, whatever the screen's.
 const atDesktopSize = async <T>(
 	page: Connection,
 	measure: () => Promise<T>,
