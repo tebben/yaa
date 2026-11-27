@@ -1,6 +1,15 @@
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const env = { ...process.env };
+// Git runs a hook with variables that name this repository, GIT_DIR among
+// them in a linked worktree. The tests make repositories of their own, and
+// with those set their git commands change this one instead.
+const repositoryVariables = execFileSync(
+	"git",
+	["rev-parse", "--local-env-vars"],
+	{ encoding: "utf8" },
+);
+for (const name of repositoryVariables.split("\n")) delete env[name];
 if (process.platform === "linux") {
 	delete env["WAYLAND_DISPLAY"];
 	env["XDG_SESSION_TYPE"] = "x11";
