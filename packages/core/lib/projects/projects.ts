@@ -103,6 +103,7 @@ export const createProjects = ({
 				branch: defaultBranch,
 				path: checkout,
 				index: 0,
+				settled: false,
 			};
 			const at = now();
 			db.exec("BEGIN");

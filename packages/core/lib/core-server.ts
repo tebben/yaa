@@ -78,6 +78,7 @@ export const createCoreServer = ({
 			"worktrees.finishCheck": ({ id }) => worktrees.finishCheck(id),
 			"worktrees.finish": ({ id, action, force }) =>
 				worktrees.finish(id, action, force),
+			"worktrees.reopen": ({ id }) => worktrees.reopen(id),
 			"worktrees.states": () => ({ states: states.states() }),
 			"worktrees.setDone": ({ id, done }) => {
 				states.append({ type: "worktree.done.set", worktree: id, done });

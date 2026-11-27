@@ -4,7 +4,12 @@ import * as z from "zod";
 import type { CoreClient } from "../core-connection.ts";
 import type { PaletteController } from "../palette/index.ts";
 import type { ProjectsController } from "./projects.svelte.ts";
-import { branchPick, finishPick, namePick } from "./worktree-picks.ts";
+import {
+	branchPick,
+	finishPick,
+	namePick,
+	settledPick,
+} from "./worktree-picks.ts";
 
 type WorktreesOptions = {
 	client: CoreClient;
@@ -84,6 +89,13 @@ export const createWorktrees = ({
 		);
 	};
 
+	const reopen = (project: string, id: string) => {
+		client.request("worktrees.reopen", { id }).then(({ problem }) => {
+			if (problem === undefined) projects.go({ project, worktree: id });
+			else report(problem);
+		}, fail);
+	};
+
 	return {
 		get creating() {
 			return creating;
@@ -110,8 +122,15 @@ export const createWorktrees = ({
 					);
 				}, fail);
 		},
+		// Puts a settled worktree back in use and opens it.
+		reopen,
+		// Picks a settled worktree of any project to reopen.
+		pickSettled() {
+			palette.pick(settledPick(projects.projects, reopen));
+		},
 		// Says what finishing would lose, then asks how far to go. A finished
-		// worktree that was open gives way to the project's main checkout.
+		// or settled worktree that was open gives way to the project's main
+		// checkout.
 		finish(project: string, id: string) {
 			const found = find(project);
 			const worktree = found?.worktrees.find((item) => item.id === id);
@@ -121,6 +140,7 @@ export const createWorktrees = ({
 					finishPick({
 						branch: worktree.branch,
 						defaultBranch: found.defaultBranch,
+						settled: worktree.settled,
 						check,
 						accept(action, force) {
 							finishing = new Set([...finishing, id]);

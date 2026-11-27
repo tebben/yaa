@@ -219,15 +219,24 @@ export const createAgentSessions = ({
 			log.info("agent session started", { sessionId: id, worktree, provider });
 			return id;
 		},
-		// Forgets the chats of worktrees no longer listed and ends their agents.
-		keep(worktrees: ReadonlySet<string>) {
+		// Ends the agents of worktrees not in use, such as settled ones, whose
+		// chats resume when they are next needed, and forgets the chats of
+		// worktrees no longer listed.
+		keep({
+			listed: kept,
+			inUse,
+		}: {
+			listed: ReadonlySet<string>;
+			inUse: ReadonlySet<string>;
+		}) {
 			for (const [id, chat] of chats) {
-				if (worktrees.has(chat.worktree)) continue;
+				if (inUse.has(chat.worktree)) continue;
 				chat.connection?.acp?.close();
-				chats.delete(id);
+				delete chat.connection;
+				if (!kept.has(chat.worktree)) chats.delete(id);
 			}
 			for (const [agent, worktree] of agents) {
-				if (!worktrees.has(worktree)) stop(agent);
+				if (!inUse.has(worktree)) stop(agent);
 			}
 		},
 		// For when core exits, which leaves no time to wait for them.

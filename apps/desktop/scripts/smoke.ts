@@ -526,14 +526,35 @@ const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
 			? true
 			: undefined,
 	);
-	await press(page, OPEN_PALETTE);
-	await waitFor(page, PALETTE);
-	await type(page, "Finish worktree");
+	const finish = async () => {
+		await press(page, OPEN_PALETTE);
+		await waitFor(page, PALETTE);
+		await type(page, "Finish worktree");
+		await press(page, ENTER);
+		await waitFor(
+			page,
+			`document.querySelector('[role="dialog"][aria-label="Finish 1-smoke"]')`,
+		);
+	};
+	// Settled, it folds away under the project and reopens from the palette.
+	await finish();
+	await type(page, "Settle");
 	await press(page, ENTER);
 	await waitFor(
 		page,
-		`document.querySelector('[role="dialog"][aria-label="Finish 1-smoke"]')`,
+		`${HEADER}.textContent.includes("main") && ${MENU}.textContent.includes("Settled") && !${MENU}.textContent.includes("1-smoke")`,
 	);
+	await press(page, OPEN_PALETTE);
+	await waitFor(page, PALETTE);
+	await type(page, "Reopen settled worktree");
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`document.querySelector('[role="option"]')?.textContent.includes("1-smoke")`,
+	);
+	await press(page, ENTER);
+	await waitFor(page, `${HEADER}.textContent.includes("1-smoke")`);
+	await finish();
 	await press(page, ENTER);
 	await waitFor(
 		page,
@@ -674,7 +695,9 @@ try {
 	await openProject(first.page);
 	console.log("The project's overview, search and main checkout opened.");
 	await createAndFinishWorktree(first.page, dataDir);
-	console.log("A worktree was created, set up, torn down and finished.");
+	console.log(
+		"A worktree was created, set up, settled, reopened, torn down and finished.",
+	);
 	await checkRailPlacement(first.page);
 	console.log("The rail opened a panel at the right edge.");
 	await useFilesPanel(first.page, join(dataDir, "repo"));

@@ -82,4 +82,7 @@ export const migrations: Migrations = [
 		key TEXT PRIMARY KEY,
 		value TEXT NOT NULL
 	) STRICT;`,
+	// 8: when a worktree was settled: put away with its folder, branch and
+	// chats kept (docs/spec/02-worktrees.md); null while it is in use.
+	"ALTER TABLE worktrees ADD COLUMN settled_at INTEGER;",
 ];

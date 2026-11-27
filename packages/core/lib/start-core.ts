@@ -120,13 +120,18 @@ export const startCore = ({
 	});
 	const terminals = createTerminals({ db, worktree, log });
 	process.on("exit", terminals.shutdown);
-	// A finished worktree, or one of a removed project, is watched no longer,
-	// and its agents and terminals end.
+	// A finished or settled worktree, or one of a removed project, is watched
+	// no longer, and its agents and terminals end. Only a settled one keeps
+	// its chats.
 	const dropGone = () => {
-		const listed = new Set(allWorktrees().map(({ id }) => id));
-		watches.keep(listed);
-		agents.keep(listed);
-		terminals.keep(listed);
+		const all = allWorktrees();
+		const listed = new Set(all.map(({ id }) => id));
+		const inUse = new Set(
+			all.flatMap(({ id, settled }) => (settled ? [] : [id])),
+		);
+		watches.keep(inUse);
+		agents.keep({ listed, inUse });
+		terminals.keep(inUse);
 	};
 	projects.onChange(dropGone);
 	worktrees.onChange(dropGone);

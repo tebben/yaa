@@ -97,7 +97,7 @@ describe("plugin store", () => {
 	it("keeps values apart by plugin and worktree, and drops them with the worktree", () => {
 		const db = openDatabase(":memory:");
 		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
-			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0);`);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL);`);
 		const store = createPluginStore(db);
 		const at = { plugin: "editor", worktree: "a", key: "tabs" };
 		store.set(at, "first");
@@ -116,8 +116,8 @@ describe("layout store", () => {
 	it("keeps the last layout saved for each worktree, and drops it with the worktree", () => {
 		const db = openDatabase(":memory:");
 		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
-			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0);
-			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0);`);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL);
+			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0, NULL);`);
 		const layouts = createLayoutStore(db);
 		expect(layouts.get("a")).toBeUndefined();
 		layouts.save("a", "first");
@@ -135,8 +135,8 @@ describe("chat store", () => {
 	it("reads chats back oldest first with their events, and drops them with the worktree", () => {
 		const db = openDatabase(":memory:");
 		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
-			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0);
-			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0);`);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL);
+			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0, NULL);`);
 		let clock = 0;
 		const chats = createChatStore(db, () => clock++);
 		chats.add({
