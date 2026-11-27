@@ -15,6 +15,7 @@ import {
 import { editTurn } from "../turns/edit.ts";
 import { failingTurn } from "../turns/failing.ts";
 import { markdownTurn } from "../turns/markdown.ts";
+import { streamTurn } from "../turns/stream.ts";
 import type { TurnScript, TurnStep } from "./turn-script.ts";
 
 export type FakeAgentOptions = {
@@ -23,7 +24,12 @@ export type FakeAgentOptions = {
 	delayScale?: number;
 };
 
-const scripts: readonly TurnScript[] = [editTurn, markdownTurn, failingTurn];
+const scripts: readonly TurnScript[] = [
+	editTurn,
+	markdownTurn,
+	streamTurn,
+	failingTurn,
+];
 
 // A prompt that is a script's slash command plays that script.
 const scriptFor = (prompt: PromptRequest["prompt"]): TurnScript => {

@@ -24,5 +24,5 @@ jobs:
       # the runner allows them, as the deb's AppArmor profile will
       # (docs/spec/12-stack-packaging.md).
       - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - run: xvfb-run --auto-servernum pnpm run smoke
+      - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" pnpm run smoke
         timeout-minutes: 5

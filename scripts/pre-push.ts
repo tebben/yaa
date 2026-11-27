@@ -25,7 +25,15 @@ if (process.platform === "linux") {
 
 run("pnpm", ["run", "check:all"]);
 if (process.platform === "linux") {
-	run("xvfb-run", ["--auto-servernum", "pnpm", "run", "smoke"]);
+	// The window fits itself to the screen, and some distributions' default,
+	// 640x480, is too small for the smoke test.
+	run("xvfb-run", [
+		"--auto-servernum",
+		"--server-args=-screen 0 1280x1024x24",
+		"pnpm",
+		"run",
+		"smoke",
+	]);
 } else {
 	run("pnpm", ["run", "smoke"]);
 }
