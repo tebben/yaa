@@ -9,11 +9,13 @@
 // still there after a reload, the palette runs the hello plugin's command, and
 // the fake agent plays a turn into the chat panel, with the worktree's state
 // following it, then a turn of markdown picked as a slash command, whose file
-// link opens the editor. A restart brings the editor's tabs back and opens the
-// terminal where it was. It prints the launch and palette
-// open times against the targets in docs/spec/12-stack-packaging.md and fails
-// only when a step fails
-// (docs/decisions/0022-smoke-test.md). Run `pnpm run smoke`, which builds first.
+// link opens the editor. A second worktree is opened, where the fake agent
+// streams a long reply, and keys switch between it and the main checkout. A
+// restart brings the editor's tabs back and opens the terminal where it was.
+// It prints the launch, palette open and worktree switch times and the frames
+// of the streamed reply against the targets in docs/spec/12-stack-packaging.md,
+// and fails only when a step fails (docs/decisions/0022-smoke-test.md). Run
+// `pnpm run smoke`, which builds first.
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
 import {
@@ -34,11 +36,21 @@ import { openDatabase } from "@yaa/core/storage";
 import { z } from "zod";
 import { outDir } from "./bundle.ts";
 import { type Connection, connect, evaluate } from "./cdp.ts";
+import {
+	frameGapsDuring,
+	keyToPaintMs,
+	median,
+	reportFrames,
+	reportTime,
+} from "./measure.ts";
 
 const LAUNCH_TARGET_MS = 1500;
 const PALETTE_TARGET_MS = 50;
+const SWITCH_TARGET_MS = 100;
 const WARM_LAUNCHES = 3;
 const PALETTE_OPENS = 5;
+// There and back again, this often.
+const SWITCH_ROUNDS = 5;
 const STEP_TIMEOUT_MS = 15_000;
 // Longer than a step, whose own deadline runs in the page.
 const COMMAND_TIMEOUT_MS = 20_000;
@@ -629,21 +641,27 @@ const openProject = async (page: Connection) => {
 
 const HEADER = `document.querySelector("header")`;
 
-// Creates a worktree from the palette, which opens its grid, then finishes
-// it, removing its folder and branch, which opens the main checkout again.
-const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
+// Creates a worktree from the palette, which opens its grid.
+const createWorktree = async (page: Connection, name: string) => {
 	await press(page, NEW_WORKTREE);
 	await waitFor(
 		page,
 		`document.querySelector('[role="dialog"][aria-label="New worktree"]')`,
 	);
-	await type(page, "1 smoke");
+	await type(page, name);
+	const branch = name.replaceAll(" ", "-");
 	await waitFor(
 		page,
-		`document.querySelector('[role="option"]')?.textContent.includes("1-smoke")`,
+		`document.querySelector('[role="option"]')?.textContent.includes("${branch}")`,
 	);
 	await press(page, ENTER);
-	await waitFor(page, `${HEADER}.textContent.includes("1-smoke")`);
+	await waitFor(page, `${HEADER}.textContent.includes("${branch}")`);
+};
+
+// A new worktree is set up, then finished, which removes its folder and
+// branch and opens the main checkout again.
+const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
+	await createWorktree(page, "1 smoke");
 	const folder = join(dataDir, "worktrees", "repo", "1-smoke");
 	await poll("the worktree's setup", async () =>
 		(await readFile(join(folder, ".env.setup"), "utf8").catch(() => "")) ===
@@ -694,27 +712,8 @@ const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
 	);
 };
 
-// From the key's event to the frame after the palette is in the DOM, so
-// its paint is included. The listeners go in before the key is sent: input
-// reaches the page through the browser process, so it can overtake an
-// expression still being evaluated.
 const paletteOpenMs = async (page: Connection): Promise<number> => {
-	await evaluate(
-		page,
-		`void (globalThis.paletteOpened = new Promise((resolve) => {
-			let pressedAt;
-			addEventListener("keydown", (event) => { pressedAt = event.timeStamp; }, { capture: true, once: true });
-			const observer = new MutationObserver(() => {
-				if (!${PALETTE}) return;
-				observer.disconnect();
-				requestAnimationFrame(() => setTimeout(() => resolve(performance.now() - pressedAt)));
-			});
-			observer.observe(document.body, { childList: true, subtree: true });
-		}))`,
-		z.undefined(),
-	);
-	await press(page, OPEN_PALETTE);
-	const ms = await evaluate(page, "globalThis.paletteOpened", z.number());
+	const ms = await keyToPaintMs(page, PALETTE, () => press(page, OPEN_PALETTE));
 	await press(page, ESCAPE);
 	await waitFor(page, `!${PALETTE}`);
 	return ms;
@@ -783,6 +782,64 @@ const readMarkdownTurn = async (page: Connection, repo: string) => {
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
 
+// The second worktree and the main checkout, each known by its branch in the
+// header and the end of its chat's last reply in its grid.
+const STREAMED = { branch: "2-stream", reply: "End of the stream." };
+const MAIN = { branch: "main", reply: "Nothing else reads it." };
+const NEXT_WORKTREE: Key = {
+	key: "j",
+	code: "KeyJ",
+	keyCode: 74,
+	modifiers: ALT,
+};
+
+// The window's size while timing, as CI's screen is smaller than a real one.
+const atDesktopSize = async <T>(
+	page: Connection,
+	measure: () => Promise<T>,
+): Promise<T> => {
+	await page.send("Emulation.setDeviceMetricsOverride", {
+		width: 1440,
+		height: 900,
+		deviceScaleFactor: 1,
+		mobile: false,
+	});
+	const measured = await measure();
+	await page.send("Emulation.clearDeviceMetricsOverride");
+	return measured;
+};
+
+// Opens a second worktree, where the fake agent streams a long reply.
+const streamInWorktree = async (page: Connection): Promise<number[]> => {
+	await createWorktree(page, "2 stream");
+	await click(page, "Start Fake agent");
+	await waitFor(page, `document.activeElement === ${CHAT}`);
+	await type(page, "/str");
+	await waitFor(page, `(${DOCK}).querySelector('[role="option"]')`);
+	await press(page, ENTER);
+	await waitFor(page, `${CHAT}.value === "/stream "`);
+	const gaps = await atDesktopSize(page, () =>
+		frameGapsDuring(
+			page,
+			{
+				started: `(${DOCK}).textContent.includes("Section 1")`,
+				ended: `(${DOCK}).textContent.includes("${STREAMED.reply}")`,
+			},
+			() => press(page, ENTER),
+		),
+	);
+	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
+	return gaps;
+};
+
+// With two worktrees listed, the next one is the other one.
+const switchMs = (page: Connection, to: typeof MAIN) =>
+	keyToPaintMs(
+		page,
+		`${HEADER}.textContent.includes("${to.branch}") && (${DOCK})?.textContent.includes("${to.reply}")`,
+		() => press(page, NEXT_WORKTREE),
+	);
+
 // After a restart the chat is back with its transcript, and its next prompt
 // starts the agent again and resumes the session.
 const resumeChat = async (page: Connection) => {
@@ -800,16 +857,6 @@ const resumeChat = async (page: Connection) => {
 	await waitFor(page, `(${DOCK}).querySelector("pre code span[style]")`);
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
-
-const median = (values: readonly number[]) => {
-	const sorted = [...values].sort((a, b) => a - b);
-	return sorted[Math.floor(sorted.length / 2)] ?? Number.NaN;
-};
-
-const report = (name: string, ms: number, targetMs: number) =>
-	console.log(
-		`${name}: ${Math.round(ms)} ms (target ${targetMs} ms${ms > targetMs ? ", over" : ""})`,
-	);
 
 const dataDir = await mkdtemp(join(tmpdir(), "yaa-smoke-"));
 const logFile = join(dataDir, "logs", "yaa.log");
@@ -843,6 +890,19 @@ try {
 	console.log("The fake agent's turn played to its end.");
 	await readMarkdownTurn(first.page, join(dataDir, "repo"));
 	console.log("A slash command's markdown reply opened a file.");
+	const streamed = await streamInWorktree(first.page);
+	console.log("A second worktree opened and streamed a long reply.");
+	const switchTimes = await atDesktopSize(first.page, async () => {
+		const times: number[] = [];
+		for (let round = 0; round < SWITCH_ROUNDS; round += 1) {
+			times.push(await switchMs(first.page, MAIN));
+			times.push(await switchMs(first.page, STREAMED));
+		}
+		// The restarts expect the main checkout.
+		times.push(await switchMs(first.page, MAIN));
+		return times;
+	});
+	console.log("Keys switched between the worktrees.");
 	const paletteTimes: number[] = [];
 	for (let run = 0; run < PALETTE_OPENS; run += 1) {
 		paletteTimes.push(await paletteOpenMs(first.page));
@@ -851,11 +911,17 @@ try {
 	await quit(first);
 
 	const warmTimes: number[] = [];
+	// The first switch to a worktree builds its grid from the saved layout.
+	const firstSwitchTimes: number[] = [];
 	for (let run = 0; run < WARM_LAUNCHES; run += 1) {
 		const app = await launch(dataDir);
 		warmTimes.push(app.launchMs);
 		await waitFor(app.page, editorTab("first.ts"));
 		await waitFor(app.page, editorShows("hi"));
+		await atDesktopSize(app.page, async () => {
+			firstSwitchTimes.push(await switchMs(app.page, STREAMED));
+			await switchMs(app.page, MAIN);
+		});
 		await runInTerminal(
 			app.page,
 			'basename "$PWD"',
@@ -871,17 +937,28 @@ try {
 	}
 
 	console.log("Smoke test passed.");
-	report("First launch, new data folder", first.launchMs, LAUNCH_TARGET_MS);
-	report(
+	reportTime("First launch, new data folder", first.launchMs, LAUNCH_TARGET_MS);
+	reportTime(
 		`Launch, median of ${WARM_LAUNCHES}`,
 		median(warmTimes),
 		LAUNCH_TARGET_MS,
 	);
-	report(
+	reportTime(
 		`Palette open, median of ${PALETTE_OPENS}`,
 		median(paletteTimes),
 		PALETTE_TARGET_MS,
 	);
+	reportTime(
+		`Worktree switch, median of ${switchTimes.length}`,
+		median(switchTimes),
+		SWITCH_TARGET_MS,
+	);
+	reportTime(
+		`Worktree switch, first visit after a launch, median of ${WARM_LAUNCHES}`,
+		median(firstSwitchTimes),
+		SWITCH_TARGET_MS,
+	);
+	reportFrames("Chat streaming", streamed);
 } catch (error) {
 	console.error(await readFile(logFile, "utf8").catch(() => "No log file."));
 	throw error;
