@@ -88,4 +88,14 @@ export const migrations: Migrations = [
 	// 9: how far a worktree's agents go without asking
 	// (docs/spec/11-platform-services.md).
 	"ALTER TABLE worktrees ADD COLUMN permission_mode TEXT NOT NULL DEFAULT 'ask' CHECK (permission_mode IN ('ask', 'risky', 'allow'));",
+	// 10: the MCP servers and skills switched off, per layer
+	// (docs/spec/09-mcp-skills.md). `scope` is `app`, `project:<id>` or
+	// `worktree:<id>`; the ids are repeated so a layer goes with what it
+	// belongs to. `toggles` is the layer's settings as JSON.
+	`CREATE TABLE context_toggles (
+		scope TEXT PRIMARY KEY,
+		project_id TEXT REFERENCES projects (id) ON DELETE CASCADE,
+		worktree_id TEXT REFERENCES worktrees (id) ON DELETE CASCADE,
+		toggles TEXT NOT NULL
+	) STRICT;`,
 ];

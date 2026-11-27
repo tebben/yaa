@@ -12,16 +12,21 @@ import {
 	type PermissionModeMapping,
 } from "@yaa/contracts/permission-modes";
 import type { Worktree } from "@yaa/contracts/projects";
+import type { SwitchedOff } from "@yaa/contracts/providers";
 import { chatEvent } from "../state/chat-event.ts";
 import type { ChatStore } from "../storage/chat-store.ts";
 import { type AcpSession, openAcpSession } from "./acp-session.ts";
 import type { AgentLaunch } from "./agent-launch.ts";
 import { type AgentProcess, startAgentProcess } from "./agent-process.ts";
+import type { SessionContext } from "./session-context.ts";
 import { workUnderWay } from "./work-under-way.ts";
 
 export type AgentSessionsOptions = {
-	// How to start a provider's agent in a folder, from its plugin.
-	launch(provider: string, cwd: string): Promise<AgentLaunch>;
+	// What a session of the provider's agent in the worktree opens with.
+	context(worktree: string, provider: string): Promise<SessionContext>;
+	// How to start a provider's agent in a folder, from its plugin, with what
+	// is switched off.
+	launch(provider: string, cwd: string, off: SwitchedOff): Promise<AgentLaunch>;
 	// How the provider applies permission modes, if it does.
 	permissionModes(provider: string): PermissionModeMapping | undefined;
 	// A listed worktree, where its agents start; throws for one that is gone.
@@ -35,9 +40,11 @@ export type AgentSessionsOptions = {
 	emit(event: SessionEvent): void;
 };
 
-// The agent a chat runs on, once it is started: `acp` is there once its
+type Opened = { acp: AcpSession; agent: AgentProcess };
+
+// The agent a chat runs on, once it is started: `opened` is there once its
 // session is open.
-type Connection = { ready: Promise<AcpSession>; acp?: AcpSession };
+type Connection = { ready: Promise<AcpSession>; opened?: Opened };
 
 type Chat = {
 	worktree: string;
@@ -60,6 +67,7 @@ const describe = (error: unknown) =>
 // chat next needs one and resume its session
 // (docs/spec/11-platform-services.md).
 export const createAgentSessions = ({
+	context,
 	launch,
 	permissionModes,
 	worktree: listed,
@@ -142,7 +150,8 @@ export const createAgentSessions = ({
 		resume?: string,
 	) => {
 		const { worktree, provider } = chat;
-		const how = await launch(provider, listed(worktree).path);
+		const { off, loaded } = await context(worktree, provider);
+		const how = await launch(provider, listed(worktree).path, off);
 		// Read again: the worktree may have been finished meanwhile.
 		const { path, index } = listed(worktree);
 		const agent = startAgentProcess({
@@ -159,6 +168,7 @@ export const createAgentSessions = ({
 				agent,
 				cwd: path,
 				...(resume === undefined ? {} : { resume }),
+				meta: how.sessionMeta,
 				log: log.forWorktree(worktree),
 				emit: emitEvent,
 			});
@@ -170,6 +180,7 @@ export const createAgentSessions = ({
 				acp.close();
 				throw error;
 			});
+			if (loaded !== undefined) emitEvent({ type: "context", ...loaded });
 			return { acp, agent };
 		} catch (error) {
 			stop(agent);
@@ -179,17 +190,14 @@ export const createAgentSessions = ({
 
 	// The chat's connection is the one `ready` belongs to until its agent
 	// exits, so the next need starts the agent again.
-	const connect = (
-		chat: Chat,
-		ready: Promise<{ acp: AcpSession; agent: AgentProcess }>,
-	) => {
+	const connect = (chat: Chat, ready: Promise<Opened>) => {
 		const connection: Connection = {
-			ready: ready.then(({ acp, agent }) => {
-				connection.acp = acp;
-				void agent.exited.then(() => {
+			ready: ready.then((opened) => {
+				connection.opened = opened;
+				void opened.agent.exited.then(() => {
 					if (chat.connection === connection) delete chat.connection;
 				});
-				return acp;
+				return opened.acp;
 			}),
 		};
 		chat.connection = connection;
@@ -199,18 +207,34 @@ export const createAgentSessions = ({
 		return connection.ready;
 	};
 
-	// The chat's open session, resuming it first when no agent runs for it.
+	// Ends the chat's agent, so the next need starts one again.
+	const disconnect = (chat: Chat) => {
+		const opened = chat.connection?.opened;
+		delete chat.connection;
+		if (opened === undefined) return;
+		opened.acp.close();
+		stop(opened.agent);
+	};
+
+	// The chat's open session, resuming it first when no agent runs for it. An
+	// agent keeps no session that never had a prompt
+	// (docs/decisions/0014-acp-coverage.md), so such a chat gets a new one.
 	const session = (id: string): Promise<AcpSession> => {
 		const chat = found(id);
 		if (chat.connection !== undefined) return chat.connection.ready;
 		push(id, chat, { type: "resuming" });
+		const prompted = chat.events.some(({ type }) => type === "prompt");
 		const ready = open(
 			chat,
 			(event) => push(id, chat, event),
-			chat.agentSession,
+			prompted ? chat.agentSession : undefined,
 		);
 		return connect(chat, ready).then(
 			(acp) => {
+				if (acp.id !== chat.agentSession) {
+					chat.agentSession = acp.id;
+					store.setAgentSession(id, acp.id);
+				}
 				log
 					.forWorktree(chat.worktree)
 					.info("agent session resumed", { sessionId: id });
@@ -228,7 +252,7 @@ export const createAgentSessions = ({
 
 	// The chat's session as it is now, for what only an open one can answer.
 	const opened = (id: string): AcpSession => {
-		const acp = found(id).connection?.acp;
+		const acp = found(id).connection?.opened?.acp;
 		if (acp === undefined) throw new Error("The chat's agent is not running");
 		return acp;
 	};
@@ -264,8 +288,7 @@ export const createAgentSessions = ({
 		}) {
 			for (const [id, chat] of chats) {
 				if (inUse.has(chat.worktree)) continue;
-				chat.connection?.acp?.close();
-				delete chat.connection;
+				disconnect(chat);
 				if (!kept.has(chat.worktree)) chats.delete(id);
 			}
 			for (const [agent, worktree] of agents) {
@@ -286,6 +309,18 @@ export const createAgentSessions = ({
 		},
 		async prompt(id: string, text: string, attachments: PromptAttachment[]) {
 			(await session(id)).prompt(text, attachments);
+		},
+		// Ends the chat's agent and starts it again on its session, so it picks
+		// up what changed, such as the MCP servers switched off.
+		async restart(id: string) {
+			const chat = found(id);
+			if (workUnderWay(chat.events)) {
+				throw new Error("Wait for the turn to end before restarting the agent");
+			}
+			// One still starting is let finish, then ended.
+			await chat.connection?.ready;
+			disconnect(chat);
+			await session(id);
 		},
 		async setConfig(id: string, configId: string, value: string) {
 			await (await session(id)).setConfig(configId, value);
@@ -309,7 +344,7 @@ export const createAgentSessions = ({
 		},
 		// A chat without a running agent has no turn to stop.
 		cancel(id: string) {
-			found(id).connection?.acp?.cancel();
+			found(id).connection?.opened?.acp.cancel();
 		},
 		answerPermission(id: string, requestId: string, optionId: string) {
 			opened(id).answerPermission(requestId, optionId);

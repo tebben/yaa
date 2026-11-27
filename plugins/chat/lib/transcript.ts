@@ -46,7 +46,7 @@ export type TranscriptItem = { key: number } & (
 			kind: "stopped";
 			reason: Event<"turn.end">["stopReason"] | "interrupted";
 	  }
-	// The agent started again for the chat, resuming its session.
+	// The agent started again for the chat.
 	| { kind: "resumed" }
 	| { kind: "error"; message: string }
 );
@@ -61,6 +61,9 @@ export type Transcript = {
 	title: string | undefined;
 	plan: Event<"plan">["entries"];
 	usage: Omit<Event<"usage">, "type"> | undefined;
+	// The MCP servers and skills the agent started with; undefined for one
+	// whose provider lists none.
+	context: Omit<Event<"context">, "type"> | undefined;
 	commands: Event<"commands">["commands"];
 	config: readonly ConfigOption[];
 	// Whether the agent takes images in a prompt.
@@ -76,6 +79,7 @@ export const EMPTY_TRANSCRIPT: Transcript = {
 	title: undefined,
 	plan: [],
 	usage: undefined,
+	context: undefined,
 	commands: [],
 	config: [],
 	images: false,
@@ -260,6 +264,12 @@ const apply = (draft: Draft, event: AgentEvent) => {
 			break;
 		case "usage":
 			draft.usage = { used: event.used, size: event.size, cost: event.cost };
+			break;
+		case "context":
+			draft.context = {
+				mcpServers: event.mcpServers,
+				skills: event.skills,
+			};
 			break;
 		case "commands":
 			draft.commands = event.commands;

@@ -6,6 +6,7 @@ import { pluginSettingDefinitions } from "@yaa/contracts/plugin-manifest";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
+import { createAgentContext } from "./agents/agent-context.ts";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
 import { createCoreServer } from "./core-server.ts";
 import { createWorktreeWatches } from "./files/worktree-watches.ts";
@@ -22,6 +23,7 @@ import { watchSettingsFile } from "./settings/watch-settings-file.ts";
 import { createStateTracker } from "./state/state-tracker.ts";
 import { createStepsRunner } from "./steps/worktree-steps.ts";
 import { createChatStore } from "./storage/chat-store.ts";
+import { createContextStore } from "./storage/context-store.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
@@ -93,7 +95,9 @@ export const startCore = ({
 		home: homedir(),
 	});
 	const agents = createAgentSessions({
-		launch: (provider, cwd) => plugins.launchAgent(provider, cwd),
+		context: (worktree, provider) =>
+			agentContext.forSession(worktree, provider),
+		launch: (provider, cwd, off) => plugins.launchAgent(provider, cwd, off),
 		permissionModes: (provider) => plugins.permissionModes(provider),
 		worktree: (id) => worktree(id),
 		store: createChatStore(db),
@@ -173,7 +177,28 @@ export const startCore = ({
 		},
 		log,
 	});
+	const agentContext = createAgentContext({
+		store: createContextStore(db),
+		worktree: (id) => {
+			for (const project of projects.list()) {
+				const found = project.worktrees.find((one) => one.id === id);
+				if (found !== undefined) {
+					return {
+						path: found.path,
+						project: project.id,
+						repository: project.path,
+					};
+				}
+			}
+			throw new Error(`No worktree ${id}`);
+		},
+		providers: plugins.plugins.flatMap(
+			(plugin) => plugin.contributes.providers,
+		),
+		discover: (provider, folders) => plugins.discover(provider, folders),
+	});
 	const server = createCoreServer({
+		agentContext,
 		log,
 		recentLogs,
 		settings,

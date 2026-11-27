@@ -2,7 +2,9 @@
 // `claude` CLI, run over ACP through the adapter in this plugin's agent
 // module. Sign-in is the CLI's own; yaa stores no credentials.
 import type { PluginBackend } from "@yaa/plugin-api";
+import { discover } from "./lib/discover.ts";
 import { parseAuthStatus, parseVersion } from "./lib/parse-cli.ts";
+import { sessionMeta } from "./lib/session-meta.ts";
 
 const MISSING =
 	"Claude Code was not found. Install it and make sure `claude` is on the PATH yaa starts with.";
@@ -10,6 +12,7 @@ const MISSING =
 export const activate: PluginBackend["activate"] = ({
 	providers,
 	programs,
+	userFiles,
 }) => {
 	const installed = async () => {
 		const path = await programs.find("claude");
@@ -39,11 +42,14 @@ export const activate: PluginBackend["activate"] = ({
 			]);
 			return parseAuthStatus(stdout);
 		},
-		async spawn() {
+		discover: (session) => discover(userFiles, session),
+		async spawn({ off }) {
+			const meta = sessionMeta(off);
 			return {
 				run: "module",
 				// The adapter starts this CLI, not one of its own.
 				env: { CLAUDE_CODE_EXECUTABLE: await installed() },
+				...(meta === undefined ? {} : { sessionMeta: meta }),
 			};
 		},
 	});

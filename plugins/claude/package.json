@@ -6,6 +6,7 @@
 	"exports": {
 		"./main": "./main.ts",
 		"./cli": "./cli.ts",
+		"./discovery": "./discovery.ts",
 		"./plugin.json": "./plugin.json"
 	},
 	"scripts": {

@@ -3,6 +3,7 @@ import type { KeybindingsState } from "@yaa/contracts/keybindings";
 import { errorData, type Logger } from "@yaa/contracts/log";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import { createServer, type Server } from "@yaa/contracts/server";
+import type { AgentContext } from "./agents/agent-context.ts";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
 import type { RecentLogs } from "./log/recent-logs.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
@@ -24,6 +25,7 @@ export type CoreServerOptions = {
 	place: PlaceStore;
 	plugins: PluginManager;
 	agents: AgentSessions;
+	agentContext: AgentContext;
 	projects: Projects;
 	worktrees: Worktrees;
 	states: StateTracker;
@@ -39,6 +41,7 @@ export const createCoreServer = ({
 	place,
 	plugins,
 	agents,
+	agentContext,
 	projects,
 	worktrees,
 	states,
@@ -133,6 +136,18 @@ export const createCoreServer = ({
 				return {};
 			},
 			"providers.status": ({ provider }) => plugins.providerStatus(provider),
+			"context.discover": async ({ worktree }) => ({
+				providers: await agentContext.discover(worktree),
+			}),
+			"context.toggles": ({ worktree }) => agentContext.toggles(worktree),
+			"context.set": (change) => {
+				agentContext.set(change);
+				return {};
+			},
+			"agent.restart": async ({ sessionId }) => {
+				await agents.restart(sessionId);
+				return {};
+			},
 			"agent.start": async ({ worktree, provider }) => ({
 				sessionId: await agents.start(worktree, provider),
 			}),
@@ -160,6 +175,7 @@ export const createCoreServer = ({
 		},
 		{ onError: (error) => log.error("protocol error", errorData(error)) },
 	);
+	agentContext.onChange(() => server.emit("context.changed", {}));
 	recentLogs.onAdd((line) => server.emit("logs.added", line));
 	settings.onChange((state) => server.emit("settings.changed", state));
 	keybindings.onChange((state) => server.emit("keybindings.changed", state));

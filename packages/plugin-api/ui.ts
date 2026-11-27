@@ -2,6 +2,12 @@
 // run on the app's Svelte runtime and use @yaa/ui; build them with the yaa
 // plugin build (docs/decisions/0015-plugin-ui-loading.md).
 import type {
+	ContextKind,
+	ContextLayer,
+	LayeredToggles,
+	ProviderDiscovery,
+} from "@yaa/contracts/agent-context";
+import type {
 	AgentEvent,
 	PromptAttachment,
 	QuestionAnswer,
@@ -88,6 +94,9 @@ export type PanelAgents = {
 		attachments: readonly PromptAttachment[],
 	): Promise<void>;
 	cancel(sessionId: string): Promise<void>;
+	// Ends the chat's agent and starts it again on the same session, so it
+	// picks up what changed. Refused while a turn runs.
+	restart(sessionId: string): Promise<void>;
 	setConfig(sessionId: string, configId: string, value: string): Promise<void>;
 	answerPermission(
 		sessionId: string,
@@ -160,6 +169,32 @@ export type PanelSettings = {
 	): Disposable;
 };
 
+// The MCP servers and skills of the worktree's agents, and what is switched
+// off (docs/spec/09-mcp-skills.md).
+export type WorktreeAgentContext = {
+	// What each provider that lists them finds.
+	providers: readonly ProviderDiscovery[];
+	toggles: LayeredToggles;
+};
+
+export type PanelAgentContext = {
+	// Calls `listener` once both are read, and again after each change of what
+	// is switched off. `failed` is called when they cannot be read. `refresh`
+	// reads what the providers find anew, as after a config file changed.
+	watch(
+		listener: (context: WorktreeAgentContext) => void,
+		failed: (reason: unknown) => void,
+	): Disposable & { refresh(): void };
+	// Switches an item, or without `name` the whole list, at one of the
+	// worktree's layers; without `enabled` the layer stops setting it.
+	set(change: {
+		layer: ContextLayer;
+		kind: ContextKind;
+		name?: string;
+		enabled?: boolean;
+	}): Promise<void>;
+};
+
 // What one panel gets. Everything registered through it is disposed when the
 // panel closes.
 export type PanelContext = {
@@ -167,6 +202,7 @@ export type PanelContext = {
 	readonly worktree: Worktree;
 	backend<P extends ProtocolDefinition>(protocol: P): PluginBackendClient<P>;
 	readonly agents: PanelAgents;
+	readonly agentContext: PanelAgentContext;
 	// The system's picker for files: their absolute paths, none when
 	// cancelled.
 	pickFiles(): Promise<readonly string[]>;

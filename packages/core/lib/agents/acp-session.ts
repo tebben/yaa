@@ -2,6 +2,7 @@ import {
 	type AuthMethod,
 	type CreateElicitationResponse,
 	client,
+	type NewSessionRequest,
 	PROTOCOL_VERSION,
 	RequestError,
 	type RequestPermissionResponse,
@@ -34,6 +35,9 @@ export type AcpSessionOptions = {
 	cwd: string;
 	// The agent's id of a session to resume instead of starting one.
 	resume?: string;
+	// Sent as `_meta` with the request that opens or resumes the session,
+	// from the provider.
+	meta?: Record<string, unknown> | undefined;
 	log: Logger;
 	emit(event: AgentEvent): void;
 };
@@ -81,9 +85,13 @@ export const openAcpSession = async ({
 	agent: { stream, exited },
 	cwd,
 	resume,
+	meta,
 	log,
 	emit,
 }: AcpSessionOptions): Promise<AcpSession> => {
+	// What every request that opens or resumes a session says.
+	const setup: NewSessionRequest = { cwd, mcpServers: [] };
+	if (meta !== undefined) setup._meta = meta;
 	const permissions = new Map<
 		string,
 		(response: RequestPermissionResponse) => void
@@ -206,7 +214,7 @@ export const openAcpSession = async ({
 		const images = agentCapabilities?.promptCapabilities?.image === true;
 		if (resume === undefined) {
 			const session = await agent
-				.request("session/new", { cwd, mcpServers: [] })
+				.request("session/new", setup)
 				.catch(explained);
 			return { ...session, images };
 		}
@@ -215,14 +223,14 @@ export const openAcpSession = async ({
 		// (docs/decisions/0014-acp-coverage.md).
 		if (agentCapabilities?.sessionCapabilities?.resume != null) {
 			const session = await agent
-				.request("session/resume", { sessionId: resume, cwd, mcpServers: [] })
+				.request("session/resume", { ...setup, sessionId: resume })
 				.catch(explained);
 			return { ...session, sessionId: resume, images };
 		}
 		if (agentCapabilities?.loadSession === true) {
 			replaying = true;
 			const session = await agent
-				.request("session/load", { sessionId: resume, cwd, mcpServers: [] })
+				.request("session/load", { ...setup, sessionId: resume })
 				.catch(explained)
 				.finally(() => {
 					replaying = false;

@@ -4,6 +4,7 @@ import {
 	chatStatus,
 	chatTitle,
 	configOption,
+	contextSummary,
 	optionLabel,
 	optionsSummary,
 } from "./chat-summary.ts";
@@ -119,6 +120,12 @@ export const createChatPanel = (panel: PanelContext) => {
 		asking = true;
 	};
 
+	const restart = () => {
+		if (shown === undefined) return;
+		failure = undefined;
+		panel.agents.restart(shown.id).catch(failed);
+	};
+
 	// Escape stops the turn; registered only while one runs.
 	$effect(() => {
 		const id = shown?.transcript.running ? shown.id : undefined;
@@ -135,6 +142,7 @@ export const createChatPanel = (panel: PanelContext) => {
 		"chat.compose": () => composer.focus(),
 		"chat.slash": () => composer.slash(),
 		"chat.attach": () => void composer.pickFiles(),
+		"chat.restart": restart,
 		"chat.mode": () => pickOption("mode"),
 		"chat.model": () => pickOption("model"),
 		"chat.effort": () => pickOption("thought_level"),
@@ -172,6 +180,10 @@ export const createChatPanel = (panel: PanelContext) => {
 					providers.permissionModes(shown.provider),
 				),
 			];
+		},
+		// How many MCP servers and skills the agent started with.
+		get counts() {
+			return shown && contextSummary(shown.transcript);
 		},
 		// The pickers the agent's options allow.
 		get pickers() {

@@ -18,6 +18,8 @@ export type ChatStore = {
 	// Every chat, oldest first, with its events in order.
 	all(): StoredChat[];
 	add(chat: Omit<StoredChat, "events">): void;
+	// The agent's id for the chat's session, once it is another one.
+	setAgentSession(chat: string, agentSession: string): void;
 	// The event numbered `seq`, which is how many the chat had before it.
 	append(chat: string, seq: number, event: AgentEvent): void;
 };
@@ -46,7 +48,13 @@ export const createChatStore = (
 	const insertEvent = db.prepare(
 		"INSERT INTO chat_events (chat_id, seq, event) VALUES (?, ?, ?)",
 	);
+	const updateSession = db.prepare(
+		"UPDATE chats SET agent_session = ? WHERE id = ?",
+	);
 	return {
+		setAgentSession(chat, agentSession) {
+			updateSession.run(agentSession, chat);
+		},
 		all() {
 			const events = new Map<string, AgentEvent[]>();
 			for (const raw of selectEvents.all()) {

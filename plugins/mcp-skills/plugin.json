@@ -1,0 +1,27 @@
+{
+	"id": "mcp-skills",
+	"version": "0.1.0",
+	"ui": "dist/ui.js",
+	"styles": "dist/ui.css",
+	"contributes": {
+		"commands": [
+			{
+				"id": "mcp-skills.refresh",
+				"title": "Read MCP servers and skills again",
+				"category": "MCP and skills",
+				"panel": "mcp-skills",
+				"reveal": true
+			},
+			{
+				"id": "mcp-skills.layer",
+				"title": "Choose where to switch MCP servers and skills",
+				"category": "MCP and skills",
+				"panel": "mcp-skills",
+				"reveal": true
+			}
+		],
+		"panels": [
+			{ "id": "mcp-skills", "title": "MCP and skills", "icon": "icon.svg" }
+		]
+	}
+}
