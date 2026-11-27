@@ -5,6 +5,7 @@ Read `docs/README.md` first; it says which doc wins and where each topic lives.
 ## Commands
 - Install: `pnpm install` (Node 24, pnpm from `packageManager`)
 - Full check, run before finishing: `pnpm run check` (lint, typecheck, boundaries, Svelte size, docs, tokens, tests of changed packages; `git add` new files first)
+- Before pushing: install the repo hook as described in `README.md`; it runs `pnpm run prepush` with the full checks and smoke test.
 - One package's tests: `pnpm --filter @yaa/<name> test`
 - Format: `pnpm run format`
 - After editing `docs/design/tokens.json`: `pnpm run tokens` regenerates the CSS variables and token types in `packages/ui`

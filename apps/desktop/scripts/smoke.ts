@@ -223,35 +223,14 @@ const clickElement = async (page: Connection, element: string) => {
 		`void (${element}).scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" })`,
 		z.undefined(),
 	);
-	try {
-		await waitFor(
-			page,
-			`(() => {
+	await waitFor(
+		page,
+		`(() => {
 			const target = (${element});
 			const rect = target.getBoundingClientRect();
 			return target.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
 		})()`,
-		);
-	} catch (error) {
-		console.log(
-			"[DEBUG-hit]",
-			await evaluate(
-				page,
-				`(() => {
-					const target = (${element});
-					const rect = target.getBoundingClientRect();
-					const parents = [];
-					for (let node = target.parentElement; node; node = node.parentElement) {
-						const bounds = node.getBoundingClientRect();
-						parents.push({ class: node.className, left: bounds.left, right: bounds.right, overflow: getComputedStyle(node).overflowX, scrollLeft: node.scrollLeft, scrollWidth: node.scrollWidth, clientWidth: node.clientWidth });
-					}
-					return JSON.stringify({ rect: rect.toJSON(), hit: document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)?.outerHTML.slice(0, 300), parents });
-				})()`,
-				z.string(),
-			),
-		);
-		throw error;
-	}
+	);
 	const { x, y } = await evaluate(
 		page,
 		`(() => {
@@ -261,20 +240,6 @@ const clickElement = async (page: Connection, element: string) => {
 		z.object({ x: z.number(), y: z.number() }),
 	);
 	await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
-	if (element.includes('role="tab"') && element.includes("first.ts")) {
-		console.log(
-			"[DEBUG-click]",
-			await evaluate(
-				page,
-				`JSON.stringify({
-			x: ${x}, y: ${y},
-			hit: document.elementFromPoint(${x}, ${y})?.outerHTML.slice(0, 300),
-			target: (${element}).getBoundingClientRect().toJSON(),
-		})`,
-				z.string(),
-			),
-		);
-	}
 	await page.send("Input.dispatchMouseEvent", {
 		type: "mousePressed",
 		x,
@@ -330,21 +295,21 @@ const useSettings = async (page: Connection, dataDir: string) => {
 		`(${PANEL_GAP}).closest("label").nextElementSibling`,
 	);
 	await waitFor(page, gap("10px"));
-	if (
-		!(await readFile(settingsFile, "utf8")).includes(
-			'"appearance.panelGap": 10',
-		)
-	) {
-		throw new Error("The panel spacing did not reach settings.json");
-	}
+	await poll("the panel spacing in settings.json", async () =>
+		(await readFile(settingsFile, "utf8")).includes('"appearance.panelGap": 10')
+			? true
+			: undefined,
+	);
 	await clickElement(
 		page,
 		`[...document.querySelectorAll('button[aria-label="Reset to default"]')].find((button) => !button.closest(".invisible"))`,
 	);
 	await waitFor(page, gap("8px"));
-	if ((await readFile(settingsFile, "utf8")).includes("appearance.panelGap")) {
-		throw new Error("Resetting the panel spacing left it in settings.json");
-	}
+	await poll("the panel spacing reset in settings.json", async () =>
+		(await readFile(settingsFile, "utf8")).includes("appearance.panelGap")
+			? undefined
+			: true,
+	);
 	await clickElement(
 		page,
 		`[...document.querySelectorAll("button")].find((button) => button.textContent.trim() === "Back to app")`,
@@ -527,23 +492,7 @@ const useMarkdownPreview = async (page: Connection, repo: string) => {
 		`(${DOCK}).querySelector('[aria-label="Table of contents"]')?.textContent.includes("Unsaved")`,
 	);
 	await clickElement(page, editorTab("first.ts"));
-	try {
-		await waitFor(page, editorShows("first"));
-	} catch (error) {
-		console.log(
-			"[DEBUG-tab]",
-			await evaluate(
-				page,
-				`JSON.stringify({
-			tabs: [...(${DOCK}).querySelectorAll('[role="tab"]')].map(tab => ({title: tab.title, selected: tab.getAttribute("aria-selected")})),
-			visible: (${DOCK}).querySelector(".monaco-editor")?.getBoundingClientRect().toJSON(),
-			content: (${DOCK}).querySelector(".monaco-editor .view-lines")?.textContent,
-		})`,
-				z.string(),
-			),
-		);
-		throw error;
-	}
+	await waitFor(page, editorShows("first"));
 	await clickElement(page, editorTab("preview.md"));
 	await waitFor(
 		page,

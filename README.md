@@ -22,6 +22,11 @@ pnpm run check      # lint, typecheck, boundaries, docs, tests of changed packag
 pnpm run check:all  # everything, as CI runs it
 ```
 
+Install the pre-push hook with `git config --local core.hooksPath .githooks`.
+This replaces any existing hooks path. The hook requires a clean checkout and
+tests the checked-out commit before pushing. Linux needs `xvfb-run`, Xvfb and
+`xauth`. CI still runs independently.
+
 Packaging for Linux arrives in M6.
 
 ## Docs
