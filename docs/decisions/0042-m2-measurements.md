@@ -14,7 +14,8 @@ M2 measurements, Electron 45.5.0, dev mode, production renderer:
 | Machine | Switch (median of 11) | First visit after a launch (median of 3) | Streaming |
 | --- | --- | --- | --- |
 | Desktop, Ryzen AI Max+ 395, 32 threads, Wayland, 9 runs | 17–26 ms | 80–95 ms | no dropped frames, longest 9 ms at 120 Hz and 17 ms at 60 Hz |
+| GitHub Actions `ubuntu-latest`, 4 vCPU, Xvfb, 2 runs | 24–30 ms | 140–168 ms (over) | no dropped frames, longest 17 ms |
 
-Switching between built grids is well inside the 100 ms target. The first visit after a launch is only just inside it on this desktop, which is faster than a mid-range laptop. Launch (323–351 ms) and palette open (6–15 ms) stay inside their targets with M2's features.
+Switching between built grids is well inside the 100 ms target. The first visit after a launch is only just inside it on the desktop, which is faster than a mid-range laptop, and over it on CI. Launch (323–351 ms on the desktop, 561–692 ms on CI) and palette open (6–15 ms, 13 ms) stay inside their targets with M2's features; CI's first launch (2.8–4.1 s) is over, as in `0022-smoke-test.md`.
 
 Consequences: the first switch to a worktree after a launch is the timing to watch; M3 measures switching again with more panels open (`docs/plan.md`, M3 step 13). Real agents send fewer, larger pieces than the fake one, and their streaming is not measured.
