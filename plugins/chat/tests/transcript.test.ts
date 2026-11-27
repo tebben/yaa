@@ -82,6 +82,38 @@ describe("appendEvents", () => {
 	});
 });
 
+describe("a restored chat", () => {
+	it("closes an interrupted turn, leaving what it waited on unanswered", () => {
+		const interrupted = read([
+			prompt,
+			{
+				type: "permission",
+				requestId: "0",
+				toolCallId: "edit",
+				title: "Edit",
+				options: [],
+			},
+			{ type: "interrupted" },
+		]);
+		expect(interrupted.running).toBe(false);
+		expect(interrupted.items.slice(1)).toEqual([
+			expect.objectContaining({ kind: "permission", answer: null }),
+			expect.objectContaining({ kind: "stopped", reason: "interrupted" }),
+		]);
+	});
+
+	it("runs while its agent starts again, until the session opens", () => {
+		const resuming = read([{ type: "resuming" }]);
+		expect(resuming.running).toBe(true);
+		expect(resuming.items).toEqual([{ key: 0, kind: "resumed" }]);
+		const opened = appendEvents(resuming, [
+			{ type: "capabilities", images: true },
+		]);
+		expect(opened.running).toBe(false);
+		expect(opened.images).toBe(true);
+	});
+});
+
 describe("chatStatus and chatTitle", () => {
 	const permission: AgentEvent = {
 		type: "permission",

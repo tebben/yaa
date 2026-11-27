@@ -3,8 +3,10 @@ import { coreEvent } from "@yaa/contracts/core-events";
 import { describe, expect, it } from "vitest";
 import * as z from "zod";
 import {
+	createChatStore,
 	createEventLog,
 	createLayoutStore,
+	createPlaceStore,
 	createPluginStore,
 	migrate,
 	openDatabase,
@@ -126,5 +128,64 @@ describe("layout store", () => {
 		db.exec("DELETE FROM worktrees WHERE id = 'b'");
 		expect(layouts.get("b")).toBeUndefined();
 		expect(() => layouts.save("gone", "x")).toThrow();
+	});
+});
+
+describe("chat store", () => {
+	it("reads chats back oldest first with their events, and drops them with the worktree", () => {
+		const db = openDatabase(":memory:");
+		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0);
+			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0);`);
+		let clock = 0;
+		const chats = createChatStore(db, () => clock++);
+		chats.add({
+			id: "one",
+			worktree: "a",
+			provider: "claude",
+			agentSession: "s1",
+		});
+		chats.add({
+			id: "two",
+			worktree: "b",
+			provider: "claude",
+			agentSession: "s2",
+		});
+		chats.append("one", 1, { type: "turn.end", stopReason: "end_turn" });
+		chats.append("one", 0, { type: "prompt", text: "hi", attachments: [] });
+		expect(chats.all()).toEqual([
+			{
+				id: "one",
+				worktree: "a",
+				provider: "claude",
+				agentSession: "s1",
+				events: [
+					{ type: "prompt", text: "hi", attachments: [] },
+					{ type: "turn.end", stopReason: "end_turn" },
+				],
+			},
+			{
+				id: "two",
+				worktree: "b",
+				provider: "claude",
+				agentSession: "s2",
+				events: [],
+			},
+		]);
+		expect(() =>
+			chats.append("one", 2, JSON.parse('{"type": "nothing"}')),
+		).toThrow();
+		db.exec("DELETE FROM worktrees WHERE id = 'a'");
+		expect(chats.all().map(({ id }) => id)).toEqual(["two"]);
+	});
+});
+
+describe("place store", () => {
+	it("keeps the last place saved", () => {
+		const places = createPlaceStore(openDatabase(":memory:"));
+		expect(places.get()).toBeUndefined();
+		places.save({ project: "p" });
+		places.save({ project: "p", worktree: "a" });
+		expect(places.get()).toEqual({ project: "p", worktree: "a" });
 	});
 });

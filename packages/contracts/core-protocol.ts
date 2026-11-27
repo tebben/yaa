@@ -15,6 +15,7 @@ import {
 	createWorktreeResult,
 	finishAction,
 	finishCheck,
+	place,
 	project,
 } from "./projects.ts";
 import { providerStatus } from "./providers.ts";
@@ -50,6 +51,13 @@ export const coreProtocol = defineProtocol({
 			params: z.object({ worktree: z.string(), layout: z.string() }),
 			result: z.object({}),
 		},
+		// Where the window was when it last moved, to open there again; null
+		// before it first did.
+		"place.get": {
+			params: z.object({}),
+			result: z.object({ place: place.nullable() }),
+		},
+		"place.save": { params: place, result: z.object({}) },
 		// The project list in the order projects were added;
 		// `projects.changed` carries it again after each change.
 		"projects.list": {

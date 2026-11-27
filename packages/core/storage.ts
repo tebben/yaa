@@ -1,3 +1,8 @@
+export {
+	type ChatStore,
+	createChatStore,
+	type StoredChat,
+} from "./lib/storage/chat-store.ts";
 export { openDatabase } from "./lib/storage/database.ts";
 export {
 	createEventLog,
@@ -13,6 +18,10 @@ export {
 	migrate,
 	schemaVersion,
 } from "./lib/storage/migrate.ts";
+export {
+	createPlaceStore,
+	type PlaceStore,
+} from "./lib/storage/place-store.ts";
 export {
 	createPluginStore,
 	type PluginKey,

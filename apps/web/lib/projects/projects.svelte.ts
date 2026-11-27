@@ -1,7 +1,7 @@
 import Folder from "@lucide/svelte/icons/folder";
 import GitBranch from "@lucide/svelte/icons/git-branch";
 import LayoutGrid from "@lucide/svelte/icons/layout-grid";
-import type { BranchStatus, Project } from "@yaa/contracts/projects";
+import type { BranchStatus, Place, Project } from "@yaa/contracts/projects";
 import type { WorktreeState } from "@yaa/contracts/worktree-state";
 import { focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
@@ -9,8 +9,8 @@ import type { CoreClient } from "../core-connection.ts";
 import type { Crumb } from "../shell/index.ts";
 import {
 	filterTree,
+	listedPlace,
 	nextWorktree,
-	type Place,
 	stepWorktree,
 } from "./project-tree.ts";
 
@@ -62,6 +62,7 @@ export const createProjects = ({
 
 	const go = (next: Place) => {
 		place = next;
+		client.request("place.save", next).catch(fail);
 		const id = next.worktree;
 		if (id === undefined) return;
 		opening(id);
@@ -87,15 +88,19 @@ export const createProjects = ({
 	}, fail);
 
 	client.subscribe("projects.changed", (changed) => update(changed.projects));
-	// Until session restore, the window opens on the first project's main
-	// checkout.
-	client.request("projects.list", {}).then((list) => {
+	// The window opens where it was, while that is still listed; otherwise on
+	// the first project's main checkout.
+	Promise.all([
+		client.request("projects.list", {}),
+		client.request("place.get", {}),
+	]).then(([list, saved]) => {
 		update(list.projects);
+		if (place !== undefined) return;
+		const start = saved.place && listedPlace(list.projects, saved.place);
 		const [first] = list.projects;
 		const main = first?.worktrees[0];
-		if (place === undefined && first && main) {
-			go({ project: first.id, worktree: main.id });
-		}
+		if (start) go(start);
+		else if (first && main) go({ project: first.id, worktree: main.id });
 	}, fail);
 
 	return {
