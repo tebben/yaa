@@ -240,6 +240,20 @@ const clickElement = async (page: Connection, element: string) => {
 		z.object({ x: z.number(), y: z.number() }),
 	);
 	await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+	if (element.includes('role="tab"') && element.includes("first.ts")) {
+		console.log(
+			"[DEBUG-click]",
+			await evaluate(
+				page,
+				`JSON.stringify({
+			x: ${x}, y: ${y},
+			hit: document.elementFromPoint(${x}, ${y})?.outerHTML.slice(0, 300),
+			target: (${element}).getBoundingClientRect().toJSON(),
+		})`,
+				z.string(),
+			),
+		);
+	}
 	await page.send("Input.dispatchMouseEvent", {
 		type: "mousePressed",
 		x,
@@ -492,7 +506,23 @@ const useMarkdownPreview = async (page: Connection, repo: string) => {
 		`(${DOCK}).querySelector('[aria-label="Table of contents"]')?.textContent.includes("Unsaved")`,
 	);
 	await clickElement(page, editorTab("first.ts"));
-	await waitFor(page, editorShows("first"));
+	try {
+		await waitFor(page, editorShows("first"));
+	} catch (error) {
+		console.log(
+			"[DEBUG-tab]",
+			await evaluate(
+				page,
+				`JSON.stringify({
+			tabs: [...(${DOCK}).querySelectorAll('[role="tab"]')].map(tab => ({title: tab.title, selected: tab.getAttribute("aria-selected")})),
+			visible: (${DOCK}).querySelector(".monaco-editor")?.getBoundingClientRect().toJSON(),
+			content: (${DOCK}).querySelector(".monaco-editor .view-lines")?.textContent,
+		})`,
+				z.string(),
+			),
+		);
+		throw error;
+	}
 	await clickElement(page, editorTab("preview.md"));
 	await waitFor(
 		page,
