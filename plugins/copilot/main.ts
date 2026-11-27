@@ -27,7 +27,7 @@ export const activate: PluginBackend["activate"] = ({
 		// The CLI has no command that reports its sign-in, and asking the agent
 		// takes seconds. Signed out, it refuses the session with ACP's
 		// auth_required, which core turns into how to sign in
-		// (docs/decisions/0038-copilot-sign-in-state.md).
+		// (docs/decisions/0039-copilot-sign-in-state.md).
 		async authStatus() {
 			return { state: "unknown" };
 		},

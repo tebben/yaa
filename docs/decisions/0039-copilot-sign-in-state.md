@@ -1,4 +1,4 @@
-# 0038 Copilot CLI's sign-in state
+# 0039 Copilot CLI's sign-in state
 
 Status: decided, 2026-11-27.
 

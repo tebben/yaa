@@ -57,7 +57,7 @@ Build order, one pull request each:
 7. Session restore and recovery: worktrees reopen with their layout and chats, a running turn is marked interrupted, a crashed agent sets Error and resumes where the agent supports it.
 8. Permission modes per worktree, shown in the chat header.
 9. Debug panel: the logs with level, source and worktree filters.
-10. Copilot CLI provider, including how it detects a signed-out state (`docs/decisions/0038-copilot-sign-in-state.md`).
+10. Copilot CLI provider, including how it detects a signed-out state (`docs/decisions/0039-copilot-sign-in-state.md`).
 11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`), with their counts in the chat header.
 12. Exit check: the smoke test opens a worktree, measure worktree switch time and chat streaming.
 
