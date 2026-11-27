@@ -1,17 +1,19 @@
 import * as z from "zod";
+import { permissionMode } from "./permission-modes.ts";
 
 // A git worktree of a project (docs/spec/02-worktrees.md). `index` is its
 // stable YAA_WORKTREE_INDEX: 0 for the project's main checkout, and for a
 // worktree yaa created the lowest number from 1 up that no other worktree
 // of the project held when it was created. A settled worktree is put away:
 // nothing runs in it, and its folder, branch, chats and layout are kept
-// until it is reopened or removed.
+// until it is reopened or removed. Its agents run in its permission mode.
 export const worktree = z.object({
 	id: z.string(),
 	branch: z.string(),
 	path: z.string(),
 	index: z.number().int().nonnegative(),
 	settled: z.boolean(),
+	permissionMode,
 });
 
 // A git repository added by folder (docs/spec/02-worktrees.md). `path` is

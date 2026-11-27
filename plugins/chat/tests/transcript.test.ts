@@ -5,6 +5,7 @@ import {
 	chatStatus,
 	chatTitle,
 	EMPTY_TRANSCRIPT,
+	optionsSummary,
 } from "../transcript.ts";
 
 const prompt: AgentEvent = {
@@ -144,5 +145,59 @@ describe("chatStatus and chatTitle", () => {
 		expect(chatTitle(read([prompt, { type: "title", title: "Greet" }]))).toBe(
 			"Greet",
 		);
+	});
+});
+
+describe("optionsSummary", () => {
+	const select = (
+		id: string,
+		category: string,
+		value: string,
+		values: string[],
+	) => ({
+		id,
+		name: id,
+		category,
+		value,
+		choices: values.map((choice) => ({
+			value: choice,
+			label: choice.toUpperCase(),
+		})),
+	});
+	const model = select("model", "model", "opus", ["opus"]);
+	const effort = select("effort", "thought_level", "high", ["high"]);
+	const modes = ["default", "auto", "plan"];
+	const mapping = {
+		option: "mode",
+		values: { ask: ["default"], risky: ["auto"], allow: ["bypass"] },
+	};
+
+	it("names the permission mode the agent is in, next to the model", () => {
+		const mode = select("mode", "mode", "auto", modes);
+		expect(optionsSummary([effort, mode, model], mapping)).toEqual([
+			"OPUS",
+			"Ask for risky actions",
+			"HIGH",
+		]);
+	});
+
+	it("names a mode of the agent's own as the agent does", () => {
+		const mode = select("mode", "mode", "plan", modes);
+		expect(optionsSummary([model, mode], mapping)).toEqual(["OPUS", "PLAN"]);
+		expect(optionsSummary([model, mode], undefined)).toEqual(["OPUS", "PLAN"]);
+	});
+
+	it("keeps the agent's mode beside a permission option of its own", () => {
+		const mode = select("mode", "mode", "plan", modes);
+		const allowAll = select("allow_all", "other", "on", ["off", "on"]);
+		const own = {
+			option: "allow_all",
+			values: { ask: ["off"], risky: ["auto"], allow: ["on"] },
+		};
+		expect(optionsSummary([model, mode, allowAll], own)).toEqual([
+			"OPUS",
+			"Allow all",
+			"PLAN",
+		]);
 	});
 });

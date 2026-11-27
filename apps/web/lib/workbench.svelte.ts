@@ -71,6 +71,7 @@ export const createWorkbench = (core: CoreConnection) => {
 	const context = (): Context => ({
 		"panel.kind": dock()?.activeKind,
 		"project.selected": projects.selected !== undefined,
+		"worktree.open": projects.worktree !== undefined,
 		"worktree.selected": (projects.worktree?.index ?? 0) > 0,
 		"worktree.done":
 			projects.worktree !== undefined &&

@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { basename, isAbsolute } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import type { AddProjectResult, Project } from "@yaa/contracts/projects";
+import type {
+	AddProjectResult,
+	Project,
+	Worktree,
+} from "@yaa/contracts/projects";
 import type { GitService } from "../git/git-service.ts";
 import {
 	expandHome,
@@ -98,12 +102,13 @@ export const createProjects = ({
 				return { problem: `${checkout} is already in the list` };
 			}
 			const id = newId();
-			const main = {
+			const main: Worktree = {
 				id: newId(),
 				branch: defaultBranch,
 				path: checkout,
 				index: 0,
 				settled: false,
+				permissionMode: "ask",
 			};
 			const at = now();
 			db.exec("BEGIN");
