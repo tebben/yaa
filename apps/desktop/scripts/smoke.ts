@@ -418,6 +418,72 @@ const useEditor = async (page: Connection, repo: string) => {
 	await waitFor(page, editorTab("first.ts"));
 };
 
+const useMarkdownPreview = async (page: Connection, repo: string) => {
+	await writeFile(
+		join(repo, "preview.md"),
+		"# Heading\n\n![pixel](pixel.png)\n\n![remote](https://example.invalid/a.png)\n\n```mermaid\ngraph TD\nA-->B\n```\n",
+	);
+	await writeFile(
+		join(repo, "pixel.png"),
+		Buffer.from(
+			"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/a9sAAAAASUVORK5CYII=",
+			"base64",
+		),
+	);
+	await clickElement(page, fileRow("preview.md"));
+	await waitFor(page, editorShows("Heading"));
+	await clickElement(page, fileRow("preview.md"));
+	await press(page, ENTER);
+	await waitFor(page, `document.activeElement?.closest(".monaco-editor")`);
+	await press(page, VIM_INSERT);
+	await type(page, "# Unsaved\n\n");
+	await press(page, ESCAPE);
+	const toggle: Key = {
+		key: "V",
+		code: "KeyV",
+		keyCode: 86,
+		modifiers: CTRL_SHIFT,
+	};
+	await press(page, toggle);
+	await waitFor(
+		page,
+		`(${DOCK}).querySelector(".markdown h1")?.textContent === "Unsaved"`,
+	);
+	await waitFor(
+		page,
+		`(${DOCK}).querySelector('.markdown img[alt="pixel"]')?.naturalWidth > 0`,
+	);
+	await waitFor(
+		page,
+		`(${DOCK}).querySelector('.markdown img[alt="Mermaid diagram"]')?.naturalWidth > 0`,
+	);
+	await waitFor(page, buttonNamed("Load remote images"));
+	await waitFor(
+		page,
+		`(${DOCK}).querySelector('.markdown img[alt="remote"]')?.getAttribute("src") === null`,
+	);
+	await press(page, {
+		key: "o",
+		code: "KeyO",
+		keyCode: 79,
+		modifiers: CTRL | 1,
+	});
+	await waitFor(
+		page,
+		`(${DOCK}).querySelector('[aria-label="Table of contents"]')?.textContent.includes("Unsaved")`,
+	);
+	await clickElement(page, editorTab("first.ts"));
+	await waitFor(page, editorShows("first"));
+	await clickElement(page, editorTab("preview.md"));
+	await waitFor(
+		page,
+		`document.activeElement?.matches(".preview[tabindex='-1']")`,
+	);
+	await press(page, toggle);
+	await waitFor(page, `document.activeElement?.closest(".monaco-editor")`);
+	await waitFor(page, editorShows("Unsaved"));
+};
+
 // Optional, as after a reload no dock is there for a moment.
 const TERMINAL_INPUT = `(${DOCK})?.querySelector(".xterm textarea")`;
 const CLOSE_WORD: Key = {
@@ -745,6 +811,10 @@ try {
 	console.log("The files panel followed the folder, made and deleted a file.");
 	await useEditor(first.page, join(dataDir, "repo"));
 	console.log("The editor opened, saved and quick-opened files.");
+	await useMarkdownPreview(first.page, join(dataDir, "repo"));
+	console.log(
+		"Markdown preview rendered unsaved text, images, Mermaid and the outline.",
+	);
 	await useTerminal(first.page, dataDir);
 	console.log("The terminal ran commands and came back after a reload.");
 	await runPluginCommand(first.page, logFile);

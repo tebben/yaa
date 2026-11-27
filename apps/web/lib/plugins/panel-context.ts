@@ -28,6 +28,7 @@ type PanelContextOptions = {
 	settings: PanelSettings;
 	// What panels registered for their commands and for files to open.
 	commands: PanelHandlers<void>;
+	keysFor(command: string): readonly string[];
 	files: PanelHandlers<OpenFile>;
 	openFile(file: OpenFile): void;
 	pick(source: PickSource): void;
@@ -47,6 +48,7 @@ export const createPanelContext = ({
 	terminals,
 	settings,
 	commands,
+	keysFor,
 	files,
 	openFile,
 	pick,
@@ -114,6 +116,7 @@ export const createPanelContext = ({
 			return (await client.request("dialog.pickFiles", {})).paths;
 		},
 		commands: {
+			keysFor,
 			register(command, handler) {
 				if (!declared.has(command)) {
 					throw new Error(

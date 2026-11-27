@@ -54,6 +54,7 @@ export const createWorkbench = (core: CoreConnection) => {
 		// panel or command runs.
 		dock: (id) => layouts.docks.get(id),
 		pick: (source) => palette.pick(source),
+		keysFor: (command) => commands.keysFor(command),
 	});
 	// The app's kinds in panel bar order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.

@@ -28,6 +28,7 @@ type PluginsOptions = {
 	dock(worktree: string): DockController | undefined;
 	// Opens the palette on a plugin's list.
 	pick(source: PickSource): void;
+	keysFor(command: string): readonly string[];
 };
 
 const message = (error: unknown) =>
@@ -45,6 +46,7 @@ export const createPlugins = ({
 	openWorktree,
 	dock,
 	pick,
+	keysFor,
 }: PluginsOptions) => {
 	const { client } = core;
 	const panelCommands = createPanelHandlers<void>();
@@ -116,6 +118,7 @@ export const createPlugins = ({
 				terminals,
 				settings,
 				commands: panelCommands,
+				keysFor,
 				files: panelFiles,
 				openFile: (file) => openFile(found.id, file),
 				pick: (source) => {

@@ -103,6 +103,7 @@ module.exports = {
 	],
 	options: {
 		includeOnly: `^(${ROOTS}|scripts)/`,
+		exclude: { path: "/dist/" },
 		doNotFollow: { path: "node_modules" },
 		tsConfig: { fileName: "tsconfig.json" },
 		enhancedResolveOptions: {

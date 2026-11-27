@@ -210,6 +210,8 @@ export type PanelContext = {
 		// Runs `handler` for a command the manifest contributes to this panel,
 		// while the panel's worktree is the open one.
 		register(command: string, handler: () => void): Disposable;
+		// The current bindings for a command, including the user's overrides.
+		keysFor(command: string): readonly string[];
 	};
 	// Shows an element in the panel's header in place of its title, such as
 	// tabs.

@@ -48,6 +48,18 @@ export const fileContent = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("missing") }),
 ]);
 
+// A bounded file's bytes, encoded for the plugin transport.
+export const fileBytes = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("bytes"), data: z.base64() }),
+	z.object({ kind: z.literal("tooLarge") }),
+	z.object({ kind: z.literal("missing") }),
+]);
+
+export const remoteImage = z.object({
+	data: z.base64(),
+	mime: z.string(),
+});
+
 // `changed`: nothing was written, because the file was not at the version the
 // write named. `version` is what it is at now, null when it is not there.
 export const fileWrite = z.discriminatedUnion("kind", [
@@ -60,4 +72,6 @@ export type GitChangeKind = z.infer<typeof gitChangeKind>;
 export type GitChange = z.infer<typeof gitChange>;
 export type DirEntry = z.infer<typeof dirEntry>;
 export type FileContent = z.infer<typeof fileContent>;
+export type FileBytes = z.infer<typeof fileBytes>;
+export type RemoteImage = z.infer<typeof remoteImage>;
 export type FileWrite = z.infer<typeof fileWrite>;

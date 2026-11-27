@@ -7,12 +7,14 @@ import type { Worktree } from "@yaa/contracts/projects";
 import { createServer, type Server } from "@yaa/contracts/server";
 import {
 	createFile,
+	readBytes,
 	readFolder,
 	readText,
 	removePath,
 	renamePath,
 	writeText,
 } from "../files/file-operations.ts";
+import { fetchImage } from "../files/remote-image.ts";
 import type { WorktreeWatches } from "../files/worktree-watches.ts";
 import type { GitService } from "../git/git-service.ts";
 import type { PluginStore } from "../storage/plugin-store.ts";
@@ -50,6 +52,9 @@ export const createPluginApiServer = ({
 				entries: await readFolder(pathOf(params.worktree), params.path),
 			}),
 			"files.read": (params) => readText(pathOf(params.worktree), params.path),
+			"files.readBytes": (params) =>
+				readBytes(pathOf(params.worktree), params.path),
+			"files.fetchImage": ({ url }) => fetchImage(url),
 			"files.write": (params) =>
 				writeText(
 					pathOf(params.worktree),
