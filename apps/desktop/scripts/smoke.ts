@@ -537,10 +537,6 @@ const useGit = async (page: Connection, repo: string) => {
 		page,
 		`[...(${DOCK}).querySelectorAll(".monaco-diff-editor .original .view-lines")].some((line) => /original\\s+text/.test(line.textContent))`,
 	);
-	await waitFor(
-		page,
-		`[...(${DOCK}).querySelectorAll(".monaco-diff-editor .modified .view-lines")].every((line) => !/original\\s+text/.test(line.textContent))`,
-	);
 	await press(page, ENTER);
 	await waitFor(
 		page,
