@@ -2,22 +2,26 @@
 import { IconButton } from "@yaa/ui";
 import type { PanelKind } from "@yaa/ui/dock";
 
-// One toggle per panel kind, at the end of the header; the open ones are
-// pressed. Pointing at or focusing an open panel's toggle shows where that
-// panel is (`onpeek`).
+// One toggle per panel kind, at the end of the header
+// (docs/decisions/0034): open panels are pressed. Pointing at or focusing
+// an open panel's toggle shows where that panel is (`onpeek`).
 let {
 	kinds,
-	isOpen,
+	open,
 	shortcut,
 	ontoggle,
 	onpeek,
 }: {
 	kinds: ReadonlyMap<string, PanelKind>;
-	isOpen: (kind: string) => boolean;
+	open: readonly string[];
 	shortcut: (kind: string) => readonly string[] | undefined;
 	ontoggle: (kind: string) => void;
 	onpeek: (kind: string | undefined) => void;
 } = $props();
+
+const peek = (id: string) => {
+	if (open.includes(id)) onpeek(id);
+};
 </script>
 
 <nav
@@ -29,13 +33,13 @@ let {
 			icon={kind.icon}
 			label={kind.title}
 			shortcut={shortcut(id)}
-			pressed={isOpen(id)}
+			pressed={open.includes(id)}
 			size="large"
 			tooltipSide="bottom"
 			onclick={() => ontoggle(id)}
-			onpointerenter={() => onpeek(id)}
+			onpointerenter={() => peek(id)}
 			onpointerleave={() => onpeek(undefined)}
-			onfocus={() => onpeek(id)}
+			onfocus={() => peek(id)}
 			onblur={() => onpeek(undefined)}
 		/>
 	{/each}

@@ -1,5 +1,5 @@
 import type { Context } from "@yaa/commands/when";
-import { isTextEntry, isTextField } from "@yaa/ui/focus";
+import { isParked, isTextEntry, isTextField } from "@yaa/ui/focus";
 import { tick } from "svelte";
 import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
@@ -80,6 +80,7 @@ export const createWorkbench = (core: CoreConnection) => {
 		"focus.highlight": regions.highlighted,
 		inputFocus: isTextEntry(document.activeElement),
 		textField: isTextField(document.activeElement),
+		"focus.parked": isParked(document.activeElement),
 		"palette.open": palette.open,
 	});
 	const commands = createCommands({ client, context });

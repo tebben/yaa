@@ -3,7 +3,7 @@ import GitBranch from "@lucide/svelte/icons/git-branch";
 import LayoutGrid from "@lucide/svelte/icons/layout-grid";
 import type { BranchStatus, Project } from "@yaa/contracts/projects";
 import type { WorktreeState } from "@yaa/contracts/worktree-state";
-import { focusableItems } from "@yaa/ui/focus";
+import { arrive, editField, focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
 import type { CoreClient } from "../core-connection.ts";
 import type { Crumb } from "../shell/index.ts";
@@ -180,13 +180,15 @@ export const createProjects = ({
 			};
 		}) satisfies Attachment<HTMLElement>,
 		focusSearch() {
-			searchField?.focus({ focusVisible: true });
-			searchField?.select();
+			if (searchField === undefined) return;
+			editField(searchField, { focusVisible: true });
+			searchField.select();
 		},
 		// The first row of the tree, or the search field when the tree is empty.
 		focusTree() {
 			const [first] = treeList === undefined ? [] : focusableItems(treeList);
-			(first ?? searchField)?.focus({ focusVisible: true });
+			const to = first ?? searchField;
+			if (to !== undefined) arrive(to, { focusVisible: true });
 		},
 		remove(id: string) {
 			client.request("projects.remove", { id }).catch(fail);

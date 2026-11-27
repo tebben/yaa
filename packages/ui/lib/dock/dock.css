@@ -89,10 +89,11 @@
 	color: var(--color-text-soft);
 }
 
-/* Opacity, not visibility: the button's cross sets its own visibility. */
+/* A tab's buttons show while it is shown or hovered. Opacity, not
+   visibility: the close button's cross sets its own visibility. */
 .yaa-dock
 	.dv-tab.dv-inactive-tab:not(:hover)
-	.yaa-tab-close:not(:focus-visible) {
+	.yaa-tab-button:not(:focus-visible) {
 	opacity: 0;
 }
 

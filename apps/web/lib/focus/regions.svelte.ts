@@ -1,5 +1,5 @@
 import type { DockController, DockDirection } from "@yaa/ui/dock";
-import { createFocusMemory, focusableItems } from "@yaa/ui/focus";
+import { arrive, createFocusMemory, focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
 
 // The parts of the window focus moves between: the shell's fixed regions
@@ -88,20 +88,13 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 		hideHighlight() {
 			highlighted = false;
 		},
-		// Moves focus out of the text field it is in, onto the panel or region
-		// holding it.
-		leaveField() {
-			const region = regions.get(current());
-			if (region === undefined) dock()?.leaveField();
-			else memory.leave(region.element);
-		},
 		// Whether the focused panel or region has a text field to edit.
 		hasField() {
 			const region = regions.get(current());
 			if (region === undefined) return dock()?.hasField() ?? false;
 			return memory.hasField(region.element);
 		},
-		// Focuses the text field of the focused panel or region.
+		// Focuses the text field of the focused panel or region, to edit it.
 		editField() {
 			const region = regions.get(current());
 			if (region === undefined) dock()?.editField();
@@ -127,7 +120,8 @@ export const createRegions = ({ dock, menuOpen }: RegionsOptions) => {
 			// From the region itself, down goes to the first item, up to the last.
 			const next =
 				index < 0 ? (step > 0 ? 0 : -1) : (index + step) % list.length;
-			list.at(next)?.focus({ focusVisible: true });
+			const item = list.at(next);
+			if (item !== undefined) arrive(item, { focusVisible: true });
 		},
 	};
 };

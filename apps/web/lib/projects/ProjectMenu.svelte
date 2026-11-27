@@ -1,7 +1,7 @@
 <script lang="ts">
 import Plus from "@lucide/svelte/icons/plus";
 import Search from "@lucide/svelte/icons/search";
-import { IconButton, Kbd, TextField } from "@yaa/ui";
+import { IconButton, TextField } from "@yaa/ui";
 import ProjectTree from "./ProjectTree.svelte";
 import type { ProjectsController } from "./projects.svelte.ts";
 import type { WorktreesController } from "./worktrees.svelte.ts";
@@ -12,12 +12,10 @@ let {
 	projects,
 	worktrees,
 	addShortcut,
-	searchShortcut,
 }: {
 	projects: ProjectsController;
 	worktrees: WorktreesController;
 	addShortcut: readonly string[] | undefined;
-	searchShortcut: readonly string[] | undefined;
 } = $props();
 </script>
 
@@ -44,11 +42,7 @@ let {
 			aria-label="Search projects"
 			bind:value={() => projects.query, (text) => (projects.query = text)}
 			{@attach projects.searchField}
-		>
-			{#if searchShortcut && projects.query === ""}
-				<Kbd keys={searchShortcut} />
-			{/if}
-		</TextField>
+		/>
 	</form>
 </search>
 <div class="min-h-0 flex-1 overflow-y-auto">

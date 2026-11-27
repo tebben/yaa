@@ -1,5 +1,6 @@
 import type { PromptAttachment } from "@yaa/contracts/agent-events";
 import type { PanelContext } from "@yaa/plugin-api/ui";
+import { editField } from "@yaa/ui/focus";
 import { SvelteMap } from "svelte/reactivity";
 import type { Session } from "./sessions.svelte.ts";
 import { suggestCommands } from "./suggestions.ts";
@@ -74,7 +75,7 @@ export const createComposer = ({ panel, session, failed }: ComposerOptions) => {
 
 	const focus = () => {
 		if (input === undefined) wanted = true;
-		else input.focus();
+		else editField(input);
 	};
 
 	// While a turn runs the draft stays, to be sent after it.

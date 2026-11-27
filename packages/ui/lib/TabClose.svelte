@@ -1,13 +1,13 @@
 <script lang="ts">
 import { X } from "@lucide/svelte";
 import Icon from "./Icon.svelte";
+import TabButton from "./TabButton.svelte";
 
 // The close button of a tab in a strip, the editor's file tabs and the
 // grid's panel tabs alike. A dotted tab, such as one with unsaved text, shows
 // a dot in its place, which turns into the cross under the pointer or with
-// focus. A strip conceals
-// the cross of a clean tab that is not the shown one until its tab, marked
-// `yaa-tab`, is hovered.
+// focus. A strip conceals the cross of a clean tab that is not the shown one
+// until its tab, marked `yaa-tab`, is hovered.
 let {
 	label,
 	dotted = false,
@@ -21,39 +21,12 @@ let {
 } = $props();
 </script>
 
-<button
-	type="button"
-	class={["yaa-tab-close", { dotted, concealed }]}
-	aria-label={label}
-	{onclick}
->
+<TabButton {label} class={["yaa-tab-close", { dotted, concealed }]} {onclick}>
 	<span class="dot"></span>
 	<span class="cross"><Icon icon={X} /></span>
-</button>
+</TabButton>
 
 <style>
-.yaa-tab-close {
-	display: grid;
-	flex: none;
-	place-items: center;
-	width: var(--spacing-4_5);
-	height: var(--spacing-4_5);
-	border-radius: var(--radius-chip);
-	color: inherit;
-	outline: none;
-}
-
-.yaa-tab-close:hover,
-.yaa-tab-close:focus-visible {
-	background: var(--color-hover);
-	color: var(--color-text);
-}
-
-.yaa-tab-close :global(svg) {
-	width: var(--spacing-3_5);
-	height: var(--spacing-3_5);
-}
-
 /* The dot and the cross share a place. */
 .dot,
 .cross {
@@ -72,11 +45,12 @@ let {
 	display: flex;
 }
 
-.dotted:not(:hover, :focus-visible) .dot,
-.dotted:is(:hover, :focus-visible) .cross,
-.yaa-tab-close:not(.dotted, .concealed) .cross,
-.yaa-tab-close:not(.dotted):focus-visible .cross,
-:global(.yaa-tab:hover) .yaa-tab-close:not(.dotted) .cross {
+/* In ascending specificity. */
+:global(.yaa-tab-close:not(.dotted, .concealed)) .cross,
+:global(.yaa-tab-close:not(.dotted):focus-visible) .cross,
+:global(.yaa-tab-close.dotted:is(:hover, :focus-visible)) .cross,
+:global(.yaa-tab-close.dotted:not(:hover, :focus-visible)) .dot,
+:global(.yaa-tab:hover .yaa-tab-close:not(.dotted)) .cross {
 	visibility: visible;
 }
 </style>

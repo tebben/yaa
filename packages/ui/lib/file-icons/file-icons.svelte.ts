@@ -12,10 +12,12 @@ const DEFAULT_SIZE = 16;
 // The Catppuccin set is one large JSON file: it loads, as a chunk of its
 // own, when the first file icon is drawn, and the icons show once it has.
 let icons = $state.raw<IconSet["icons"]>();
-let loading: Promise<void> | undefined;
+let requested = false;
 
 const load = () => {
-	loading ??= import("@iconify-json/catppuccin/icons.json").then(
+	if (requested) return;
+	requested = true;
+	void import("@iconify-json/catppuccin/icons.json").then(
 		(set: { default: IconSet }) => {
 			icons = set.default.icons;
 		},

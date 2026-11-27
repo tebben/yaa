@@ -43,6 +43,7 @@ export type TokenName =
 	| "spacing-graph"
 	| "spacing-palette"
 	| "spacing-palette-offset"
+	| "spacing-modal-inset"
 	| "color-chrome"
 	| "color-grid"
 	| "color-menu"

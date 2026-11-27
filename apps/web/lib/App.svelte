@@ -45,7 +45,6 @@ const shortcut = (id: string) => {
 					{projects}
 					{worktrees}
 					addShortcut={shortcut("project.add")}
-					searchShortcut={shortcut("menu.search")}
 				/>
 			</LeftMenu>
 		{/if}
@@ -60,7 +59,7 @@ const shortcut = (id: string) => {
 				{#if projects.view === "worktree"}
 					<PanelBar
 						kinds={layouts.kinds}
-						isOpen={(kind) => workbench.dock?.isOpen(kind) ?? false}
+						open={workbench.dock?.open ?? []}
 						shortcut={(kind) => shortcut(`panel.toggle.${kind}`)}
 						ontoggle={(kind) => commands.run(`panel.toggle.${kind}`)}
 						onpeek={(kind) => workbench.dock?.peek(kind)}

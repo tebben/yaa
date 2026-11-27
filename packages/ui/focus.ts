@@ -4,4 +4,12 @@ export {
 	type FocusMemory,
 	focusableItems,
 } from "./lib/focus/focus-memory.ts";
-export { isTextEntry, isTextField } from "./lib/focus/text-field.ts";
+export {
+	arrive,
+	editField,
+	isParked,
+	isTextEntry,
+	isTextField,
+	park,
+	unpark,
+} from "./lib/focus/text-field.ts";

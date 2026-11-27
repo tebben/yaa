@@ -1,4 +1,5 @@
 import type { DockController, DockDirection, PanelKind } from "@yaa/ui/dock";
+import { isParked, park, unpark } from "@yaa/ui/focus";
 import type { Command } from "./commands/index.ts";
 import type { RegionsController } from "./focus/index.ts";
 import type { PaletteController } from "./palette/index.ts";
@@ -42,14 +43,25 @@ export const appCommands = ({
 		category: "View",
 		run: () => regions.move(direction),
 	})),
-	{ id: "input.leave", when: "textField", run: regions.leaveField },
+	// Escape stops editing a field and leaves focus on it, parked; Enter or I
+	// edits it again, or the panel's or region's field when focus is not on
+	// one (docs/spec/01-ui-layout-theming.md).
+	{
+		id: "input.leave",
+		when: "textField",
+		run: () => park(document.activeElement),
+	},
 	{
 		id: "input.edit",
 		title: "Edit the text field",
 		category: "View",
 		when: "!inputFocus",
-		enabled: regions.hasField,
-		run: regions.editField,
+		enabled: () => isParked(document.activeElement) || regions.hasField(),
+		run: () => {
+			const active = document.activeElement;
+			if (isParked(active)) unpark(active);
+			else regions.editField();
+		},
 	},
 	{
 		id: "focus.hideHighlight",
@@ -105,6 +117,12 @@ export const appCommands = ({
 		title: "Close panel",
 		category: "Panel",
 		run: () => dock()?.closeActive(),
+	},
+	{
+		id: "panel.fullScreen",
+		title: "Toggle full-screen panel",
+		category: "Panel",
+		run: () => dock()?.toggleActiveFullScreen(),
 	},
 	{
 		id: "layout.reset",

@@ -88,8 +88,11 @@ export const createDock = ({
 	const headerHosts = new Map<string, HTMLElement>();
 	const ownHeaders = new SvelteSet<string>();
 	const closeHandlers = new Map<string, () => boolean>();
-	let open = $state<ReadonlySet<string>>(new Set());
+	// The open panels' kinds.
+	let open = $state.raw<readonly string[]>([]);
 	let activeKind = $state<string>();
+	// The group shown full screen over the grid, if one is.
+	let fullScreen = $state<string>();
 	let api: DockviewApi | undefined;
 	// The grid's element, to tell whether focus is in the grid.
 	let root: HTMLElement | undefined;
@@ -194,6 +197,19 @@ export const createDock = ({
 	};
 	let peeked: readonly Element[] = [];
 
+	// Flashes the kind's panel once, to show where it is.
+	const flash = (kind: string) => {
+		for (const element of mark(kind, "yaa-flash")) {
+			// Animations inside the panel end here too.
+			const done = (event: Event) => {
+				if (event.target !== element) return;
+				element.classList.remove("yaa-flash");
+				element.removeEventListener("animationend", done);
+			};
+			element.addEventListener("animationend", done);
+		}
+	};
+
 	const close = (panel: IDockviewPanel) => {
 		if (panel.group.panels.length === 1) {
 			widths.set(panel.id, panel.group.api.width);
@@ -246,6 +262,17 @@ export const createDock = ({
 		else panel?.api.setActive();
 	};
 
+	// Shows the panel's group full screen, or the grid again; focus moves
+	// into the panel when it was in the grid. Going to another panel shows
+	// the grid again (dockview does).
+	const toggleFullScreen = (panel: IDockviewPanel | undefined) => {
+		if (api === undefined || panel === undefined) return;
+		const hadFocus = root?.contains(document.activeElement) === true;
+		if (panel.group.api.isMaximized()) api.exitMaximizedGroup();
+		else api.maximizeGroup(panel);
+		settle(panel, hadFocus);
+	};
+
 	const attach: Attachment<HTMLElement> = (element) =>
 		// Creating panels writes to `slots`; untracked, so that does not rerun
 		// the attachment and rebuild the grid.
@@ -267,7 +294,7 @@ export const createDock = ({
 			root = element;
 			restore(dock);
 			const sync = () => {
-				open = new Set(dock.panels.map((panel) => panel.id));
+				open = dock.panels.map((panel) => panel.id);
 			};
 			sync();
 			const changes = dock.onDidLayoutChange(() => {
@@ -279,9 +306,15 @@ export const createDock = ({
 				activeKind = dock.activePanel?.api.component;
 			});
 			activeKind = dock.activePanel?.api.component;
+			const fullScreenChanges = dock.onDidMaximizedGroupChange(
+				({ group, isMaximized }) => {
+					fullScreen = isMaximized ? group.id : undefined;
+				},
+			);
 			return () => {
 				changes.dispose();
 				activeChanges.dispose();
+				fullScreenChanges.dispose();
 				dock.dispose();
 				api = undefined;
 				root = undefined;
@@ -300,8 +333,9 @@ export const createDock = ({
 		hasOwnHeader(panelId: string) {
 			return ownHeaders.has(panelId);
 		},
-		isOpen(kind: string) {
-			return open.has(kind);
+		// The open panels' kinds.
+		get open(): readonly string[] {
+			return open;
 		},
 		// The kind of the focused panel, for `panel.kind` in when conditions.
 		get activeKind() {
@@ -310,11 +344,6 @@ export const createDock = ({
 		// Moves focus into the active panel, as it was when focus left the grid.
 		focusActive() {
 			activate(api?.activePanel);
-		},
-		// Moves focus from a text field in the active panel onto the panel.
-		leaveField() {
-			const root = content(api?.activePanel);
-			if (root !== undefined) memory.leave(root);
 		},
 		// Whether the active panel has a text field to go back to.
 		hasField() {
@@ -326,10 +355,32 @@ export const createDock = ({
 			const root = content(api?.activePanel);
 			if (root !== undefined) memory.edit(root);
 		},
+		// Whether a panel is full screen, over the rest of the window like a
+		// dialog.
+		get fullScreen() {
+			return fullScreen !== undefined;
+		},
+		exitFullScreen() {
+			api?.exitMaximizedGroup();
+		},
+		// Whether the panel's group is the one full screen.
+		isFullScreen(panelId: string) {
+			const group = api?.getPanel(panelId)?.group;
+			return group !== undefined && group.id === fullScreen;
+		},
+		// Shows the panel's group full screen, or the grid again.
+		toggleFullScreen(panelId: string) {
+			toggleFullScreen(api?.getPanel(panelId));
+		},
+		toggleActiveFullScreen() {
+			toggleFullScreen(api?.activePanel);
+		},
 		// Focuses the group beside the active one; false at the grid's edge.
+		// A full-screen panel keeps focus, as a dialog does.
 		focus(direction: DockDirection): boolean {
 			const group = api?.activeGroup;
 			if (api === undefined || group === undefined) return false;
+			if (fullScreen !== undefined) return true;
 			// dockview's own lookup compares centres, so from a wide panel it
 			// misses the narrower ones beside it.
 			const others = api.groups.filter((other) => other !== group);
@@ -409,15 +460,7 @@ export const createDock = ({
 			// The new panel's content renders on the next tick; dockview may
 			// have moved the focused element out of the page meanwhile.
 			void tick().then(() => settle(api?.getPanel(kind), hadFocus));
-			for (const element of mark(kind, "yaa-flash")) {
-				// Animations inside the panel end here too.
-				const done = (event: Event) => {
-					if (event.target !== element) return;
-					element.classList.remove("yaa-flash");
-					element.removeEventListener("animationend", done);
-				};
-				element.addEventListener("animationend", done);
-			}
+			flash(kind);
 		},
 		// Shows where the kind's panel is while its toggle is hovered or
 		// focused; undefined takes the mark off.
