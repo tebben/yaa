@@ -1,5 +1,10 @@
 import { defineProtocol } from "@yaa/contracts/protocol";
-import { fileContent, fileWrite } from "@yaa/contracts/worktree-files";
+import {
+	fileBytes,
+	fileContent,
+	fileWrite,
+	remoteImage,
+} from "@yaa/contracts/worktree-files";
 import * as z from "zod";
 
 const inWorktree = { worktree: z.string() };
@@ -30,6 +35,11 @@ export const editorProtocol = defineProtocol({
 			result: z.object({ files: z.array(z.string()) }),
 		},
 		read: { params: z.object(atPath), result: fileContent },
+		readBytes: { params: z.object(atPath), result: fileBytes },
+		fetchImage: {
+			params: z.object({ url: z.string().url() }),
+			result: remoteImage,
+		},
 		write: {
 			params: z.object({
 				...atPath,

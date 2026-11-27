@@ -11,10 +11,12 @@ import {
 } from "./providers.ts";
 import {
 	dirEntry,
+	fileBytes,
 	fileContent,
 	fileWrite,
 	gitChange,
 	gitFiles,
+	remoteImage,
 } from "./worktree-files.ts";
 
 // An event a plugin's backend sends its UI.
@@ -120,6 +122,11 @@ export const pluginCoreProtocol = defineProtocol({
 			result: z.object({ entries: z.array(dirEntry) }),
 		},
 		"files.read": { params: z.object(atPath), result: fileContent },
+		"files.readBytes": { params: z.object(atPath), result: fileBytes },
+		"files.fetchImage": {
+			params: z.object({ url: z.string().url() }),
+			result: remoteImage,
+		},
 		"files.write": {
 			params: z.object({
 				...atPath,

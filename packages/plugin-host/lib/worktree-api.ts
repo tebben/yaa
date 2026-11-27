@@ -27,6 +27,9 @@ export const createWorktreeApi = (
 			readDir: async (worktree, path) =>
 				(await core.request("files.readDir", { worktree, path })).entries,
 			read: (worktree, path) => core.request("files.read", { worktree, path }),
+			readBytes: (worktree, path) =>
+				core.request("files.readBytes", { worktree, path }),
+			fetchImage: (url) => core.request("files.fetchImage", { url }),
 			write: (worktree, path, text, version) =>
 				core.request("files.write", { worktree, path, text, version }),
 			async create(worktree, path) {

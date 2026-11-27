@@ -8,9 +8,11 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	createFile,
+	fetchImage,
+	readBytes,
 	readFolder,
 	readText,
 	removePath,
@@ -107,6 +109,81 @@ describe("worktree file operations", () => {
 });
 
 describe("reading and writing text", () => {
+	it("reads binary files only within the worktree", async () => {
+		await writeFile(join(root, "image"), Buffer.from([0, 1, 255]));
+		await writeFile(join(dir, "outside"), "private");
+		await symlink(join(dir, "outside"), join(root, "link"));
+		expect(await readBytes(root, "image")).toEqual({
+			kind: "bytes",
+			data: "AAH/",
+		});
+		expect(await readBytes(root, "missing")).toEqual({ kind: "missing" });
+		await expect(readBytes(root, "link")).rejects.toThrow("leads out");
+	});
+
+	describe("remote images", () => {
+		afterEach(() => vi.unstubAllGlobals());
+
+		it("returns the bytes of a supported image", async () => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue(
+					new Response(Uint8Array.from([0, 1, 255]), {
+						headers: { "content-type": "image/png" },
+					}),
+				),
+			);
+			expect(await fetchImage("https://example.test/a")).toEqual({
+				data: "AAH/",
+				mime: "image/png",
+			});
+		});
+
+		it("requires HTTPS and validates the response type", async () => {
+			const request = vi.fn().mockResolvedValue(
+				new Response("not an image", {
+					headers: { "content-type": "text/html" },
+				}),
+			);
+			vi.stubGlobal("fetch", request);
+			await expect(fetchImage("http://example.test/a")).rejects.toThrow(
+				"HTTPS",
+			);
+			expect(request).not.toHaveBeenCalled();
+			await expect(fetchImage("https://example.test/a")).rejects.toThrow(
+				"not a supported image",
+			);
+		});
+
+		it("does not follow a redirect to HTTP", async () => {
+			const request = vi.fn().mockResolvedValue(
+				new Response(null, {
+					status: 302,
+					headers: { location: "http://example.test/image.png" },
+				}),
+			);
+			vi.stubGlobal("fetch", request);
+			await expect(fetchImage("https://example.test/a")).rejects.toThrow(
+				"HTTPS",
+			);
+			expect(request).toHaveBeenCalledTimes(1);
+		});
+
+		it("stops a response larger than the image limit", async () => {
+			vi.stubGlobal(
+				"fetch",
+				vi.fn().mockResolvedValue(
+					new Response(new Uint8Array(10 * 1024 * 1024 + 1), {
+						headers: { "content-type": "image/png" },
+					}),
+				),
+			);
+			await expect(fetchImage("https://example.test/a")).rejects.toThrow(
+				"too large",
+			);
+		});
+	});
+
 	it("writes only over the version that was read, keeping a byte order mark", async () => {
 		await writeFile(join(root, "a"), "\uFEFFone");
 		const read = await readText(root, "a");

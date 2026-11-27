@@ -41,6 +41,8 @@ export const activate: PluginBackend["activate"] = ({
 			files: (await git.files(worktree)).files,
 		}),
 		read: ({ worktree, path }) => files.read(worktree, path),
+		readBytes: ({ worktree, path }) => files.readBytes(worktree, path),
+		fetchImage: ({ url }) => files.fetchImage(url),
 		write: ({ worktree, path, text, version }) =>
 			files.write(worktree, path, text, version),
 		async restore({ worktree }) {

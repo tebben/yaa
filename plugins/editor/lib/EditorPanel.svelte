@@ -4,6 +4,8 @@ import { untrack } from "svelte";
 import EditorNotice from "./EditorNotice.svelte";
 import EditorTabs from "./EditorTabs.svelte";
 import { createEditorPanel } from "./editor-panel.svelte.ts";
+import MarkdownPreview from "./MarkdownPreview.svelte";
+import MarkdownRibbon from "./MarkdownRibbon.svelte";
 
 let { panel }: PanelProps = $props();
 // A panel keeps its context for as long as it is open.
@@ -25,15 +27,39 @@ const hasText = $derived(editor.active?.document?.model !== undefined);
 		<div class="header" {@attach context.header}>
 			<EditorTabs {editor} />
 		</div>
+		{#if editor.markdown}
+			<MarkdownRibbon {editor} keysFor={context.commands.keysFor} />
+		{/if}
 	</div>
 	{#if editor.problem}
 		<p class="note problem">{editor.problem}</p>
 	{/if}
 	<EditorNotice {editor} />
 	<div
-		class={["code", { hidden: !hasText }]}
+		class={["code", { hidden: !hasText || editor.readMode }]}
 		{@attach editor.view.attach}
 	></div>
+	{#if editor.readMode && editor.active?.document?.model}
+		{#key editor.active.path}
+			<div
+				class="preview"
+				tabindex="-1"
+				{@attach (element) => {
+					editor.setPreview(element);
+					return () => editor.setPreview(undefined);
+				}}
+			>
+				<MarkdownPreview
+					model={editor.active.document.model}
+					path={editor.active.path}
+					toc={editor.toc}
+					read={editor.readImage}
+					fetch={editor.fetchImage}
+					open={editor.openMarkdownFile}
+				/>
+			</div>
+		{/key}
+	{/if}
 	{#if editor.active === undefined}
 		<p class="note">
 			No file is open. Pick one in the files panel, or use Go to file.
@@ -60,6 +86,13 @@ const hasText = $derived(editor.active?.document?.model !== undefined);
 	flex: 1;
 	flex-direction: column;
 	min-height: 0;
+}
+
+.preview {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	outline: none;
 }
 
 .code :global(.text) {

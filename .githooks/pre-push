@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+head=$(git rev-parse --verify HEAD)
+check=false
+while read -r local_ref local_sha remote_ref remote_sha; do
+	if [ "$local_ref" = "(delete)" ]; then
+		continue
+	fi
+	commit=$(git rev-parse --verify "$local_sha^{commit}") || exit 1
+	if [ "$commit" != "$head" ]; then
+		echo "Pre-push: check out the commit being pushed before pushing." >&2
+		exit 1
+	fi
+	check=true
+done
+
+if [ "$check" = false ]; then
+	exit 0
+fi
+
+if [ -n "$(git status --porcelain --untracked-files=normal)" ]; then
+	echo "Pre-push: commit or stash changes before pushing." >&2
+	exit 1
+fi
+
+exec pnpm run prepush

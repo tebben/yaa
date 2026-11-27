@@ -1,11 +1,13 @@
 import { fuzzyMatch } from "@yaa/commands/fuzzy-match";
 import type { Disposable } from "@yaa/contracts/protocol";
 import type { PanelContext } from "@yaa/plugin-api/ui";
-import { onDestroy } from "svelte";
+import { onDestroy, tick } from "svelte";
+import { SvelteSet } from "svelte/reactivity";
 import { editorProtocol, type TabsState } from "../protocol.ts";
 import { createDocuments } from "./documents.svelte.ts";
 import { editorSettings } from "./editor-options.ts";
 import { createEditorView } from "./editor-view.svelte.ts";
+import { imageMime } from "./markdown-preview.svelte.ts";
 import {
 	activateTab,
 	closeTab,
@@ -29,6 +31,8 @@ export const createEditorPanel = (panel: PanelContext) => {
 	const server = panel.backend(editorProtocol);
 	const worktree = panel.worktree.id;
 	let tabs = $state.raw<TabsState>(NO_TABS);
+	const reading = new SvelteSet<string>();
+	const outlines = new SvelteSet<string>();
 	// The tab waiting for an answer on its unsaved text before it closes.
 	let closing = $state<string>();
 	let cancel: Disposable | undefined;
@@ -56,12 +60,54 @@ export const createEditorPanel = (panel: PanelContext) => {
 	const active = $derived(
 		tabs.active === null ? undefined : documents.get(tabs.active),
 	);
+	const markdown = $derived(
+		tabs.active !== null &&
+			/\.md$/i.test(tabs.active) &&
+			active?.model !== undefined,
+	);
+	const readMode = $derived(tabs.active !== null && reading.has(tabs.active));
+	let preview: HTMLElement | undefined;
+	const toggleMarkdown = () => {
+		const path = tabs.active;
+		if (!markdown || path === null) return;
+		if (reading.has(path)) {
+			reading.delete(path);
+			void tick().then(() => view.focus());
+		} else {
+			reading.add(path);
+			void tick().then(() => preview?.focus());
+		}
+	};
+	const toggleToc = () => {
+		const path = tabs.active;
+		if (path === null || !markdown || !readMode) return;
+		if (outlines.has(path)) outlines.delete(path);
+		else outlines.add(path);
+	};
+	$effect(() => {
+		if (!markdown) return;
+		const mode = panel.commands.register(
+			"editor.toggleMarkdown",
+			toggleMarkdown,
+		);
+		const toc = readMode
+			? panel.commands.register("editor.toggleMarkdownToc", toggleToc)
+			: undefined;
+		return () => {
+			mode.dispose();
+			toc?.dispose();
+		};
+	});
 
 	// Takes the tabs, lets go of the files no tab shows, loads the active one
 	// and stores the result.
 	const show = (next: TabsState) => {
 		for (const { path } of tabs.open) {
-			if (!next.open.some((tab) => tab.path === path)) documents.discard(path);
+			if (!next.open.some((tab) => tab.path === path)) {
+				documents.discard(path);
+				reading.delete(path);
+				outlines.delete(path);
+			}
 		}
 		tabs = next;
 		if (next.active !== null) documents.open(next.active).catch(fail);
@@ -113,10 +159,18 @@ export const createEditorPanel = (panel: PanelContext) => {
 		cancel = undefined;
 	};
 
+	const goTo = (path: string, to?: Parameters<typeof view.goTo>[1]) => {
+		if (reading.has(path) && to?.line === undefined) {
+			if (to?.focus !== false) void tick().then(() => preview?.focus());
+		} else view.goTo(path, to);
+	};
+
 	const close = (path: string) => {
 		stopClosing();
+		reading.delete(path);
+		outlines.delete(path);
 		update(closeTab(tabs, path));
-		if (tabs.active !== null) view.goTo(tabs.active);
+		if (tabs.active !== null) goTo(tabs.active);
 	};
 
 	// A tab with unsaved text asks first.
@@ -137,8 +191,10 @@ export const createEditorPanel = (panel: PanelContext) => {
 
 	const select = (next: TabsState, to?: Parameters<typeof view.goTo>[1]) => {
 		stopClosing();
+		if (next.active !== null && to?.line !== undefined)
+			reading.delete(next.active);
 		update(next);
-		if (next.active !== null) view.goTo(next.active, to);
+		if (next.active !== null) goTo(next.active, to);
 	};
 
 	const save = async (path: string, overwrite = false) => {
@@ -197,6 +253,29 @@ export const createEditorPanel = (panel: PanelContext) => {
 
 	return {
 		view,
+		get markdown() {
+			return markdown;
+		},
+		get readMode() {
+			return readMode;
+		},
+		get toc() {
+			return tabs.active !== null && outlines.has(tabs.active);
+		},
+		toggleMarkdown,
+		toggleToc,
+		setPreview(element: HTMLElement | undefined) {
+			preview = element;
+		},
+		async readImage(path: string) {
+			const mime = imageMime(path);
+			if (mime === undefined) throw new Error("Unsupported image type");
+			const result = await server.request("readBytes", { worktree, path });
+			if (result.kind !== "bytes") throw new Error(result.kind);
+			return { data: result.data, mime };
+		},
+		fetchImage: (url: string) => server.request("fetchImage", { url }),
+		openMarkdownFile: (path: string) => select(openTab(tabs, path, false)),
 		get tabs() {
 			const labels = tabLabels(tabs.open.map((tab) => tab.path));
 			return tabs.open.map((tab, index) => ({

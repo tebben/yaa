@@ -21,10 +21,12 @@ import type {
 import type { Handlers } from "@yaa/contracts/server";
 import type {
 	DirEntry,
+	FileBytes,
 	FileContent,
 	FileWrite,
 	GitChange,
 	GitFiles,
+	RemoteImage,
 } from "@yaa/contracts/worktree-files";
 
 export type {
@@ -120,6 +122,10 @@ export type PluginContext = {
 		// A file's text; one that is not there, not UTF-8 text or too large to
 		// open says so.
 		read(worktree: string, path: string): Promise<FileContent>;
+		// A file's bytes, base64 encoded; missing and oversized files say so.
+		readBytes(worktree: string, path: string): Promise<FileBytes>;
+		// Fetches an HTTPS image after the user has agreed to load it.
+		fetchImage(url: string): Promise<RemoteImage>;
 		// Writes the text over the file at `version`, as `read` gave it, or
 		// makes the file when `version` is null. A file at another version is
 		// left alone and reported.

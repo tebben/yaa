@@ -11,6 +11,7 @@
 		"./disk": "./disk.ts",
 		"./css-color": "./css-color.ts",
 		"./editor-options": "./editor-options.ts",
+		"./markdown": "./markdown.ts",
 		"./plugin.json": "./plugin.json"
 	},
 	"scripts": {
@@ -23,6 +24,9 @@
 		"@yaa/contracts": "workspace:*",
 		"@yaa/plugin-api": "workspace:*",
 		"@yaa/ui": "workspace:*",
+		"dompurify": "^3.4.17",
+		"marked": "^18.3.0",
+		"mermaid": "^11.17.2",
 		"monaco-editor": "0.58.0",
 		"monaco-vim": "0.4.4",
 		"zod": "^4.6.7"

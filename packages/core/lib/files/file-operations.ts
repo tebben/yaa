@@ -13,6 +13,7 @@ import {
 import { dirname, join, relative, sep } from "node:path";
 import type {
 	DirEntry,
+	FileBytes,
 	FileContent,
 	FileWrite,
 } from "@yaa/contracts/worktree-files";
@@ -77,6 +78,7 @@ const fileInside = async (root: string, path: string): Promise<string> => {
 
 // Larger files are not opened as text.
 const MAX_TEXT_BYTES = 10 * 1024 * 1024;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const versionOf = (bytes: Uint8Array) =>
 	createHash("sha256").update(bytes).digest("hex");
@@ -98,6 +100,21 @@ const decode = (bytes: Uint8Array): string | undefined => {
 	} catch {
 		return undefined;
 	}
+};
+
+export const readBytes = async (
+	root: string,
+	path: string,
+): Promise<FileBytes> => {
+	const target = await fileInside(root, path);
+	if (!(await exists(target))) return { kind: "missing" };
+	const found = await stat(target);
+	if (!found.isFile()) throw new Error(`${path} is not a file`);
+	if (found.size > MAX_FILE_BYTES) return { kind: "tooLarge" };
+	const bytes = await bytesOf(target);
+	if (bytes === null) return { kind: "missing" };
+	if (bytes.length > MAX_FILE_BYTES) return { kind: "tooLarge" };
+	return { kind: "bytes", data: bytes.toString("base64") };
 };
 
 export const readText = async (

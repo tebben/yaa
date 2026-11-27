@@ -50,6 +50,18 @@
 				"panel": "editor"
 			},
 			{
+				"id": "editor.toggleMarkdown",
+				"title": "Toggle Markdown read view",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
+				"id": "editor.toggleMarkdownToc",
+				"title": "Toggle Markdown table of contents",
+				"category": "Editor",
+				"panel": "editor"
+			},
+			{
 				"id": "editor.cancel",
 				"panel": "editor"
 			}
@@ -87,6 +99,14 @@
 			{
 				"key": "ctrl+shift+t",
 				"command": "editor.reopenTab"
+			},
+			{
+				"key": "ctrl+shift+v",
+				"command": "editor.toggleMarkdown"
+			},
+			{
+				"key": "ctrl+alt+o",
+				"command": "editor.toggleMarkdownToc"
 			},
 			{
 				"key": "escape",

@@ -9,6 +9,7 @@ export type { IconSource } from "./lib/icon-source.ts";
 export { default as Kbd } from "./lib/Kbd.svelte";
 export { default as NumberField } from "./lib/NumberField.svelte";
 export type { Option } from "./lib/option.ts";
+export { default as Ribbon } from "./lib/Ribbon.svelte";
 export { default as Segmented } from "./lib/Segmented.svelte";
 export { default as Select } from "./lib/Select.svelte";
 export { default as Switch } from "./lib/Switch.svelte";
