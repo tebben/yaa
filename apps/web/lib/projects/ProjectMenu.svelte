@@ -46,20 +46,7 @@ let {
 	</form>
 </search>
 <div class="min-h-0 flex-1 overflow-y-auto">
-	<ProjectTree
-		tree={projects.tree}
-		place={projects.place}
-		creating={worktrees.creating}
-		isFinishing={worktrees.isFinishing}
-		isExpanded={projects.isExpanded}
-		stateOf={projects.stateOf}
-		list={projects.treeList}
-		onselect={projects.go}
-		ontoggle={projects.toggle}
-		onremove={projects.remove}
-		oncreate={worktrees.create}
-		onfinish={worktrees.finish}
-	/>
+	<ProjectTree {projects} {worktrees} />
 	{#if projects.projects.length === 0}
 		<p class="px-3 py-1 text-text-muted">No projects yet.</p>
 	{:else if projects.tree.length === 0}

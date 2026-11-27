@@ -1,9 +1,19 @@
 import { fuzzyScore } from "@yaa/commands/fuzzy-match";
-import type { Project, Worktree } from "@yaa/contracts/projects";
+import type { Place, Project, Worktree } from "@yaa/contracts/projects";
 
-// A project as the tree shows it, with the worktrees under it: the main
-// checkout first.
-export type TreeProject = { project: Project; worktrees: readonly Worktree[] };
+// A project as the tree shows it: the worktrees in use under it, the main
+// checkout first, and apart from them the settled ones.
+export type TreeProject = {
+	project: Project;
+	worktrees: readonly Worktree[];
+	settled: readonly Worktree[];
+};
+
+const split = (project: Project, worktrees: readonly Worktree[]) => ({
+	project,
+	worktrees: worktrees.filter(({ settled }) => !settled),
+	settled: worktrees.filter(({ settled }) => settled),
+});
 
 const matches = (query: string, text: string) =>
 	fuzzyScore(query, text) !== undefined;
@@ -17,21 +27,36 @@ export const filterTree = (
 ): TreeProject[] =>
 	projects.flatMap((project) => {
 		if (matches(query, project.name)) {
-			return [{ project, worktrees: project.worktrees }];
+			return [split(project, project.worktrees)];
 		}
 		const worktrees = project.worktrees.filter(({ branch }) =>
 			matches(query, branch),
 		);
-		return worktrees.length > 0 ? [{ project, worktrees }] : [];
+		return worktrees.length > 0 ? [split(project, worktrees)] : [];
 	});
 
-// Where the grid is: a project's overview, or one of its worktrees.
-export type Place = { project: string; worktree?: string };
+// The place if its project, and its worktree when it names one, are still
+// listed, and the worktree is in use.
+export const listedPlace = (
+	projects: readonly Project[],
+	place: Place,
+): Place | undefined => {
+	const project = projects.find(({ id }) => id === place.project);
+	if (project === undefined) return undefined;
+	if (place.worktree === undefined) return place;
+	return project.worktrees.some(
+		({ id, settled }) => id === place.worktree && !settled,
+	)
+		? place
+		: undefined;
+};
 
-// Every worktree in tree order, as places.
+// Every worktree in use in tree order, as places.
 const worktreePlaces = (projects: readonly Project[]) =>
 	projects.flatMap(({ id, worktrees }) =>
-		worktrees.map((worktree) => ({ project: id, worktree: worktree.id })),
+		worktrees.flatMap((worktree) =>
+			worktree.settled ? [] : [{ project: id, worktree: worktree.id }],
+		),
 	);
 
 // The first worktree after `current` in tree order, wrapping around, that

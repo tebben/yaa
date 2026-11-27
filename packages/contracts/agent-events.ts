@@ -237,6 +237,13 @@ export const agentEvent = z.discriminatedUnion("type", [
 	}),
 	// The turn failed, or the agent process could not be reached.
 	z.object({ type: z.literal("error"), message: z.string() }),
+	// Core starts the agent again for a chat whose agent is not running, after
+	// a restart or a crash, and resumes its session; `error` follows when it
+	// cannot.
+	z.object({ type: z.literal("resuming") }),
+	// The turn was under way when yaa last closed: it is over, and what it
+	// waited on was never answered.
+	z.object({ type: z.literal("interrupted") }),
 ]);
 
 // An event as core sends it: numbered per session from 0, so a client that

@@ -7,6 +7,7 @@ import {
 	openAcpSession,
 	promptContent,
 	startAgentProcess,
+	workUnderWay,
 } from "../agents.ts";
 
 const log = createLogger(() => {}, "core");
@@ -97,6 +98,28 @@ describe("openAcpSession with the fake agent", () => {
 		expect(
 			config?.type === "config" && config.options.map(({ id }) => id),
 		).toEqual(["model", "mode"]);
+	});
+
+	it("resumes a session by the agent's id, with its options", async () => {
+		const { session } = await fakeSession();
+		await session.setConfig("model", "fake-small");
+		const events: AgentEvent[] = [];
+		const resumed = await openAcpSession({
+			agent: {
+				stream: connectFakeAgent({ delayScale: 0 }),
+				exited: new Promise(() => {}),
+			},
+			cwd: "/fake",
+			resume: session.id,
+			log,
+			emit: (event) => events.push(event),
+		});
+		expect(resumed.id).toBe(session.id);
+		expect(events.map(({ type }) => type)).toEqual([
+			"commands",
+			"capabilities",
+			"config",
+		]);
 	});
 
 	it("ends a failing turn with an error", async () => {
@@ -236,5 +259,22 @@ describe("normalizeQuestion", () => {
 		});
 		expect(fields).toEqual([]);
 		expect(unsupported).toEqual(["when"]);
+	});
+});
+
+describe("workUnderWay", () => {
+	const prompt: AgentEvent = { type: "prompt", text: "go", attachments: [] };
+	const ended: AgentEvent = { type: "turn.end", stopReason: "end_turn" };
+	const opened: AgentEvent = { type: "capabilities", images: false };
+
+	it("sees a turn or a resume that nothing ended", () => {
+		expect(workUnderWay([])).toBe(false);
+		expect(workUnderWay([opened, prompt, { type: "message", text: "a" }])).toBe(
+			true,
+		);
+		expect(workUnderWay([opened, prompt, ended])).toBe(false);
+		expect(workUnderWay([prompt, { type: "interrupted" }])).toBe(false);
+		expect(workUnderWay([prompt, ended, { type: "resuming" }])).toBe(true);
+		expect(workUnderWay([ended, { type: "resuming" }, opened])).toBe(false);
 	});
 });

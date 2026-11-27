@@ -1,7 +1,7 @@
 import Folder from "@lucide/svelte/icons/folder";
 import GitBranch from "@lucide/svelte/icons/git-branch";
 import LayoutGrid from "@lucide/svelte/icons/layout-grid";
-import type { BranchStatus, Project } from "@yaa/contracts/projects";
+import type { BranchStatus, Place, Project } from "@yaa/contracts/projects";
 import type { WorktreeState } from "@yaa/contracts/worktree-state";
 import { arrive, editField, focusableItems } from "@yaa/ui/focus";
 import type { Attachment } from "svelte/attachments";
@@ -9,8 +9,8 @@ import type { CoreClient } from "../core-connection.ts";
 import type { Crumb } from "../shell/index.ts";
 import {
 	filterTree,
+	listedPlace,
 	nextWorktree,
-	type Place,
 	stepWorktree,
 } from "./project-tree.ts";
 
@@ -19,7 +19,7 @@ type ProjectsOptions = {
 	report(message: string): void;
 	// A worktree is about to show, so its dock can load.
 	opening(worktree: string): void;
-	// The worktrees that exist now; the others' docks can go.
+	// The worktrees in use now; the others' docks can go.
 	listed(worktrees: ReadonlySet<string>): void;
 };
 
@@ -42,15 +42,20 @@ export const createProjects = ({
 	let status = $state.raw<{ id: string; value: BranchStatus }>();
 	let query = $state("");
 	let collapsed = $state.raw<ReadonlySet<string>>(new Set());
+	// The projects whose settled worktrees show; none at first.
+	let settledShown = $state.raw<ReadonlySet<string>>(new Set());
 
-	// A removed project or a finished worktree is no longer selected.
+	// A removed project, or a finished or settled worktree, is no longer
+	// selected.
 	const selected = $derived(
 		projects.find((project) => project.id === place?.project),
 	);
 	const worktree = $derived(
 		place?.worktree === undefined
 			? undefined
-			: selected?.worktrees.find(({ id }) => id === place?.worktree),
+			: selected?.worktrees.find(
+					({ id, settled }) => id === place?.worktree && !settled,
+				),
 	);
 	const tree = $derived(filterTree(query, projects));
 
@@ -62,6 +67,7 @@ export const createProjects = ({
 
 	const go = (next: Place) => {
 		place = next;
+		client.request("place.save", next).catch(fail);
 		const id = next.worktree;
 		if (id === undefined) return;
 		opening(id);
@@ -70,10 +76,15 @@ export const createProjects = ({
 		}, fail);
 	};
 
+	// A settled worktree's dock goes too: it opens again when reopened.
 	const update = (next: readonly Project[]) => {
 		projects = next;
 		listed(
-			new Set(next.flatMap(({ worktrees }) => worktrees.map(({ id }) => id))),
+			new Set(
+				next.flatMap(({ worktrees }) =>
+					worktrees.flatMap(({ id, settled }) => (settled ? [] : [id])),
+				),
+			),
 		);
 	};
 
@@ -87,15 +98,19 @@ export const createProjects = ({
 	}, fail);
 
 	client.subscribe("projects.changed", (changed) => update(changed.projects));
-	// Until session restore, the window opens on the first project's main
-	// checkout.
-	client.request("projects.list", {}).then((list) => {
+	// The window opens where it was, while that is still listed; otherwise on
+	// the first project's main checkout.
+	Promise.all([
+		client.request("projects.list", {}),
+		client.request("place.get", {}),
+	]).then(([list, saved]) => {
 		update(list.projects);
+		if (place !== undefined) return;
+		const start = saved.place && listedPlace(list.projects, saved.place);
 		const [first] = list.projects;
 		const main = first?.worktrees[0];
-		if (place === undefined && first && main) {
-			go({ project: first.id, worktree: main.id });
-		}
+		if (start) go(start);
+		else if (first && main) go({ project: first.id, worktree: main.id });
 	}, fail);
 
 	return {
@@ -150,6 +165,15 @@ export const createProjects = ({
 			const next = new Set(collapsed);
 			if (!next.delete(id)) next.add(id);
 			collapsed = next;
+		},
+		// While searching, the settled worktrees that matched show too.
+		isSettledShown(id: string) {
+			return query.trim() !== "" || settledShown.has(id);
+		},
+		toggleSettled(id: string) {
+			const next = new Set(settledShown);
+			if (!next.delete(id)) next.add(id);
+			settledShown = next;
 		},
 		go,
 		stateOf,

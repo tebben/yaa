@@ -60,4 +60,29 @@ export const migrations: Migrations = [
 		worktree_id TEXT NOT NULL REFERENCES worktrees (id) ON DELETE CASCADE,
 		cwd TEXT NOT NULL
 	) STRICT;`,
+	// 7: chats with their events, so they reopen after a restart
+	// (docs/spec/11-platform-services.md). `agent_session` is the agent's own
+	// session id, which resuming needs; `event` is an agent event as JSON.
+	// `app_state` holds what the app reopens with, such as where the window
+	// was, as JSON by key.
+	`CREATE TABLE chats (
+		id TEXT PRIMARY KEY,
+		worktree_id TEXT NOT NULL REFERENCES worktrees (id) ON DELETE CASCADE,
+		provider TEXT NOT NULL,
+		agent_session TEXT NOT NULL,
+		created_at INTEGER NOT NULL
+	) STRICT;
+	CREATE TABLE chat_events (
+		chat_id TEXT NOT NULL REFERENCES chats (id) ON DELETE CASCADE,
+		seq INTEGER NOT NULL,
+		event TEXT NOT NULL,
+		PRIMARY KEY (chat_id, seq)
+	) STRICT;
+	CREATE TABLE app_state (
+		key TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	) STRICT;`,
+	// 8: when a worktree was settled: put away with its folder, branch and
+	// chats kept (docs/spec/02-worktrees.md); null while it is in use.
+	"ALTER TABLE worktrees ADD COLUMN settled_at INTEGER;",
 ];

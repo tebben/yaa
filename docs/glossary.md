@@ -6,7 +6,8 @@ One line per term. Code, specs and agents use these names; add a term when a new
 - **Worktree:** a git worktree of a project; the unit of work, with its own branch, layout, terminals, chats and usage.
 - **Default branch:** the project's main branch, shown as the trunk in the left menu.
 - **Main checkout:** the project's own folder, where the default branch is checked out; its first worktree, with index 0, which cannot be finished.
-- **Finish:** closing a worktree, optionally removing its folder and deleting its branch.
+- **Finish:** putting a worktree away: settling it, or removing its folder and optionally deleting its branch.
+- **Settled worktree:** a finished worktree kept on disk with its branch and chats, with nothing running in it, until it is reopened or removed.
 - **Provider:** a plugin that connects one agent CLI; supplies detection, spawn configuration and capabilities.
 - **Capability:** something a provider declares it supports, such as resume or skill toggling; the UI hides what is not declared.
 - **Session:** one running agent process with its ACP connection, owned by core, shown as a chat.

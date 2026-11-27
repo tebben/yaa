@@ -526,14 +526,35 @@ const createAndFinishWorktree = async (page: Connection, dataDir: string) => {
 			? true
 			: undefined,
 	);
-	await press(page, OPEN_PALETTE);
-	await waitFor(page, PALETTE);
-	await type(page, "Finish worktree");
+	const finish = async () => {
+		await press(page, OPEN_PALETTE);
+		await waitFor(page, PALETTE);
+		await type(page, "Finish worktree");
+		await press(page, ENTER);
+		await waitFor(
+			page,
+			`document.querySelector('[role="dialog"][aria-label="Finish 1-smoke"]')`,
+		);
+	};
+	// Settled, it folds away under the project and reopens from the palette.
+	await finish();
+	await type(page, "Settle");
 	await press(page, ENTER);
 	await waitFor(
 		page,
-		`document.querySelector('[role="dialog"][aria-label="Finish 1-smoke"]')`,
+		`${HEADER}.textContent.includes("main") && ${MENU}.textContent.includes("Settled") && !${MENU}.textContent.includes("1-smoke")`,
 	);
+	await press(page, OPEN_PALETTE);
+	await waitFor(page, PALETTE);
+	await type(page, "Reopen settled worktree");
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`document.querySelector('[role="option"]')?.textContent.includes("1-smoke")`,
+	);
+	await press(page, ENTER);
+	await waitFor(page, `${HEADER}.textContent.includes("1-smoke")`);
+	await finish();
 	await press(page, ENTER);
 	await waitFor(
 		page,
@@ -637,6 +658,24 @@ const readMarkdownTurn = async (page: Connection, repo: string) => {
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
 
+// After a restart the chat is back with its transcript, and its next prompt
+// starts the agent again and resumes the session.
+const resumeChat = async (page: Connection) => {
+	await waitFor(
+		page,
+		`(${DOCK}).textContent.includes("The greeting now says")`,
+	);
+	await clickElement(page, CHAT);
+	await type(page, "/mark");
+	await waitFor(page, `(${DOCK}).querySelector('[role="option"]')`);
+	await press(page, ENTER);
+	await waitFor(page, `${CHAT}.value === "/markdown "`);
+	await press(page, ENTER);
+	await waitFor(page, `(${DOCK}).textContent.includes("resuming the session")`);
+	await waitFor(page, `(${DOCK}).querySelector("pre code span[style]")`);
+	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
+};
+
 const median = (values: readonly number[]) => {
 	const sorted = [...values].sort((a, b) => a - b);
 	return sorted[Math.floor(sorted.length / 2)] ?? Number.NaN;
@@ -656,7 +695,9 @@ try {
 	await openProject(first.page);
 	console.log("The project's overview, search and main checkout opened.");
 	await createAndFinishWorktree(first.page, dataDir);
-	console.log("A worktree was created, set up, torn down and finished.");
+	console.log(
+		"A worktree was created, set up, settled, reopened, torn down and finished.",
+	);
 	await checkPanelBarPlacement(first.page);
 	console.log("The panel bar opened a panel at the right edge.");
 	await useFilesPanel(first.page, join(dataDir, "repo"));
@@ -690,6 +731,10 @@ try {
 			join(dataDir, `terminal-restart-${run}`),
 			"inner\n",
 		);
+		if (run === 0) {
+			await resumeChat(app.page);
+			console.log("The chat came back and resumed its session.");
+		}
 		await quit(app);
 		console.log(`The app started again (${run + 1}/${WARM_LAUNCHES}).`);
 	}
