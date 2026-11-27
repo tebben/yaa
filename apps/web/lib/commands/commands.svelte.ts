@@ -17,6 +17,10 @@ export type Command = {
 	// What `when` cannot say, such as whether the panel that runs the command
 	// is open.
 	enabled?(): boolean;
+	// A command of the palette's own. While the palette is open only these
+	// have keys, and every other key types in it; while it is closed they
+	// have none.
+	inPalette?: boolean;
 	run(): void;
 };
 
@@ -36,6 +40,7 @@ type CommandsOptions = {
 	client: CoreClient;
 	// The context keys as they are now.
 	context(): Context;
+	paletteOpen(): boolean;
 };
 
 const always = () => true;
@@ -60,7 +65,11 @@ const compile = (command: Command): Registered => {
 // The command registry and the keymap: the user's keybindings.json from
 // core, which applies again on every save, then the default keys in the
 // order they were registered, the app's first.
-export const createCommands = ({ client, context }: CommandsOptions) => {
+export const createCommands = ({
+	client,
+	context,
+	paletteOpen,
+}: CommandsOptions) => {
 	// Read when a key is pressed or the palette opens, never by markup, so it
 	// need not be reactive.
 	const registry = new Map<string, Registered>();
@@ -85,9 +94,6 @@ export const createCommands = ({ client, context }: CommandsOptions) => {
 	};
 	client.request("settings.get", {}).then(takeSettings);
 	client.subscribe("settings.changed", takeSettings);
-
-	const canRun = (id: string, now: Context) =>
-		registry.get(id)?.holds(now) ?? false;
 
 	const run = (id: string) => {
 		const command = registry.get(id);
@@ -128,7 +134,15 @@ export const createCommands = ({ client, context }: CommandsOptions) => {
 			if (key === undefined) return;
 			if (!appKeys.has(key) && capturesKeys(event.target)) return;
 			const now = context();
-			const id = keymap.resolve(key, now, (command) => canRun(command, now));
+			const inPalette = paletteOpen();
+			const id = keymap.resolve(key, now, (candidate) => {
+				const command = registry.get(candidate);
+				return (
+					command !== undefined &&
+					(command.inPalette ?? false) === inPalette &&
+					command.holds(now)
+				);
+			});
 			if (id === undefined) return;
 			event.preventDefault();
 			event.stopPropagation();

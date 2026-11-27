@@ -6,14 +6,14 @@ const all = () => true;
 describe("createKeymap", () => {
 	const defaults = [
 		{ key: "ctrl+w", command: "panel.close" },
-		{ key: "escape", command: "palette.close", when: "palette.open" },
+		{ key: "escape", command: "input.edit", when: "focus.parked" },
 		{ key: "escape", command: "panel.blur" },
 	];
 
 	it("resolves to the first binding whose condition holds", () => {
 		const keymap = createKeymap(defaults, []);
-		expect(keymap.resolve("escape", { "palette.open": true }, all)).toBe(
-			"palette.close",
+		expect(keymap.resolve("escape", { "focus.parked": true }, all)).toBe(
+			"input.edit",
 		);
 		expect(keymap.resolve("escape", {}, all)).toBe("panel.blur");
 		expect(keymap.resolve("ctrl+q", {}, all)).toBeUndefined();

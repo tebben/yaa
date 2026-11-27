@@ -97,97 +97,96 @@
 			{
 				"key": "enter",
 				"command": "chat.acceptSuggestion",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "tab",
 				"command": "chat.acceptSuggestion",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "arrowdown",
 				"command": "chat.nextSuggestion",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "ctrl+n",
 				"command": "chat.nextSuggestion",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "arrowup",
 				"command": "chat.previousSuggestion",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "ctrl+p",
 				"command": "chat.previousSuggestion",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "escape",
 				"command": "chat.dismissSuggestions",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "enter",
 				"command": "chat.send",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && inputFocus"
 			},
 			{
 				"key": "escape",
 				"command": "chat.stop",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "i",
 				"command": "chat.compose",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && !inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "/",
 				"command": "chat.slash",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open && !inputFocus"
+				"when": "panel.kind == chat && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "alt+n",
-				"command": "chat.new",
-				"when": "!palette.open"
+				"command": "chat.new"
 			},
 			{
 				"key": "alt+h",
 				"command": "chat.switch",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "alt+m",
 				"command": "chat.model",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "alt+e",
 				"command": "chat.effort",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "alt+p",
 				"command": "chat.mode",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "alt+f",
 				"command": "chat.attach",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "pageup",
 				"command": "chat.pageUp",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			},
 			{
 				"key": "pagedown",
 				"command": "chat.pageDown",
-				"when": "panel.kind == chat && focus.region == dock && !palette.open"
+				"when": "panel.kind == chat && focus.region == dock"
 			}
 		],
 		"panels": [

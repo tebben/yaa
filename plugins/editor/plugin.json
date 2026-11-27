@@ -57,48 +57,47 @@
 		"keybindings": [
 			{
 				"key": "ctrl+p",
-				"command": "editor.quickOpen",
-				"when": "!palette.open"
+				"command": "editor.quickOpen"
 			},
 			{
 				"key": "ctrl+s",
 				"command": "editor.save",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "ctrl+tab",
 				"command": "editor.nextTab",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "ctrl+pagedown",
 				"command": "editor.nextTab",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "ctrl+shift+tab",
 				"command": "editor.previousTab",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "ctrl+pageup",
 				"command": "editor.previousTab",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "ctrl+w",
 				"command": "editor.closeTab",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "ctrl+shift+t",
 				"command": "editor.reopenTab",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			},
 			{
 				"key": "escape",
 				"command": "editor.cancel",
-				"when": "panel.kind == editor && focus.region == dock && !palette.open"
+				"when": "panel.kind == editor && focus.region == dock"
 			}
 		],
 		"panels": [

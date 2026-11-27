@@ -46,87 +46,87 @@
 			{
 				"key": "arrowdown",
 				"command": "files.next",
-				"when": "panel.kind == files && focus.region == dock && !palette.open"
+				"when": "panel.kind == files && focus.region == dock"
 			},
 			{
 				"key": "arrowup",
 				"command": "files.previous",
-				"when": "panel.kind == files && focus.region == dock && !palette.open"
+				"when": "panel.kind == files && focus.region == dock"
 			},
 			{
 				"key": "j",
 				"command": "files.next",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "k",
 				"command": "files.previous",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "arrowright",
 				"command": "files.expand",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "l",
 				"command": "files.expand",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "arrowleft",
 				"command": "files.collapse",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "h",
 				"command": "files.collapse",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "f",
 				"command": "files.filter",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "/",
 				"command": "files.filter",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "n",
 				"command": "files.new",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "r",
 				"command": "files.rename",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "f2",
 				"command": "files.rename",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "d",
 				"command": "files.delete",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "delete",
 				"command": "files.delete",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": ".",
 				"command": "files.toggleIgnored",
-				"when": "panel.kind == files && focus.region == dock && !inputFocus && !palette.open"
+				"when": "panel.kind == files && focus.region == dock && !inputFocus"
 			},
 			{
 				"key": "escape",
 				"command": "files.cancel",
-				"when": "panel.kind == files && focus.region == dock && !palette.open"
+				"when": "panel.kind == files && focus.region == dock"
 			}
 		],
 		"panels": [{ "id": "files", "title": "Files", "icon": "icon.svg" }]
