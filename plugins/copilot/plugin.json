@@ -1,0 +1,14 @@
+{
+	"id": "copilot",
+	"version": "0.1.0",
+	"main": "dist/main.js",
+	"contributes": {
+		"providers": [
+			{
+				"id": "copilot",
+				"title": "GitHub Copilot",
+				"capabilities": ["resume", "effort", "usage"]
+			}
+		]
+	}
+}

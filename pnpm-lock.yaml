@@ -439,6 +439,16 @@ importers:
         specifier: workspace:*
         version: link:../../packages/plugin-build
 
+  plugins/copilot:
+    dependencies:
+      '@yaa/plugin-api':
+        specifier: workspace:*
+        version: link:../../packages/plugin-api
+    devDependencies:
+      '@yaa/plugin-build':
+        specifier: workspace:*
+        version: link:../../packages/plugin-build
+
   plugins/editor:
     dependencies:
       '@lucide/svelte':
