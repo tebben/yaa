@@ -36,25 +36,30 @@ export const createModel = (
 	);
 };
 
+// Takes the app's tokens again, after a theme or a setting changed them.
+// Monaco has one theme for every editor on the page.
+export const applyTheme = (element: Element) => {
+	editor.defineTheme(THEME, themeFromTokens(element));
+	editor.setTheme(THEME);
+};
+
+// Measured before the font arrived, every column would be off.
+export const remeasureFonts = () =>
+	void document.fonts.ready.then(() => editor.remeasureFonts());
+
 export const createEditor = (
 	element: HTMLElement,
+	options: editor.IEditorOptions & editor.IGlobalEditorOptions,
 ): editor.IStandaloneCodeEditor => {
-	const styles = getComputedStyle(element);
-	const value = (name: string) => styles.getPropertyValue(name).trim();
-	editor.defineTheme(THEME, themeFromTokens(element));
+	applyTheme(element);
 	const created = editor.create(element, {
+		...options,
 		model: null,
 		theme: THEME,
-		fontFamily: value("--font-mono"),
-		fontSize: Number.parseFloat(value("--text-sm")),
-		lineHeight: Number.parseFloat(value("--leading-tight")),
 		automaticLayout: true,
-		minimap: { enabled: false },
-		scrollBeyondLastLine: false,
 		// Menus and hovers would otherwise be cut off at the panel's edge.
 		fixedOverflowWidgets: true,
 	});
-	// Measured before the font arrived, every column would be off.
-	void document.fonts.ready.then(() => editor.remeasureFonts());
+	remeasureFonts();
 	return created;
 };

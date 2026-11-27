@@ -265,6 +265,45 @@ const checkRailPlacement = async (page: Connection) => {
 	);
 };
 
+const PANEL_GAP = `document.querySelector('input[aria-label="Panel spacing"]')`;
+
+// The settings screen: a change applies to the page and lands in
+// settings.json, and a reset takes it out again.
+const useSettings = async (page: Connection, dataDir: string) => {
+	const settingsFile = join(dataDir, "settings.json");
+	const gap = (value: string) =>
+		`getComputedStyle(document.documentElement).getPropertyValue("--spacing-panel-gap") === "${value}"`;
+	await clickElement(
+		page,
+		`document.querySelector('button[aria-label="Settings"]')`,
+	);
+	await clickElement(
+		page,
+		`(${PANEL_GAP}).closest("label").nextElementSibling`,
+	);
+	await waitFor(page, gap("10px"));
+	if (
+		!(await readFile(settingsFile, "utf8")).includes(
+			'"appearance.panelGap": 10',
+		)
+	) {
+		throw new Error("The panel spacing did not reach settings.json");
+	}
+	await clickElement(
+		page,
+		`[...document.querySelectorAll('button[aria-label="Reset to default"]')].find((button) => !button.closest(".invisible"))`,
+	);
+	await waitFor(page, gap("8px"));
+	if ((await readFile(settingsFile, "utf8")).includes("appearance.panelGap")) {
+		throw new Error("Resetting the panel spacing left it in settings.json");
+	}
+	await clickElement(
+		page,
+		`[...document.querySelectorAll("button")].find((button) => button.textContent.trim() === "Back to app")`,
+	);
+	await waitFor(page, `!(${PANEL_GAP}) && (${DOCK})`);
+};
+
 const NEW_FILE: Key = { key: "n", code: "KeyN", keyCode: 78, text: "n" };
 const DELETE_FILE: Key = { key: "d", code: "KeyD", keyCode: 68, text: "d" };
 
@@ -700,6 +739,8 @@ try {
 	);
 	await checkRailPlacement(first.page);
 	console.log("The rail opened a panel at the right edge.");
+	await useSettings(first.page, dataDir);
+	console.log("A setting changed the page and settings.json, and reset.");
 	await useFilesPanel(first.page, join(dataDir, "repo"));
 	console.log("The files panel followed the folder, made and deleted a file.");
 	await useEditor(first.page, join(dataDir, "repo"));

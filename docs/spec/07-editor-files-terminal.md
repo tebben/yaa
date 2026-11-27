@@ -14,7 +14,8 @@ Lands in: M3.
 - Files open from the files panel and, from the chat's rendering in M2, from file paths in chat, at the line given. A click previews and leaves focus where it is; Enter and a double click move into the editor, and a double click keeps the tab.
 - Diffs open as tabs too.
 - Plugins can add decorations, gutter actions and widgets, and commands scoped to the editor.
-- Vim keys are on, from monaco-vim (`docs/decisions/0031-editor-vim-keys.md`): a status line under the text shows the mode and takes what is typed after / and :, and :w saves. The app's keys come first, so those it binds, such as Ctrl B, H, J, K, L, P, S and W, do not reach vim. Switching vim keys off comes with plugin settings (see `11-platform-services.md`).
+- Vim keys are on by default, from monaco-vim (`docs/decisions/0031-editor-vim-keys.md`): a status line under the text shows the mode and takes what is typed after / and :, and :w saves. The app's keys come first, so those it binds, such as Ctrl B, H, J, K, L, P, S and W, do not reach vim. The `editor.vim` setting turns them and the status line off.
+- The editor's settings page (`11-platform-services.md`) sets its font (empty follows the app's code font), font size, line height, ligatures, line wrap and its column, line numbers, whitespace, the current line's highlight, minimap, sticky scroll, indent guides, coloured bracket pairs, scrolling past the last line, indentation (detected, tab size, spaces), the cursor's style, blinking and movement, smooth scrolling and vim keys. A change applies to open editors at once.
 
 **Files panel**
 
@@ -35,3 +36,4 @@ Lands in: M3.
 - The terminals of a worktree and each one's working directory are stored, so after a restart they open there with a new shell and an empty screen; a directory that is gone gives way to the worktree's folder. The directory is read from `/proc`, so a system without it opens them in the worktree's folder.
 - Character widths follow Unicode 11. Input methods work; the Kitty keyboard protocol is not supported. Nerd Font icons come from a bundled font (see `12-stack-packaging.md`); other characters Geist Mono lacks, such as CJK and emoji, come from the system's fonts.
 - Terminal colors come from the active theme's palette.
+- The terminal's settings page sets its font (empty follows the app's code font), font size, line height, letter spacing, cursor style and blinking; a change applies to open terminals at once.

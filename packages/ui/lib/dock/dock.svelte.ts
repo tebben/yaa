@@ -202,6 +202,14 @@ export const createDock = ({
 		else panel?.api.setActive();
 	};
 
+	// dockview lays out its gaps itself, from the panel gap token.
+	const themeOf = (element: HTMLElement) => ({
+		...theme,
+		gap: Number.parseFloat(
+			getComputedStyle(element).getPropertyValue("--spacing-panel-gap"),
+		),
+	});
+
 	const attach: Attachment<HTMLElement> = (element) =>
 		// Creating panels writes to `slots`; untracked, so that does not rerun
 		// the attachment and rebuild the grid.
@@ -210,12 +218,7 @@ export const createDock = ({
 				createComponent: () => renderer("content"),
 				createTabComponent: () => renderer("tab"),
 				defaultTabComponent: "yaa",
-				theme: {
-					...theme,
-					gap: Number.parseFloat(
-						getComputedStyle(element).getPropertyValue("--spacing-panel-gap"),
-					),
-				},
+				theme: themeOf(element),
 				singleTabMode: "fullwidth",
 				disableFloatingGroups: true,
 			});
@@ -262,6 +265,13 @@ export const createDock = ({
 		// The kind of the focused panel, for `panel.kind` in when conditions.
 		get activeKind() {
 			return activeKind;
+		},
+		// Reads the tokens the grid lays out by again, after a setting or a
+		// theme changed them.
+		restyle() {
+			if (api !== undefined && root !== undefined) {
+				api.updateOptions({ theme: themeOf(root) });
+			}
 		},
 		// Moves focus into the active panel, as it was when focus left the grid.
 		focusActive() {

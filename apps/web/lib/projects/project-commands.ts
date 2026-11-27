@@ -113,6 +113,8 @@ export const projectCommands = ({
 		id: "menu.search",
 		title: "Search projects",
 		category: "Project",
+		// The settings screen has the menu, with a search of its own.
+		when: "!settings.open",
 		run: () => {
 			highlight();
 			showMenu().then(projects.focusSearch);
@@ -121,7 +123,7 @@ export const projectCommands = ({
 	// Escape in the menu's search field clears it and moves to the tree.
 	{
 		id: "menu.leaveSearch",
-		when: "focus.region == menu && inputFocus",
+		when: "focus.region == menu && inputFocus && !settings.open",
 		run: () => {
 			projects.query = "";
 			highlight();

@@ -82,6 +82,73 @@
 				"title": "Terminal",
 				"icon": "icon.svg"
 			}
-		]
+		],
+		"settings": {
+			"title": "Terminal",
+			"description": "How terminals show their text and cursor.",
+			"icon": "icon.svg",
+			"groups": [
+				{
+					"title": "Text",
+					"settings": {
+						"terminal.fontFamily": {
+							"type": "text",
+							"title": "Font",
+							"description": "A monospace font installed on this computer. Empty follows the app's code font.",
+							"default": "",
+							"placeholder": "Code font"
+						},
+						"terminal.fontSize": {
+							"type": "number",
+							"title": "Font size",
+							"default": 13.5,
+							"min": 8,
+							"max": 32,
+							"step": 0.5,
+							"unit": "px"
+						},
+						"terminal.lineHeight": {
+							"type": "number",
+							"title": "Line height",
+							"description": "As a multiple of the font's own.",
+							"default": 1,
+							"min": 1,
+							"max": 2,
+							"step": 0.1,
+							"unit": "×"
+						},
+						"terminal.letterSpacing": {
+							"type": "number",
+							"title": "Letter spacing",
+							"default": 0,
+							"min": 0,
+							"max": 4,
+							"step": 0.5,
+							"unit": "px"
+						}
+					}
+				},
+				{
+					"title": "Cursor",
+					"settings": {
+						"terminal.cursorStyle": {
+							"type": "choice",
+							"title": "Cursor style",
+							"default": "block",
+							"options": [
+								{ "value": "block", "label": "Block" },
+								{ "value": "bar", "label": "Bar" },
+								{ "value": "underline", "label": "Underline" }
+							]
+						},
+						"terminal.cursorBlink": {
+							"type": "boolean",
+							"title": "Cursor blinking",
+							"default": false
+						}
+					}
+				}
+			]
+		}
 	}
 }

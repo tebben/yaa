@@ -44,9 +44,12 @@ Lines: `border` for hairlines, `borderStrong` for inputs, key caps, overlays and
 - Closing: small x button; Ctrl+W closes the tab, then the panel. No hint text about it.
 - The editor's header is its file tabs: file icon, name in Geist Mono, italic while a preview, and a dot for unsaved text that turns into the close button under the pointer.
 - The terminal's header is its tabs: terminal icon, the running program in Geist Mono with the folder after it when that is not the worktree's, and a button for a new terminal after the last tab.
-- **Focus must be obvious**: the focused panel has a brighter title. After a key moves focus, it also shows the focus edge, a border in the `focus` colour; a click or Escape hides the edge until a key moves focus again. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0. A setting to choose between the two lands with the settings page (proposed).
+- **Focus must be obvious**: the focused panel has a brighter title. After a key moves focus, it also shows the focus edge, a border in the `focus` colour; a click or Escape hides the edge until a key moves focus again. Keys act on the focused panel. The edge's widths are the `focusTop` and `focusSide` tokens: 1px all round by default, or a line on top only with `focusSide` at 0, which the `appearance.focusEdge` setting chooses.
 - Shortcuts are shown as key caps, one per key (`Kbd` in `packages/ui`), in tooltips and the palette.
 - Scrollbars are thin everywhere, in the `borderStrong` colour on a transparent track.
+
+## Settings screen
+The left menu shows Back to app, the search field and the pages under muted uppercase App and Plugins headings, the current page a full-row `selection` tint; a settings icon button at the menu's foot opens it. The page is one card on the grid, `surface`, with a centred column `settingsPage` wide: the page title at `title` size, its description in `textSoft`, then each group's title over a `menu`-coloured card whose rows are parted by hairlines. A row has the title in `text` and the description in `textMuted` at `sm`, and its control at the right; the reset icon shows left of the control only while the value is not the default. Text fields and selects are `field` wide, number and hex fields `shortField` wide with the unit inside. The switch is `accent` when on.
 
 ## Command palette
 An overlay with rounded corners and a shadow. The query and the rows share one text edge; the selected row is a rounded `selection` tint. Each row shows the command's first key as key caps and its category.

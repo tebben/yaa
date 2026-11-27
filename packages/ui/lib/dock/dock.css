@@ -15,7 +15,9 @@
 	--dv-inactivegroup-visiblepanel-tab-color: var(--color-text-soft);
 	--dv-inactivegroup-hiddenpanel-tab-color: var(--color-text-muted);
 	--dv-tab-divider-color: var(--color-border);
-	--dv-separator-border: transparent;
+	/* A line between panels only where no gap parts them: the appearance
+	   settings set it when the panel gap is 0. */
+	--dv-separator-border: var(--dock-separator, transparent);
 	--dv-paneview-header-border-color: var(--color-border);
 	--dv-sash-color: transparent;
 	--dv-active-sash-color: var(--color-accent);

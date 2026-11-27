@@ -7,21 +7,41 @@ import {
 	TERMINAL_UNICODE,
 } from "@yaa/contracts/terminals";
 import type { PanelTerminals, TerminalLink } from "@yaa/plugin-api/ui";
-import { optionsFromTokens } from "./xterm-options.svelte.ts";
+import {
+	type TerminalSettings,
+	terminalOptions,
+} from "./xterm-options.svelte.ts";
 
 type ViewOptions = {
 	id: string;
 	terminals: PanelTerminals;
+	settings: TerminalSettings;
 	fail(problem: string): void;
 };
+
+// xterm measures its cells as it opens, which is off until the font is in,
+// and keeps each glyph as first drawn, so the icons' font has to be in too:
+// the second character asks for it.
+const loadFont = ({
+	fontSize,
+	fontFamily,
+}: {
+	fontSize: number;
+	fontFamily: string;
+}) => document.fonts.load(`${fontSize}px ${fontFamily}`, "a");
 
 // One terminal on screen: an xterm.js terminal in an element of its own,
 // which can be moved in and out of the page. It connects to its terminal once
 // it first has a size, so the program starts at that size.
-export const createTerminalView = ({ id, terminals, fail }: ViewOptions) => {
+export const createTerminalView = ({
+	id,
+	terminals,
+	settings,
+	fail,
+}: ViewOptions) => {
 	const element = document.createElement("div");
 	element.className = "view";
-	const options = optionsFromTokens(document.documentElement);
+	const options = terminalOptions(document.documentElement, settings);
 	const terminal = new Terminal({
 		...options,
 		scrollback: TERMINAL_SCROLLBACK,
@@ -39,13 +59,7 @@ export const createTerminalView = ({ id, terminals, fail }: ViewOptions) => {
 	terminal.onData((data) => link?.write(data));
 	terminal.onResize(({ cols, rows }) => link?.resize({ cols, rows }));
 
-	// xterm measures its cells as it opens, which is off until the font is in,
-	// and keeps each glyph as first drawn, so the icons' font has to be in too:
-	// the second character asks for it.
-	const font = document.fonts.load(
-		`${options.fontSize}px ${options.fontFamily}`,
-		"a\ue0a0",
-	);
+	let font = loadFont(options);
 
 	const layOut = () => {
 		// Hidden, or out of the page: there is nothing to measure.
@@ -101,6 +115,16 @@ export const createTerminalView = ({ id, terminals, fail }: ViewOptions) => {
 
 	return {
 		element,
+		// Takes changed settings, and the app's tokens again, which the
+		// appearance settings may have changed.
+		configure(next: TerminalSettings) {
+			const changed = terminalOptions(document.documentElement, next);
+			font = loadFont(changed);
+			void font.then(() => {
+				Object.assign(terminal.options, changed);
+				layOut();
+			}, fail);
+		},
 		focus() {
 			if (terminal.element === undefined || !element.isConnected) {
 				wantsFocus = true;

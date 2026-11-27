@@ -52,9 +52,19 @@ Lands in: M1 for app-level files; M6 for project and worktree layers, export and
 Settings and keybindings are human-editable files with a schema, layered as app, project, then worktree. Core settings and plugin settings share the mechanism, and the settings page is rendered from the same schema. A settings file can be exported and imported.
 
 - The app-level files are `settings.json` and `keybindings.json` in the app's config folder (`~/.config/yaa` on Linux, `~/.config/yaa-dev` in dev mode). They are plain JSON (`docs/decisions/0020-settings-files-json.md`). A missing or blank file means the defaults.
-- `settings.json` is one object keyed `namespace.name`. Each setting has a schema with a default in `contracts`. A value its schema rejects falls back to the default, and an unknown key is ignored; both are reported as problems, and the rest of the file applies. A file that is not a JSON object applies no settings.
+- `settings.json` is one object keyed `namespace.name`. Each setting has a schema with a default and a spec, which the settings screen renders: core's are in `contracts`, a plugin's in its manifest (`03-plugins.md`), keyed under its id. A value its schema rejects falls back to the default, and an unknown key is ignored; both are reported as problems, and the rest of the file applies. A file that is not a JSON object applies no settings.
 - `keybindings.json` is an array of `{ "key", "command", "when" }` entries, `when` optional. `key` is lower-case modifiers (`ctrl`, `shift`, `alt`, `meta`) and a key name joined by `+`, for example `ctrl+shift+p`. User entries are checked before the defaults, and a command starting with `-` removes the default binding with that key and command. Modifiers may come in any order. An entry with a mistake, an unknown field or a `when` that does not parse included, is dropped and reported; the others apply. How a key resolves is in `01-ui-layout-theming.md`.
 - Core reads both files at start and watches them, so a save applies without a restart. When a save changes what a file resolves to, core sends the new state with its problems to every subscribed client. Problems are logged as warnings.
+
+## Settings screen
+
+Lands in: M3 (moved ahead of M6 so features add their options as they land: `docs/decisions/0038-settings-screen.md`).
+
+- Opened with Ctrl , or the settings button at the foot of the left menu, and closed with the same key or Back to app. While it is open the left menu lists its pages, core's (Appearance, Worktrees, Keyboard) and then one per plugin with settings, under a search field; the grid's place shows the page, the rail hides, and the header's path reads Settings, then the page. The grid keeps its state underneath.
+- A page has titled groups of settings. Each row shows the setting's title, description and control, and a reset button while the value is not the default. Controls follow the spec's type: a switch, a number with step buttons and its unit, a text field, side-by-side options for a choice of up to three and a list for more, a colour swatch with its hex value, or a grid of fields for a list of texts. A setting whose `enabledBy` switch is off is dimmed and disabled.
+- The search keeps the settings whose page, group, key, title or description hold every typed word, across all pages.
+- A change applies at once and is written to `settings.json` (`settings.set`); a value equal to its default is taken out of the file. A file that does not parse is left for the user to fix, and the change is refused with a message in the footer. The page lists the file's problems above the settings.
+- Plugin panels get every setting's value, and each change, through `panel.settings` (`03-plugins.md`); a panel renders only once they are read.
 
 ## Logs and debug panel
 

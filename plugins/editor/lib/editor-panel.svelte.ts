@@ -4,6 +4,7 @@ import type { PanelContext } from "@yaa/plugin-api/ui";
 import { onDestroy } from "svelte";
 import { editorProtocol, type TabsState } from "../protocol.ts";
 import { createDocuments } from "./documents.svelte.ts";
+import { editorSettings } from "./editor-options.ts";
 import { createEditorView } from "./editor-view.svelte.ts";
 import {
 	activateTab,
@@ -39,6 +40,9 @@ export const createEditorPanel = (panel: PanelContext) => {
 	};
 
 	const view = createEditorView(() => saveActive());
+	panel.settings.watch((values) =>
+		view.configure(editorSettings.parse(values)),
+	);
 	const documents = createDocuments({
 		panel,
 		// An edited file stays open.

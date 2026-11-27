@@ -7,7 +7,12 @@ import {
 	resultSchema,
 	safeParse,
 } from "@yaa/contracts/protocol";
-import type { OpenFile, PanelContext, PickSource } from "@yaa/plugin-api/ui";
+import type {
+	OpenFile,
+	PanelContext,
+	PanelSettings,
+	PickSource,
+} from "@yaa/plugin-api/ui";
 import type { PanelFrame } from "@yaa/ui/dock";
 import { captureKeys } from "../commands/index.ts";
 import type { CoreClient } from "../core-connection.ts";
@@ -18,6 +23,7 @@ import type { PanelHandlers } from "./panel-handlers.ts";
 type PanelContextOptions = {
 	client: CoreClient;
 	terminals: TerminalLinks;
+	settings: PanelSettings;
 	// What panels registered for their commands and for files to open.
 	commands: PanelHandlers<void>;
 	files: PanelHandlers<OpenFile>;
@@ -37,6 +43,7 @@ type PanelContextOptions = {
 export const createPanelContext = ({
 	client,
 	terminals,
+	settings,
 	commands,
 	files,
 	openFile,
@@ -123,6 +130,9 @@ export const createPanelContext = ({
 				const { dispose } = track(link);
 				return { ...link, dispose };
 			},
+		},
+		settings: {
+			watch: (listener) => track(settings.watch(listener)),
 		},
 		captureKeys,
 	};

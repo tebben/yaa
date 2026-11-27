@@ -25,7 +25,7 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 | Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the rail before the UI module loads |
 | Header and footer items | components in named slots |
 | Commands and keybindings | actions in the palette, default keys |
-| Settings | a schema-rendered settings page, or a custom panel |
+| Settings | a page of the settings screen, rendered from the specs of its settings (`11-platform-services.md`); a custom panel instead (proposed) |
 | Connectors | an issue-tracker or source-control implementation |
 | Agent providers | detection, spawn configuration, capabilities and models for an agent CLI; core runs the process |
 | Chat renderers | custom rendering for a message part or tool-call kind |
@@ -42,6 +42,7 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 - **A panel and its backend:** the plugin defines a protocol with `defineProtocol`; the backend `serve`s it, and a panel calls it and subscribes to its events, which are the events the plugin declares. A call activates the plugin. A panel knows its worktree, is told when the backend started over after a host crash, and has everything it registered disposed when it closes (`docs/decisions/0029-worktree-plugin-api.md`).
 - **Terminals** (UI): a panel lists and watches its worktree's terminals, creates and closes them, and connects a screen to one, which core feeds and keeps in step with the program. It talks to core directly, so terminals need no backend. A panel can also mark an element as capturing the keyboard, as a terminal does (see `01-ui-layout-theming.md`).
 - **A panel and the app:** a panel can show its own content in the panel header in place of its title, be asked first when it is closed by command, open a file, take the files to open, and show a list in the palette (`docs/decisions/0030-editor-monaco.md`).
+- **Settings** (UI): a panel watches every setting's value, its plugin's among them, called at once and after each change; a panel renders only once they are read.
 - **Agent sessions** (UI): a panel lists the providers and their state, follows its worktree's sessions with their events, starts one, sends prompts, cancels, changes config options and answers permission requests and questions. It can also have the system's file picker choose files (`docs/decisions/0034-chat-plugin.md`).
 - **Events:** core emits typed events (`worktree.*`, `agent.*`, `git.*`, including agent questions, permission requests, tool calls and usage). Plugins subscribe, and may emit their own events under their namespace. This is how a plugin can show a questionnaire panel when an agent asks a question, or a panel of the skills an agent loaded.
 - **Services:** a plugin exposes functions to others with `services.expose(name, api)`. Consumers declare the dependency in their manifest and receive a versioned handle, so load order is resolved by the manager.

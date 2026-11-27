@@ -30,6 +30,8 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "ctrl+p", command: "palette.previous", when: "palette.open" },
 	{ key: "enter", command: "palette.run", when: "palette.open" },
 	{ key: "ctrl+b", command: "menu.toggle", when: NOT_IN_PALETTE },
+	{ key: "ctrl+,", command: "settings.open", when: NOT_IN_PALETTE },
+	{ key: "ctrl+,", command: "settings.close", when: NOT_IN_PALETTE },
 	// A panel keeps / for itself, such as to search in it.
 	{
 		key: "/",
