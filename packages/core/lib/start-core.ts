@@ -19,9 +19,11 @@ import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
 import { createStateTracker } from "./state/state-tracker.ts";
 import { createStepsRunner } from "./steps/worktree-steps.ts";
+import { createChatStore } from "./storage/chat-store.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
+import { createPlaceStore } from "./storage/place-store.ts";
 import { createPluginStore } from "./storage/plugin-store.ts";
 import { createTerminals } from "./terminals/terminals.ts";
 
@@ -91,6 +93,7 @@ export const startCore = ({
 	const agents = createAgentSessions({
 		launch: (provider, cwd) => plugins.launchAgent(provider, cwd),
 		worktree: (id) => worktree(id),
+		store: createChatStore(db),
 		record: states.append,
 		log,
 		agentLog: createLogger(logFile.write, "agent"),
@@ -154,6 +157,7 @@ export const startCore = ({
 		settings,
 		keybindings,
 		layouts: createLayoutStore(db),
+		place: createPlaceStore(db),
 		plugins,
 		agents,
 		pick,

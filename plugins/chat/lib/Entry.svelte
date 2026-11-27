@@ -1,4 +1,5 @@
 <script lang="ts">
+import { stoppedText } from "./chat-summary.ts";
 import Markdown from "./Markdown.svelte";
 import Permission from "./Permission.svelte";
 import Prompt from "./Prompt.svelte";
@@ -48,17 +49,15 @@ let {
 		onanswer={(answer) => view.answerQuestion(item.requestId, answer)}
 	/>
 {:else if item.kind === "stopped"}
-	<p class="stopped">
-		{item.reason === "cancelled"
-			? "Stopped"
-			: `Turn ended: ${item.reason.replaceAll("_", " ")}`}
-	</p>
+	<p class="note">{stoppedText(item.reason)}</p>
+{:else if item.kind === "resumed"}
+	<p class="note">Agent started again, resuming the session</p>
 {:else if item.kind === "error"}
 	<p class="error">{item.message}</p>
 {/if}
 
 <style>
-.stopped {
+.note {
 	color: var(--color-text-muted);
 	font-size: var(--text-sm);
 }

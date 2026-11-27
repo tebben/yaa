@@ -637,6 +637,27 @@ const readMarkdownTurn = async (page: Connection, repo: string) => {
 	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
 };
 
+// After a restart the chat is back with its transcript, and its next prompt
+// starts the agent again and resumes the session.
+const resumeChat = async (page: Connection) => {
+	await waitFor(
+		page,
+		`(${DOCK}).textContent.includes("The greeting now says")`,
+	);
+	await clickElement(page, CHAT);
+	await type(page, "/mark");
+	await waitFor(page, `(${DOCK}).querySelector('[role="option"]')`);
+	await press(page, ENTER);
+	await waitFor(page, `${CHAT}.value === "/markdown "`);
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`(${DOCK}).textContent.includes("resuming the session")`,
+	);
+	await waitFor(page, `(${DOCK}).querySelector("pre code span[style]")`);
+	await waitFor(page, `${FOOTER}.textContent.includes("Idle")`);
+};
+
 const median = (values: readonly number[]) => {
 	const sorted = [...values].sort((a, b) => a - b);
 	return sorted[Math.floor(sorted.length / 2)] ?? Number.NaN;
@@ -690,6 +711,10 @@ try {
 			join(dataDir, `terminal-restart-${run}`),
 			"inner\n",
 		);
+		if (run === 0) {
+			await resumeChat(app.page);
+			console.log("The chat came back and resumed its session.");
+		}
 		await quit(app);
 		console.log(`The app started again (${run + 1}/${WARM_LAUNCHES}).`);
 	}

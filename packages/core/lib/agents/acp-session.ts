@@ -3,6 +3,7 @@ import {
 	client,
 	PROTOCOL_VERSION,
 	type RequestPermissionResponse,
+	type SessionConfigOption,
 	type Stream,
 } from "@agentclientprotocol/sdk/unstable";
 import type {
@@ -29,11 +30,15 @@ export type AgentConnection = {
 export type AcpSessionOptions = {
 	agent: AgentConnection;
 	cwd: string;
+	// The agent's id of a session to resume instead of starting one.
+	resume?: string;
 	log: Logger;
 	emit(event: AgentEvent): void;
 };
 
 export type AcpSession = {
+	// The agent's own id for the session.
+	readonly id: string;
 	// Starts a turn.
 	prompt(text: string, attachments: readonly PromptAttachment[]): void;
 	setConfig(configId: string, value: string): Promise<void>;
@@ -60,6 +65,7 @@ const elicitationResponse = (
 export const openAcpSession = async ({
 	agent: { stream, exited },
 	cwd,
+	resume,
 	log,
 	emit,
 }: AcpSessionOptions): Promise<AcpSession> => {
@@ -73,6 +79,8 @@ export const openAcpSession = async ({
 	>();
 	let nextRequest = 0;
 	let running = false;
+	// While `session/load` replays the history, which the chat has already.
+	let replaying = false;
 
 	// Answers a waiting request once, and says so with its `.resolved` event.
 	const waitFor = <R>(
@@ -102,6 +110,7 @@ export const openAcpSession = async ({
 
 	const app = client({ name: "yaa" })
 		.onNotification("session/update", ({ params }) => {
+			if (replaying) return;
 			const event = normalizeUpdate(params.update);
 			if (event === undefined) {
 				log.debug("agent update not used", {
@@ -160,18 +169,45 @@ export const openAcpSession = async ({
 
 	const connection = app.connect(stream);
 	const { agent } = connection;
-	const open = async () => {
+	const open = async (): Promise<{
+		sessionId: string;
+		configOptions?: SessionConfigOption[] | null;
+		images: boolean;
+	}> => {
 		const { agentCapabilities } = await agent.request("initialize", {
 			protocolVersion: PROTOCOL_VERSION,
 			clientCapabilities: { elicitation: { form: {} } },
 			clientInfo: { name: "yaa", version: "0.0.0" },
 		});
-		const session = await agent.request("session/new", {
-			cwd,
-			mcpServers: [],
-		});
 		const images = agentCapabilities?.promptCapabilities?.image === true;
-		return { ...session, images };
+		if (resume === undefined) {
+			const session = await agent.request("session/new", {
+				cwd,
+				mcpServers: [],
+			});
+			return { ...session, images };
+		}
+		// Resuming keeps the agent's context without replaying it; an agent that
+		// can only load replays it, and the chat has it already
+		// (docs/decisions/0014-acp-coverage.md).
+		if (agentCapabilities?.sessionCapabilities?.resume != null) {
+			const session = await agent.request("session/resume", {
+				sessionId: resume,
+				cwd,
+				mcpServers: [],
+			});
+			return { ...session, sessionId: resume, images };
+		}
+		if (agentCapabilities?.loadSession === true) {
+			replaying = true;
+			const session = await agent
+				.request("session/load", { sessionId: resume, cwd, mcpServers: [] })
+				.finally(() => {
+					replaying = false;
+				});
+			return { ...session, sessionId: resume, images };
+		}
+		throw new Error("The agent cannot resume a session: start a new chat");
 	};
 	const created = await open().catch(async (error: unknown) => {
 		if (!connection.signal.aborted) throw error;
@@ -203,6 +239,7 @@ export const openAcpSession = async ({
 	});
 
 	return {
+		id: sessionId,
 		prompt(text, attachments) {
 			if (gone) throw new Error("The agent has exited");
 			if (running) throw new Error("A turn is already running");

@@ -9,7 +9,7 @@
 			{
 				"id": "fake-agent",
 				"title": "Fake agent",
-				"capabilities": ["effort", "usage"]
+				"capabilities": ["resume", "effort", "usage"]
 			}
 		]
 	}

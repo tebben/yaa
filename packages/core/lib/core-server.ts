@@ -11,6 +11,7 @@ import type { Worktrees } from "./projects/worktrees.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { StateTracker } from "./state/state-tracker.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
+import type { PlaceStore } from "./storage/place-store.ts";
 import type { Terminals } from "./terminals/terminals.ts";
 
 export type CoreServerOptions = {
@@ -18,6 +19,7 @@ export type CoreServerOptions = {
 	settings: SettingsFile<SettingsState>;
 	keybindings: SettingsFile<KeybindingsState>;
 	layouts: LayoutStore;
+	place: PlaceStore;
 	plugins: PluginManager;
 	agents: AgentSessions;
 	projects: Projects;
@@ -32,6 +34,7 @@ export const createCoreServer = ({
 	settings,
 	keybindings,
 	layouts,
+	place,
 	plugins,
 	agents,
 	projects,
@@ -50,6 +53,11 @@ export const createCoreServer = ({
 			}),
 			"layout.save": ({ worktree, layout }) => {
 				layouts.save(worktree, layout);
+				return {};
+			},
+			"place.get": () => ({ place: place.get() ?? null }),
+			"place.save": (next) => {
+				place.save(next);
 				return {};
 			},
 			"projects.list": () => ({ projects: projects.list() }),

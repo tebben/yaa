@@ -168,52 +168,73 @@ export const createFakeAgent = ({
 		}
 	};
 
-	return agent({ name: "yaa-fake-agent" })
-		.onRequest("initialize", ({ params }) => {
-			capabilities = params.clientCapabilities ?? {};
-			return {
-				protocolVersion: PROTOCOL_VERSION,
-				agentCapabilities: { promptCapabilities: { image: true } },
-				agentInfo: {
-					name: "yaa-fake-agent",
-					title: "Fake agent",
-					version: "0.0.0",
-				},
-			};
-		})
-		.onRequest("session/new", async ({ client }) => {
-			const sessionId = randomUUID();
-			const config = { model: "fake-large", effort: "medium", mode: "default" };
-			configs.set(sessionId, config);
-			await client.notify("session/update", {
-				sessionId,
-				update: {
-					sessionUpdate: "available_commands_update",
-					availableCommands: scripts.map(({ name, description }) => ({
-						name,
-						description,
-					})),
-				},
-			});
-			return { sessionId, configOptions: configOptions(config) };
-		})
-		.onRequest("session/set_config_option", ({ params }) => {
-			const { sessionId, configId, value } = params;
-			const config = configs.get(sessionId);
-			if (
-				config === undefined ||
-				!isConfigId(config, configId) ||
-				typeof value !== "string"
-			) {
-				throw RequestError.invalidParams(undefined, `No option ${configId}`);
-			}
-			config[configId] = value;
-			return { configOptions: configOptions(config) };
-		})
-		.onRequest("session/prompt", ({ client, params }) => prompt(client, params))
-		.onNotification("session/cancel", ({ params }) => {
-			turns.get(params.sessionId)?.abort();
+	// A session opening: its options, after the commands it offers.
+	const open = async (client: AgentContext, sessionId: string) => {
+		const config = configs.get(sessionId) ?? {
+			model: "fake-large",
+			effort: "medium",
+			mode: "default",
+		};
+		configs.set(sessionId, config);
+		await client.notify("session/update", {
+			sessionId,
+			update: {
+				sessionUpdate: "available_commands_update",
+				availableCommands: scripts.map(({ name, description }) => ({
+					name,
+					description,
+				})),
+			},
 		});
+		return configOptions(config);
+	};
+
+	return (
+		agent({ name: "yaa-fake-agent" })
+			.onRequest("initialize", ({ params }) => {
+				capabilities = params.clientCapabilities ?? {};
+				return {
+					protocolVersion: PROTOCOL_VERSION,
+					agentCapabilities: {
+						promptCapabilities: { image: true },
+						sessionCapabilities: { resume: {} },
+					},
+					agentInfo: {
+						name: "yaa-fake-agent",
+						title: "Fake agent",
+						version: "0.0.0",
+					},
+				};
+			})
+			.onRequest("session/new", async ({ client }) => {
+				const sessionId = randomUUID();
+				return { sessionId, configOptions: await open(client, sessionId) };
+			})
+			// It keeps no context, so any session resumes, with the options it had
+			// in this process or the defaults.
+			.onRequest("session/resume", async ({ client, params }) => ({
+				configOptions: await open(client, params.sessionId),
+			}))
+			.onRequest("session/set_config_option", ({ params }) => {
+				const { sessionId, configId, value } = params;
+				const config = configs.get(sessionId);
+				if (
+					config === undefined ||
+					!isConfigId(config, configId) ||
+					typeof value !== "string"
+				) {
+					throw RequestError.invalidParams(undefined, `No option ${configId}`);
+				}
+				config[configId] = value;
+				return { configOptions: configOptions(config) };
+			})
+			.onRequest("session/prompt", ({ client, params }) =>
+				prompt(client, params),
+			)
+			.onNotification("session/cancel", ({ params }) => {
+				turns.get(params.sessionId)?.abort();
+			})
+	);
 };
 
 // A connection to a fake agent in this process, for tests: two in-memory

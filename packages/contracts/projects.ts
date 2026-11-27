@@ -67,7 +67,14 @@ export const finishAction = z.enum([
 	"deleteRemote",
 ]);
 
+// Where the window is: a project's overview, or one of its worktrees.
+export const place = z.object({
+	project: z.string(),
+	worktree: z.string().optional(),
+});
+
 export type Worktree = z.infer<typeof worktree>;
+export type Place = z.infer<typeof place>;
 export type Project = z.infer<typeof project>;
 export type AddProjectResult = z.infer<typeof addProjectResult>;
 export type CreateWorktreeResult = z.infer<typeof createWorktreeResult>;

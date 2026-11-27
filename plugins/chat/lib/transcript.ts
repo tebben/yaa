@@ -40,8 +40,14 @@ export type TranscriptItem = { key: number } & (
 			fields: QuestionField[];
 			answer: Event<"question.resolved">["action"] | undefined;
 	  }
-	// A turn that ended some other way than by the agent finishing.
-	| { kind: "stopped"; reason: Event<"turn.end">["stopReason"] }
+	// A turn that ended some other way than by the agent finishing, or that
+	// yaa closing cut off.
+	| {
+			kind: "stopped";
+			reason: Event<"turn.end">["stopReason"] | "interrupted";
+	  }
+	// The agent started again for the chat, resuming its session.
+	| { kind: "resumed" }
 	| { kind: "error"; message: string }
 );
 
@@ -59,7 +65,8 @@ export type Transcript = {
 	config: readonly ConfigOption[];
 	// Whether the agent takes images in a prompt.
 	images: boolean;
-	// From the turn's start to its end or error.
+	// From the turn's start to its end or error, and while the agent starts
+	// again to resume the session.
 	running: boolean;
 };
 
@@ -138,6 +145,18 @@ const endTurn = (draft: Draft) => {
 	draft.running = false;
 };
 
+// What the turn waited on goes unanswered.
+const interrupt = (draft: Draft) => {
+	endTurn(draft);
+	for (const [index, item] of draft.items.entries()) {
+		if (item.kind === "permission" && item.answer === undefined) {
+			draft.items[index] = { ...item, answer: null };
+		} else if (item.kind === "question" && item.answer === undefined) {
+			draft.items[index] = { ...item, answer: "cancel" };
+		}
+	}
+};
+
 const toolTitle = (items: readonly TranscriptItem[], toolCallId: string) => {
 	const tool = items.findLast(
 		(item) => item.kind === "tool" && item.toolCallId === toolCallId,
@@ -162,8 +181,18 @@ const resolve = (
 const apply = (draft: Draft, event: AgentEvent) => {
 	const { items, count: key } = draft;
 	switch (event.type) {
+		// Sent when the session opens, which ends a resume.
 		case "capabilities":
 			draft.images = event.images;
+			draft.running = false;
+			break;
+		case "resuming":
+			items.push({ key, kind: "resumed" });
+			draft.running = true;
+			break;
+		case "interrupted":
+			interrupt(draft);
+			items.push({ key, kind: "stopped", reason: "interrupted" });
 			break;
 		case "prompt":
 			items.push({

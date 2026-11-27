@@ -1,5 +1,5 @@
 import { fuzzyScore } from "@yaa/commands/fuzzy-match";
-import type { Project, Worktree } from "@yaa/contracts/projects";
+import type { Place, Project, Worktree } from "@yaa/contracts/projects";
 
 // A project as the tree shows it, with the worktrees under it: the main
 // checkout first.
@@ -25,8 +25,19 @@ export const filterTree = (
 		return worktrees.length > 0 ? [{ project, worktrees }] : [];
 	});
 
-// Where the grid is: a project's overview, or one of its worktrees.
-export type Place = { project: string; worktree?: string };
+// The place if its project, and its worktree when it names one, are still
+// listed.
+export const listedPlace = (
+	projects: readonly Project[],
+	place: Place,
+): Place | undefined => {
+	const project = projects.find(({ id }) => id === place.project);
+	if (project === undefined) return undefined;
+	if (place.worktree === undefined) return place;
+	return project.worktrees.some(({ id }) => id === place.worktree)
+		? place
+		: undefined;
+};
 
 // Every worktree in tree order, as places.
 const worktreePlaces = (projects: readonly Project[]) =>

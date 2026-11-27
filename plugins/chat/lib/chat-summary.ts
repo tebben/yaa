@@ -1,4 +1,4 @@
-import type { ConfigOption, Transcript } from "./transcript.ts";
+import type { ConfigOption, Transcript, TranscriptItem } from "./transcript.ts";
 
 // What a list of chats calls one: the agent's title, or what was asked
 // first.
@@ -31,3 +31,13 @@ export const configOption = (
 // The chosen value as the agent names it.
 export const optionLabel = ({ value, choices }: ConfigOption): string =>
 	choices?.find((choice) => choice.value === value)?.label ?? String(value);
+
+// How a turn that did not finish ended, as the transcript says it.
+export const stoppedText = (
+	reason: Extract<TranscriptItem, { kind: "stopped" }>["reason"],
+): string => {
+	if (reason === "cancelled") return "Stopped";
+	if (reason === "interrupted")
+		return "Interrupted: yaa closed during the turn";
+	return `Turn ended: ${reason.replaceAll("_", " ")}`;
+};
