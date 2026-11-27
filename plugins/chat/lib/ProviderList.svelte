@@ -12,7 +12,8 @@ let {
 	onstart,
 }: {
 	providers: Providers;
-	starting: boolean;
+	// The provider whose chat is starting.
+	starting: string | undefined;
 	onstart: (provider: string) => void;
 } = $props();
 
@@ -28,9 +29,15 @@ onMount(() => providers.checkAll());
 				<span class="detail">
 					{status.version}{status.account ? ` · ${status.account}` : ""}
 				</span>
-				<Button disabled={starting} onclick={() => onstart(provider.id)}>
+				<Button
+					disabled={starting !== undefined}
+					onclick={() => onstart(provider.id)}
+				>
 					Start {provider.title}
 				</Button>
+				{#if starting === provider.id}
+					<span class="detail" role="status">Starting the agent…</span>
+				{/if}
 			{:else}
 				{#if status?.state === "signed-out"}
 					<span class="detail">Signed out. Run this in your terminal:</span>

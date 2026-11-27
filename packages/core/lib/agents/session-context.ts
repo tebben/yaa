@@ -1,5 +1,6 @@
 import {
 	type ContextKind,
+	contextKind,
 	type LayeredToggles,
 	resolveToggle,
 } from "@yaa/contracts/agent-context";
@@ -25,6 +26,21 @@ const TOGGLING = {
 	mcpServers: "mcp-toggling",
 	skills: "skill-toggling",
 } as const satisfies Record<ContextKind, ProviderCapability>;
+
+// Whether a session may open with something switched off. When it cannot,
+// its agent need not wait for what discovery finds.
+export const maySwitchOff = (
+	toggles: LayeredToggles,
+	capabilities: readonly ProviderCapability[],
+): boolean =>
+	contextKind.options.some(
+		(kind) =>
+			capabilities.includes(TOGGLING[kind]) &&
+			Object.values(toggles).some((layer) => {
+				const { all, items } = layer[kind];
+				return all === false || Object.values(items).includes(false);
+			}),
+	);
 
 // An item the agent's own configuration leaves out is neither loaded nor
 // switched off. One the provider cannot switch off stays loaded. A name

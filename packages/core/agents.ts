@@ -17,5 +17,8 @@ export {
 	normalizeQuestion,
 } from "./lib/agents/normalize-question.ts";
 export { promptContent } from "./lib/agents/prompt-content.ts";
-export { sessionContext } from "./lib/agents/session-context.ts";
+export {
+	maySwitchOff,
+	sessionContext,
+} from "./lib/agents/session-context.ts";
 export { workUnderWay } from "./lib/agents/work-under-way.ts";

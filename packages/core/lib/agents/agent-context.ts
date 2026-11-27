@@ -9,6 +9,7 @@ import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import type { Discovery } from "@yaa/contracts/providers";
 import type { ContextScope, ContextStore } from "../storage/context-store.ts";
 import {
+	maySwitchOff,
 	type SessionContext,
 	sessionContext,
 	UNLISTED,
@@ -25,6 +26,13 @@ export type AgentContextOptions = {
 		provider: string,
 		folders: { cwd: string; repository: string },
 	): Promise<Discovery>;
+};
+
+// What a session opens with, each part as soon as it is known: starting the
+// agent needs `off`, and `loaded` only says what it then loads.
+export type SessionOpening = {
+	off: Promise<SessionContext["off"]>;
+	loaded: Promise<SessionContext["loaded"]>;
 };
 
 export type ContextChange = {
@@ -107,14 +115,22 @@ export const createAgentContext = ({
 		},
 		// A provider that lists nothing has its agent load what its
 		// configuration says.
-		async forSession(
-			worktree: string,
-			provider: string,
-		): Promise<SessionContext> {
+		forSession(worktree: string, provider: string): SessionOpening {
+			const nothingOff = Promise.resolve(UNLISTED.off);
 			const declared = listing.find(({ id }) => id === provider);
-			if (declared === undefined) return UNLISTED;
-			const found = await discover(provider, folders(worktree));
-			return sessionContext(found, toggles(worktree), declared.capabilities);
+			if (declared === undefined) {
+				return { off: nothingOff, loaded: Promise.resolve(undefined) };
+			}
+			const set = toggles(worktree);
+			const found = discover(provider, folders(worktree)).then((discovery) =>
+				sessionContext(discovery, set, declared.capabilities),
+			);
+			return {
+				off: maySwitchOff(set, declared.capabilities)
+					? found.then(({ off }) => off)
+					: nothingOff,
+				loaded: found.then(({ loaded }) => loaded),
+			};
 		},
 	};
 };

@@ -16,14 +16,14 @@ import type { SwitchedOff } from "@yaa/contracts/providers";
 import { chatEvent } from "../state/chat-event.ts";
 import type { ChatStore } from "../storage/chat-store.ts";
 import { type AcpSession, openAcpSession } from "./acp-session.ts";
+import type { SessionOpening } from "./agent-context.ts";
 import type { AgentLaunch } from "./agent-launch.ts";
 import { type AgentProcess, startAgentProcess } from "./agent-process.ts";
-import type { SessionContext } from "./session-context.ts";
 import { workUnderWay } from "./work-under-way.ts";
 
 export type AgentSessionsOptions = {
 	// What a session of the provider's agent in the worktree opens with.
-	context(worktree: string, provider: string): Promise<SessionContext>;
+	context(worktree: string, provider: string): SessionOpening;
 	// How to start a provider's agent in a folder, from its plugin, with what
 	// is switched off.
 	launch(provider: string, cwd: string, off: SwitchedOff): Promise<AgentLaunch>;
@@ -150,8 +150,11 @@ export const createAgentSessions = ({
 		resume?: string,
 	) => {
 		const { worktree, provider } = chat;
-		const { off, loaded } = await context(worktree, provider);
-		const how = await launch(provider, listed(worktree).path, off);
+		const { off, loaded } = context(worktree, provider);
+		// Awaited once the session is open, which fails the start if discovery
+		// did. A start that fails before then says its own reason.
+		loaded.catch(() => undefined);
+		const how = await launch(provider, listed(worktree).path, await off);
 		// Read again: the worktree may have been finished meanwhile.
 		const { path, index } = listed(worktree);
 		const agent = startAgentProcess({
@@ -176,11 +179,13 @@ export const createAgentSessions = ({
 				acp.close();
 				throw new Error("The worktree was closed while its agent started");
 			}
-			await applyMode(chat, acp).catch((error: unknown) => {
-				acp.close();
-				throw error;
-			});
-			if (loaded !== undefined) emitEvent({ type: "context", ...loaded });
+			const found = await applyMode(chat, acp)
+				.then(() => loaded)
+				.catch((error: unknown) => {
+					acp.close();
+					throw error;
+				});
+			if (found !== undefined) emitEvent({ type: "context", ...found });
 			return { acp, agent };
 		} catch (error) {
 			stop(agent);
