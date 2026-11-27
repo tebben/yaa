@@ -2,7 +2,7 @@
 import Plus from "@lucide/svelte/icons/plus";
 import SquareTerminal from "@lucide/svelte/icons/terminal";
 import type { PanelProps } from "@yaa/plugin-api/ui";
-import { IconButton, TabStrip } from "@yaa/ui";
+import { Icon, IconButton, TabStrip } from "@yaa/ui";
 import { untrack } from "svelte";
 import { createTerminalPanel } from "./terminal-panel.svelte.ts";
 
@@ -19,11 +19,13 @@ const terminals = createTerminalPanel(context);
 			<TabStrip
 				tabs={terminals.tabs}
 				label="Terminals"
-				icon={SquareTerminal}
 				empty="Terminal"
 				onselect={terminals.select}
 				onclose={terminals.close}
 			>
+				{#snippet icon()}
+					<Icon icon={SquareTerminal} />
+				{/snippet}
 				{#snippet after()}
 					<IconButton
 						icon={Plus}

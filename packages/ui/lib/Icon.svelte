@@ -3,7 +3,10 @@ import type { IconSource } from "./icon-source.ts";
 
 // An SVG file becomes a mask over the text colour, so it follows hover and
 // focus colours like a Lucide icon does.
-let { icon, class: className }: { icon: IconSource; class?: string } = $props();
+let {
+	icon,
+	class: className,
+}: { icon: IconSource; class?: string | undefined } = $props();
 </script>
 
 {#if typeof icon === "string"}

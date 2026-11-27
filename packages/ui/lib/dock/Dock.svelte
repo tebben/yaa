@@ -6,7 +6,21 @@ import { portal } from "./portal.ts";
 let { dock }: { dock: DockController } = $props();
 </script>
 
-<div class="size-full" {@attach dock.attach}></div>
+<!-- A full-screen panel lifts out of the grid over a dimmed window, like a
+     dialog; a click beside it puts it back. -->
+{#if dock.fullScreen}
+	<div
+		class="fixed inset-0 z-40 bg-chrome/60"
+		role="presentation"
+		onpointerdown={dock.exitFullScreen}
+	></div>
+{/if}
+<div
+	class={dock.fullScreen
+		? "fixed inset-modal-inset z-40 overflow-hidden rounded-overlay border border-border-strong shadow-overlay"
+		: "size-full"}
+	{@attach dock.attach}
+></div>
 
 <!-- dockview focuses a group when focus enters its content, so the content
      root takes focus from a click anywhere in the panel. -->
@@ -18,6 +32,8 @@ let { dock }: { dock: DockController } = $props();
 				title={slot.title}
 				header={dock.headerHost(slot.panelId)}
 				ownHeader={dock.hasOwnHeader(slot.panelId)}
+				fullScreen={dock.isFullScreen(slot.panelId)}
+				ontogglefullscreen={() => dock.toggleFullScreen(slot.panelId)}
 				onclose={() => dock.close(slot.panelId)}
 			/>
 		</div>

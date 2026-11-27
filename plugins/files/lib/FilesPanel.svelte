@@ -102,6 +102,9 @@ const { files, edits } = view;
 	flex: 0 1 auto;
 	min-height: 0;
 	overflow: auto;
+	/* Scrolled to the end, the last row keeps the toolbar's space from the
+	   panel's edge. */
+	padding-bottom: var(--spacing-2);
 }
 
 .note {

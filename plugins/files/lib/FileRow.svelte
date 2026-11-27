@@ -1,9 +1,8 @@
 <script lang="ts">
 import ChevronDown from "@lucide/svelte/icons/chevron-down";
 import ChevronRight from "@lucide/svelte/icons/chevron-right";
-import File from "@lucide/svelte/icons/file";
 import Folder from "@lucide/svelte/icons/folder";
-import { Icon } from "@yaa/ui";
+import { FileIcon, Icon } from "@yaa/ui";
 import type { Row } from "./file-tree.ts";
 
 let {
@@ -44,7 +43,13 @@ const letters = {
 			<Icon icon={row.expanded ? ChevronDown : ChevronRight} />
 		{/if}
 	</span>
-	<span class="icon"><Icon icon={row.folder ? Folder : File} /></span>
+	<span class="icon">
+		{#if row.folder}
+			<Icon icon={Folder} />
+		{:else}
+			<FileIcon path={row.path} />
+		{/if}
+	</span>
 	<span class="name">{row.label}</span>
 	{#if row.status}
 		<span class="mark" title={row.status}>{letters[row.status]}</span>

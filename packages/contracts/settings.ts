@@ -33,6 +33,7 @@ export const coreSettings = {
 			"ctrl+shift+j",
 			"ctrl+shift+k",
 			"ctrl+shift+l",
+			"ctrl+shift+f",
 			"ctrl+shift+n",
 			"alt+j",
 			"alt+k",

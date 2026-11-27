@@ -10,7 +10,7 @@ import {
 import type { DockPlacement, PanelKind } from "@yaa/ui/dock";
 import Placeholder from "./Placeholder.svelte";
 
-// The app's panel kinds, in rail order: placeholders until the plugins that
+// The app's panel kinds, in panel bar order: placeholders until the plugins that
 // own them arrive. A plugin's panel with the same id takes its place.
 export const panelKinds: ReadonlyMap<string, PanelKind> = new Map([
 	["files", { title: "Files", icon: ListTree, component: Placeholder }],

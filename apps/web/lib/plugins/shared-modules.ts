@@ -1,5 +1,6 @@
 import { type SharedModule, sharedModulesKey } from "@yaa/contracts/plugin-ui";
 import * as ui from "@yaa/ui";
+import * as uiFocus from "@yaa/ui/focus";
 import * as svelte from "svelte";
 import * as animate from "svelte/animate";
 import * as attachments from "svelte/attachments";
@@ -32,6 +33,7 @@ const registry: Record<SharedModule, object> = {
 	// components have already run.
 	"svelte/internal/init-operations": {},
 	"@yaa/ui": ui,
+	"@yaa/ui/focus": uiFocus,
 };
 
 // Must run before any plugin module loads.

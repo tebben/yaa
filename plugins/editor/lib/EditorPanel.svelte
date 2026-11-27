@@ -67,6 +67,12 @@ const hasText = $derived(editor.active?.document?.model !== undefined);
 	min-height: 0;
 }
 
+/* Monaco puts the cursor line's number at the gutter's left edge; it lines
+   up with the relative numbers instead, set apart by its brighter colour. */
+.code :global(.line-numbers .relative-current-line-number) {
+	text-align: right;
+}
+
 .code :global(.vim) {
 	padding: 0 var(--spacing-3);
 	font-family: var(--font-mono);

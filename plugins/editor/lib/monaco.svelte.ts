@@ -36,9 +36,21 @@ export const createModel = (
 	);
 };
 
+// The width of the app's thin scrollbar (packages/ui/styles.css), measured,
+// since CSS names it only as thin.
+const scrollbarWidth = (within: HTMLElement) => {
+	const probe = document.createElement("div");
+	probe.style.cssText = "position: absolute; overflow: scroll; width: 50px";
+	within.append(probe);
+	const width = probe.offsetWidth - probe.clientWidth;
+	probe.remove();
+	return width;
+};
+
 export const createEditor = (
 	element: HTMLElement,
 ): editor.IStandaloneCodeEditor => {
+	const scrollbar = scrollbarWidth(element);
 	const styles = getComputedStyle(element);
 	const value = (name: string) => styles.getPropertyValue(name).trim();
 	editor.defineTheme(THEME, themeFromTokens(element));
@@ -50,7 +62,16 @@ export const createEditor = (
 		lineHeight: Number.parseFloat(value("--leading-tight")),
 		automaticLayout: true,
 		minimap: { enabled: false },
+		// Counted from the cursor line, for vim counts such as 5j; a setting
+		// comes with plugin settings (docs/spec/07-editor-files-terminal.md).
+		lineNumbers: "relative",
 		scrollBeyondLastLine: false,
+		// The app's thin scrollbar, not Monaco's wide one.
+		scrollbar: {
+			verticalScrollbarSize: scrollbar,
+			horizontalScrollbarSize: scrollbar,
+			useShadows: false,
+		},
 		// Menus and hovers would otherwise be cut off at the panel's edge.
 		fixedOverflowWidgets: true,
 	});

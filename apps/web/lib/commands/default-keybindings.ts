@@ -17,6 +17,19 @@ export const defaultKeybindings: readonly Keybinding[] = [
 		command: "menu.leaveSearch",
 		when: "focus.region == menu && inputFocus && !palette.open",
 	},
+	// Escape parks a text field: focus stays, keys such as J and K act
+	// again. Enter on a parked field, or I, edits it.
+	{
+		key: "escape",
+		command: "input.leave",
+		when: "textField && !palette.open",
+	},
+	{ key: "i", command: "input.edit", when: "!inputFocus && !palette.open" },
+	{
+		key: "enter",
+		command: "input.edit",
+		when: "focus.parked && !palette.open",
+	},
 	{
 		key: "escape",
 		command: "focus.hideHighlight",
@@ -57,4 +70,9 @@ export const defaultKeybindings: readonly Keybinding[] = [
 	{ key: "ctrl+shift+k", command: "panel.shorter", when: NOT_IN_PALETTE },
 	{ key: "ctrl+shift+l", command: "panel.wider", when: NOT_IN_PALETTE },
 	{ key: "ctrl+w", command: "panel.close", when: IN_DOCK },
+	{
+		key: "ctrl+shift+f",
+		command: "panel.fullScreen",
+		when: "focus.region == dock && !palette.open",
+	},
 ];
