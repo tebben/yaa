@@ -22,10 +22,20 @@ export const gitChangeKind = z.enum([
 	"unmerged",
 ]);
 
+export const gitSection = z.enum(["staged", "unstaged"]);
+export const gitAction = z.enum(["stage", "unstage", "discard"]);
+export const gitSource = z.enum(["head", "index"]);
+export const editorTarget = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("file"), path: z.string() }),
+	z.object({ kind: z.literal("diff"), path: z.string(), section: gitSection }),
+]);
+
 // A file with uncommitted changes: what is staged, and what is not. An
 // untracked file has only the latter; a conflicted one is unmerged there.
 export const gitChange = z.object({
 	path: z.string(),
+	// The original path of a rename or copy, when git reports one.
+	originalPath: z.string().optional(),
 	staged: gitChangeKind.nullable(),
 	unstaged: gitChangeKind.nullable(),
 });
@@ -70,6 +80,10 @@ export const fileWrite = z.discriminatedUnion("kind", [
 export type GitFiles = z.infer<typeof gitFiles>;
 export type GitChangeKind = z.infer<typeof gitChangeKind>;
 export type GitChange = z.infer<typeof gitChange>;
+export type GitSection = z.infer<typeof gitSection>;
+export type GitAction = z.infer<typeof gitAction>;
+export type GitSource = z.infer<typeof gitSource>;
+export type EditorTarget = z.infer<typeof editorTarget>;
 export type DirEntry = z.infer<typeof dirEntry>;
 export type FileContent = z.infer<typeof fileContent>;
 export type FileBytes = z.infer<typeof fileBytes>;

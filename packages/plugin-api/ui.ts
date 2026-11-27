@@ -19,6 +19,7 @@ import type { Worktree } from "@yaa/contracts/projects";
 import type { Disposable, ProtocolDefinition } from "@yaa/contracts/protocol";
 import type { ProviderStatus } from "@yaa/contracts/providers";
 import type { Terminal, TerminalSize } from "@yaa/contracts/terminals";
+import type { EditorTarget } from "@yaa/contracts/worktree-files";
 import type { Component } from "svelte";
 import type { Attachment } from "svelte/attachments";
 
@@ -32,9 +33,8 @@ export type PluginBackendClient<P extends ProtocolDefinition> = Pick<
 };
 
 // A file to show in the worktree's editor.
-export type OpenFile = {
-	// Relative to the worktree's folder, with `/`.
-	path: string;
+export type OpenDocument = {
+	target: EditorTarget;
 	// The line to put the cursor on, from 1.
 	line?: number | undefined;
 	// Keeps its tab open; otherwise the next file opened may reuse it.
@@ -220,10 +220,10 @@ export type PanelContext = {
 	// close something inside it; false lets the panel close.
 	handleClose(handler: () => boolean): Disposable;
 	// Shows the panel that opens files, with the file in it.
-	openFile(file: OpenFile): void;
+	openDocument(document: OpenDocument): void;
 	// For a panel whose manifest entry has `opensFiles`: takes the files to
 	// open, the latest one asked for before it was there included.
-	handleOpenFile(handler: (file: OpenFile) => void): Disposable;
+	handleOpenDocument(handler: (document: OpenDocument) => void): Disposable;
 	// Opens the palette on the source, while the panel's worktree is open.
 	pick(source: PickSource): void;
 	readonly terminals: PanelTerminals;

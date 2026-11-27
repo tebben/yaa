@@ -2,6 +2,7 @@ import { createDock, type DockController, type PanelKind } from "@yaa/ui/dock";
 import { SvelteMap } from "svelte/reactivity";
 import type { CoreClient } from "./core-connection.ts";
 import { defaultLayout } from "./panels/index.ts";
+import { migratePanelLayout } from "./panels/layout.ts";
 
 // Dragging a sash changes the layout on every frame; save once it settles.
 const SAVE_DELAY_MS = 500;
@@ -56,7 +57,7 @@ export const createLayouts = ({ client, kinds, fail }: LayoutOptions) => {
 						worktree,
 						createDock({
 							kinds: all,
-							layout: layout ?? undefined,
+							layout: layout === null ? undefined : migratePanelLayout(layout),
 							defaultLayout,
 							onChange: (changed) => save(worktree, changed),
 						}),

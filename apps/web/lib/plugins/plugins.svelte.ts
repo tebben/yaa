@@ -2,7 +2,11 @@ import { pluginFileUrl } from "@yaa/contracts/app-urls";
 import type { Keybinding } from "@yaa/contracts/keybindings";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
-import type { OpenFile, PanelSettings, PickSource } from "@yaa/plugin-api/ui";
+import type {
+	OpenDocument,
+	PanelSettings,
+	PickSource,
+} from "@yaa/plugin-api/ui";
 import type { DockController, PanelKind } from "@yaa/ui/dock";
 import type { Command } from "../commands/index.ts";
 import type { CoreConnection } from "../core-connection.ts";
@@ -50,7 +54,7 @@ export const createPlugins = ({
 }: PluginsOptions) => {
 	const { client } = core;
 	const panelCommands = createPanelHandlers<void>();
-	const panelFiles = createPanelHandlers<OpenFile>();
+	const panelFiles = createPanelHandlers<OpenDocument>();
 	// The panel kind that opens files: the first a plugin declares.
 	let opener: string | undefined;
 	const manifests = client
@@ -95,10 +99,10 @@ export const createPlugins = ({
 		return component;
 	};
 
-	const openFile = (worktree: string, file: OpenFile) => {
+	const openDocument = (worktree: string, file: OpenDocument) => {
 		const shown = dock(worktree);
 		if (opener === undefined || shown === undefined) {
-			report(`Nothing can open ${file.path}`);
+			report(`Nothing can open ${file.target.path}`);
 			return;
 		}
 		shown.show(opener, file.focus ?? true);
@@ -120,7 +124,7 @@ export const createPlugins = ({
 				commands: panelCommands,
 				keysFor,
 				files: panelFiles,
-				openFile: (file) => openFile(found.id, file),
+				openDocument: (file) => openDocument(found.id, file),
 				pick: (source) => {
 					if (openWorktree() === found.id) pick(source);
 				},

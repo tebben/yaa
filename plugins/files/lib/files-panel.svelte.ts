@@ -165,7 +165,11 @@ export const createFilesPanel = (panel: PanelContext) => {
 			if (row === undefined) return;
 			if (!row.folder) {
 				const keep = by === "double";
-				panel.openFile({ path, keep, focus: by !== "mouse" });
+				panel.openDocument({
+					target: { kind: "file", path },
+					keep,
+					focus: by !== "mouse",
+				});
 			} else if (by !== "double") setExpanded(path, !row.expanded);
 		},
 		// Enter in the filter field moves to the first match.

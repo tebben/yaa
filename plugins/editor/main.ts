@@ -2,12 +2,27 @@
 // panel, tells it when they change, and keeps its tabs and unsaved text.
 import type { Disposable, PluginBackend } from "@yaa/plugin-api";
 import * as z from "zod";
+import { targetKey } from "./lib/tabs.ts";
 import { draft, editorProtocol, tabsState } from "./protocol.ts";
 
 const describe = (error: unknown) =>
 	error instanceof Error ? error.message : String(error);
 
 const NO_TABS = { open: [], active: null, closed: [] };
+const oldTabs = z
+	.object({
+		open: z.array(z.object({ path: z.string(), preview: z.boolean() })),
+		active: z.string().nullable(),
+		closed: z.array(z.string()),
+	})
+	.transform(({ open, active, closed }) => ({
+		open: open.map(({ path, preview }) => ({
+			target: { kind: "file" as const, path },
+			preview,
+		})),
+		active: active === null ? null : targetKey({ kind: "file", path: active }),
+		closed: closed.map((path) => ({ kind: "file" as const, path })),
+	}));
 
 export const activate: PluginBackend["activate"] = ({
 	serve,
@@ -41,13 +56,15 @@ export const activate: PluginBackend["activate"] = ({
 			files: (await git.files(worktree)).files,
 		}),
 		read: ({ worktree, path }) => files.read(worktree, path),
+		readGit: ({ worktree, source, path }) => git.read(worktree, source, path),
+		changes: async ({ worktree }) => ({ changes: await git.changes(worktree) }),
 		readBytes: ({ worktree, path }) => files.readBytes(worktree, path),
 		fetchImage: ({ url }) => files.fetchImage(url),
 		write: ({ worktree, path, text, version }) =>
 			files.write(worktree, path, text, version),
 		async restore({ worktree }) {
 			const [tabs, drafts] = await Promise.all([
-				stored(worktree, "tabs", tabsState, NO_TABS),
+				stored(worktree, "tabs", z.union([tabsState, oldTabs]), NO_TABS),
 				stored(worktree, "drafts", z.array(draft), []),
 			]);
 			return { tabs, drafts };

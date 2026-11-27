@@ -7,4 +7,5 @@ export {
 	openTab,
 	reopenTab,
 	tabLabels,
+	targetKey,
 } from "./lib/tabs.ts";

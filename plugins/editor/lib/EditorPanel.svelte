@@ -36,9 +36,21 @@ const hasText = $derived(editor.active?.document?.model !== undefined);
 	{/if}
 	<EditorNotice {editor} />
 	<div
-		class={["code", { hidden: !hasText || editor.readMode }]}
+		class={[
+			"code",
+			{
+				hidden:
+					!hasText || editor.readMode || editor.active?.target.kind !== "file",
+			},
+		]}
 		{@attach editor.view.attach}
 	></div>
+	{#if editor.active?.target.kind === "diff"}
+		<div class="code" {@attach editor.diffView.attach}></div>
+		{#if editor.diffProblem}
+			<p class="note">{editor.diffProblem}</p>
+		{/if}
+	{/if}
 	{#if editor.readMode && editor.active?.document?.model}
 		{#key editor.active.path}
 			<div
@@ -64,7 +76,7 @@ const hasText = $derived(editor.active?.document?.model !== undefined);
 		<p class="note">
 			No file is open. Pick one in the files panel, or use Go to file.
 		</p>
-	{:else if reason}
+	{:else if reason && editor.active.target.kind === "file"}
 		<p class="note">{unreadable[reason]}</p>
 	{/if}
 </div>

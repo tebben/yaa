@@ -33,12 +33,13 @@ export const parseChanges = (output: string): GitChange[] => {
 		const parts = entry.split(" ");
 		const [, codes = ""] = parts;
 		const path = parts.slice(fields).join(" ");
-		if (type === "2") at += 1;
+		const originalPath = type === "2" ? entries[++at] : undefined;
 		changes.push(
 			type === "u"
 				? { path, staged: null, unstaged: "unmerged" }
 				: {
 						path,
+						...(originalPath === undefined ? {} : { originalPath }),
 						staged: kinds[codes.charAt(0)] ?? null,
 						unstaged: kinds[codes.charAt(1)] ?? null,
 					},

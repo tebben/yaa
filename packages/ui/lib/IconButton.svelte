@@ -16,6 +16,7 @@ let {
 	label,
 	shortcut,
 	pressed,
+	disabled = false,
 	size = "default",
 	tooltipSide = "top",
 	onclick,
@@ -25,6 +26,7 @@ let {
 	label: string;
 	shortcut?: readonly string[] | undefined;
 	pressed?: boolean;
+	disabled?: boolean;
 	size?: "default" | "large";
 	tooltipSide?: "top" | "right" | "bottom" | "left";
 	onclick: () => void;
@@ -39,6 +41,7 @@ let {
 		class="inline-flex size-control shrink-0 items-center justify-center rounded-control text-text-muted outline-focus hover:bg-hover hover:text-text focus-visible:bg-hover focus-visible:text-text focus-visible:outline-1 aria-pressed:bg-pressed aria-pressed:text-text aria-pressed:hover:bg-hover"
 		aria-label={label}
 		aria-pressed={pressed}
+		{disabled}
 		{onclick}
 		{...events}
 	>

@@ -20,7 +20,7 @@ const focus: Attachment<HTMLElement> = (node) => {
 		aria-label="Unsaved changes"
 		{@attach focus}
 	>
-		<p>Save the changes to {path} before closing it?</p>
+		<p>Save the changes to {editor.closingPath} before closing it?</p>
 		<Button onclick={() => editor.saveAndClose(path)}>Save</Button>
 		<Button onclick={() => editor.discardAndClose(path)}>Discard</Button>
 		<Button onclick={editor.keepOpen}>Cancel</Button>
@@ -37,7 +37,7 @@ const focus: Attachment<HTMLElement> = (node) => {
 	<div class="notice" role="alert">
 		<p>This file was deleted on disk.</p>
 		<Button onclick={() => editor.save(path)}>Save it again</Button>
-		<Button onclick={() => editor.close(path)}>Close</Button>
+		<Button onclick={editor.closeActive}>Close</Button>
 	</div>
 {/if}
 
