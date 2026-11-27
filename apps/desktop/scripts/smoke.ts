@@ -223,14 +223,35 @@ const clickElement = async (page: Connection, element: string) => {
 		`void (${element}).scrollIntoView({ block: "nearest", inline: "nearest", behavior: "instant" })`,
 		z.undefined(),
 	);
-	await waitFor(
-		page,
-		`(() => {
+	try {
+		await waitFor(
+			page,
+			`(() => {
 			const target = (${element});
 			const rect = target.getBoundingClientRect();
 			return target.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
 		})()`,
-	);
+		);
+	} catch (error) {
+		console.log(
+			"[DEBUG-hit]",
+			await evaluate(
+				page,
+				`(() => {
+					const target = (${element});
+					const rect = target.getBoundingClientRect();
+					const parents = [];
+					for (let node = target.parentElement; node; node = node.parentElement) {
+						const bounds = node.getBoundingClientRect();
+						parents.push({ class: node.className, left: bounds.left, right: bounds.right, overflow: getComputedStyle(node).overflowX, scrollLeft: node.scrollLeft, scrollWidth: node.scrollWidth, clientWidth: node.clientWidth });
+					}
+					return JSON.stringify({ rect: rect.toJSON(), hit: document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)?.outerHTML.slice(0, 300), parents });
+				})()`,
+				z.string(),
+			),
+		);
+		throw error;
+	}
 	const { x, y } = await evaluate(
 		page,
 		`(() => {
