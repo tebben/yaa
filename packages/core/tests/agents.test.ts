@@ -195,6 +195,49 @@ describe("openAcpSession with a signed-out agent", () => {
 	});
 });
 
+describe("openAcpSession with a value listed twice", () => {
+	// Copilot CLI 1.0.117 lists the model `auto` twice.
+	const listsTwice = (): Stream => {
+		const toAgent = new TransformStream<Uint8Array, Uint8Array>();
+		const toClient = new TransformStream<Uint8Array, Uint8Array>();
+		acpAgent({ name: "lists-twice" })
+			.onRequest("initialize", () => ({ protocolVersion: PROTOCOL_VERSION }))
+			.onRequest("session/new", () => ({
+				sessionId: "1",
+				configOptions: [
+					{
+						type: "select",
+						id: "model",
+						name: "Model",
+						currentValue: "auto",
+						options: [
+							{ value: "auto", name: "Auto" },
+							{ value: "auto", name: "Auto" },
+							{ value: "small", name: "Small" },
+						],
+					},
+				],
+			}))
+			.connect(ndJsonStream(toClient.writable, toAgent.readable));
+		return ndJsonStream(toAgent.writable, toClient.readable);
+	};
+
+	it("offers it once", async () => {
+		const events: AgentEvent[] = [];
+		await openAcpSession({
+			agent: { stream: listsTwice(), exited: new Promise(() => {}) },
+			cwd: "/fake",
+			log,
+			emit: (event) => events.push(event),
+		});
+		const config = events.find(({ type }) => type === "config");
+		expect(config?.type === "config" && config.options[0]?.choices).toEqual([
+			{ value: "auto", label: "Auto" },
+			{ value: "small", label: "Small" },
+		]);
+	});
+});
+
 describe("promptContent", () => {
 	const file = { type: "file", path: "/repo/a b.ts" } as const;
 	const image = {

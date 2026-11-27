@@ -12,7 +12,7 @@ The chat is the app's own interface on top of an existing agent. A provider plug
 - `createSession({cwd, model, effort, mode, off})` starts a session in a worktree, without the MCP servers and skills named in `off`.
 - `discover({cwd, repository})`, optional: the MCP servers and skills the agent would load (`09-mcp-skills.md`).
 - Sessions accept `send`, `cancel`, config changes (model, effort, mode), and answers to permission requests and agent questions, and emit normalized events.
-- Models, effort levels and modes come from the session's ACP config options, grouped by category (`model`, `thought_level`, `mode`). Effort levels depend on the model, so the pickers follow every config update from the agent. Before a chat exists, for example in settings, core opens a session without a prompt to read them; neither agent persists such a session (`docs/decisions/0014-acp-coverage.md`).
+- Models, effort levels and modes come from the session's ACP config options, grouped by category (`model`, `thought_level`, `mode`). Effort levels depend on the model, so the pickers follow every config update from the agent. A value an agent lists twice is offered once. Before a chat exists, for example in settings, core opens a session without a prompt to read them; neither agent persists such a session (`docs/decisions/0014-acp-coverage.md`).
 
 * `authStatus()` and `login()` report the sign-in state and start sign-in.
 * `complete(prompt, model)`, optional: a one-shot call without a chat, used for generated text. A provider that cannot do it is not offered for that setting.
