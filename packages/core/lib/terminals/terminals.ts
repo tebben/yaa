@@ -37,7 +37,8 @@ export type Terminals = {
 	ack(id: string, view: string, offset: number): void;
 	write(id: string, data: string): void;
 	resize(id: string, size: TerminalSize): void;
-	// Ends the programs of worktrees that are not in `worktrees`.
+	// Ends the programs of worktrees that are not in `worktrees`, keeping
+	// where each terminal was.
 	keep(worktrees: ReadonlySet<string>): void;
 	// For the core's exit: keeps where each terminal is and ends its program,
 	// before returning.
@@ -190,7 +191,10 @@ export const createTerminals = ({
 		resize: (id, size) => running.get(id)?.session.resize(size),
 		keep(worktrees) {
 			for (const [id, terminal] of running) {
-				if (!worktrees.has(terminal.worktree)) stop(id);
+				if (worktrees.has(terminal.worktree)) continue;
+				// A settled worktree's terminals open there again.
+				if (look(id, terminal)) changed(terminal.worktree);
+				stop(id);
 			}
 		},
 		shutdown() {

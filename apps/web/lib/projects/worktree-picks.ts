@@ -3,6 +3,7 @@ import {
 	type FinishAction,
 	type FinishCheck,
 	finishAction,
+	type Project,
 } from "@yaa/contracts/projects";
 import { type NamingRules, worktreeName } from "@yaa/contracts/worktree-name";
 import type { PaletteItem, PaletteSource } from "../palette/index.ts";
@@ -91,26 +92,62 @@ export const namePick = ({
 	};
 };
 
+// The settled worktrees of every project, to reopen one.
+export const settledPick = (
+	projects: readonly Project[],
+	accept: (project: string, worktree: string) => void,
+): PaletteSource => {
+	// The project of each settled worktree, by the worktree's id.
+	const owners = new Map<string, string>();
+	const items = projects.flatMap((project) =>
+		project.worktrees.flatMap((worktree): PaletteItem[] => {
+			if (!worktree.settled) return [];
+			owners.set(worktree.id, project.id);
+			return [
+				{
+					id: worktree.id,
+					label: worktree.branch,
+					mono: true,
+					detail: project.name,
+				},
+			];
+		}),
+	);
+	return {
+		label: "Reopen settled worktree",
+		placeholder: "Branch of a settled worktree",
+		items: (query) => fuzzyMatch(query, items, ({ label }) => label),
+		empty: () => "No settled worktrees",
+		accept({ id }) {
+			const project = owners.get(id);
+			if (project !== undefined) accept(project, id);
+		},
+	};
+};
+
 // What finishing this way loses; empty when nothing. Removing the folder
 // loses its uncommitted changes, deleting the branch its unpushed commits.
 const losses = (action: FinishAction, check: FinishCheck) => [
-	...(action !== "close" && check.changes > 0 ? ["uncommitted changes"] : []),
-	...(action !== "close" && action !== "remove" && check.unpushed > 0
+	...(action !== "settle" && check.changes > 0 ? ["uncommitted changes"] : []),
+	...(action !== "settle" && action !== "remove" && check.unpushed > 0
 		? ["unpushed commits"]
 		: []),
 ];
 
 // How far to finish a worktree, after what it would lose. When it would
 // lose work, the choices that keep it come first, so Enter is safe; the
-// ones that lose it say so and carry the override.
+// ones that lose it say so and carry the override. A settled worktree is
+// offered only the ways to remove it.
 export const finishPick = ({
 	branch,
 	defaultBranch,
+	settled,
 	check,
 	accept,
 }: {
 	branch: string;
 	defaultBranch: string;
+	settled: boolean;
 	check: FinishCheck;
 	accept: (action: FinishAction, force: boolean) => void;
 }): PaletteSource => {
@@ -157,15 +194,22 @@ export const finishPick = ({
 			label: label("remove", "Remove the folder, keep the branch"),
 		},
 	];
-	const close: PaletteItem = {
-		id: "close",
-		label: "Close it, keep the folder and the branch",
-	};
+	const settle: PaletteItem[] = settled
+		? []
+		: [
+				{
+					id: "settle",
+					label: "Settle it: keep the folder, branch and chats, stop what runs",
+				},
+			];
 	const loses = check.changes > 0 || check.unpushed > 0;
-	const items = loses ? [close, ...removing.reverse()] : [...removing, close];
+	const items = loses
+		? [...settle, ...removing.reverse()]
+		: [...removing, ...settle];
+	const title = settled ? `Remove ${branch}` : `Finish ${branch}`;
 	return {
-		label: `Finish ${branch}`,
-		placeholder: `Finish ${branch}`,
+		label: title,
+		placeholder: title,
 		notes,
 		items: (query) => fuzzyMatch(query, items, (item) => item.label),
 		empty: () => "No matching choices",

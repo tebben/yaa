@@ -66,6 +66,12 @@ export const projectCommands = ({
 		},
 	},
 	{
+		id: "worktree.reopen",
+		title: "Reopen settled worktree",
+		category: "Worktree",
+		run: worktrees.pickSettled,
+	},
+	{
 		id: "worktree.markDone",
 		title: "Mark worktree done",
 		category: "Worktree",

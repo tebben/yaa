@@ -19,7 +19,7 @@ type ProjectsOptions = {
 	report(message: string): void;
 	// A worktree is about to show, so its dock can load.
 	opening(worktree: string): void;
-	// The worktrees that exist now; the others' docks can go.
+	// The worktrees in use now; the others' docks can go.
 	listed(worktrees: ReadonlySet<string>): void;
 };
 
@@ -42,15 +42,20 @@ export const createProjects = ({
 	let status = $state.raw<{ id: string; value: BranchStatus }>();
 	let query = $state("");
 	let collapsed = $state.raw<ReadonlySet<string>>(new Set());
+	// The projects whose settled worktrees show; none at first.
+	let settledShown = $state.raw<ReadonlySet<string>>(new Set());
 
-	// A removed project or a finished worktree is no longer selected.
+	// A removed project, or a finished or settled worktree, is no longer
+	// selected.
 	const selected = $derived(
 		projects.find((project) => project.id === place?.project),
 	);
 	const worktree = $derived(
 		place?.worktree === undefined
 			? undefined
-			: selected?.worktrees.find(({ id }) => id === place?.worktree),
+			: selected?.worktrees.find(
+					({ id, settled }) => id === place?.worktree && !settled,
+				),
 	);
 	const tree = $derived(filterTree(query, projects));
 
@@ -71,10 +76,15 @@ export const createProjects = ({
 		}, fail);
 	};
 
+	// A settled worktree's dock goes too: it opens again when reopened.
 	const update = (next: readonly Project[]) => {
 		projects = next;
 		listed(
-			new Set(next.flatMap(({ worktrees }) => worktrees.map(({ id }) => id))),
+			new Set(
+				next.flatMap(({ worktrees }) =>
+					worktrees.flatMap(({ id, settled }) => (settled ? [] : [id])),
+				),
+			),
 		);
 	};
 
@@ -155,6 +165,15 @@ export const createProjects = ({
 			const next = new Set(collapsed);
 			if (!next.delete(id)) next.add(id);
 			collapsed = next;
+		},
+		// While searching, the settled worktrees that matched show too.
+		isSettledShown(id: string) {
+			return query.trim() !== "" || settledShown.has(id);
+		},
+		toggleSettled(id: string) {
+			const next = new Set(settledShown);
+			if (!next.delete(id)) next.add(id);
+			settledShown = next;
 		},
 		go,
 		stateOf,

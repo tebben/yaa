@@ -37,6 +37,8 @@ export type Worktrees = {
 		action: FinishAction,
 		force: boolean,
 	): Promise<{ problem?: string }>;
+	// Puts a settled worktree back in use.
+	reopen(id: string): { problem?: string };
 	onChange(listener: () => void): void;
 };
 
@@ -95,6 +97,9 @@ export const createWorktrees = ({
 		"INSERT INTO worktrees (id, project_id, branch, path, idx, created_at) VALUES (?, ?, ?, ?, ?, ?)",
 	);
 	const deleteById = db.prepare("DELETE FROM worktrees WHERE id = ?");
+	const setSettled = db.prepare(
+		"UPDATE worktrees SET settled_at = ? WHERE id = ?",
+	);
 	const listeners = new Set<() => void>();
 	const changed = () => {
 		for (const listener of listeners) listener();
@@ -203,6 +208,7 @@ export const createWorktrees = ({
 				branch: planned.branch,
 				path,
 				index: nextIndex(repo.id),
+				settled: false,
 			};
 			insert.run(added.id, repo.id, added.branch, path, added.index, now());
 			changed();
@@ -244,9 +250,11 @@ export const createWorktrees = ({
 				deleteById.run(id);
 				changed();
 			};
-			if (action === "close") {
+			// Nothing runs in a settled worktree, and nothing of it is lost.
+			if (action === "settle") {
 				await steps.stop(id);
-				forget();
+				setSettled.run(now(), id);
+				changed();
 				return {};
 			}
 			const folder = exists(found.path);
@@ -299,6 +307,17 @@ export const createWorktrees = ({
 					problem: `The worktree is removed, but: ${describe(error)}`,
 				};
 			}
+			return {};
+		},
+		reopen(id) {
+			const { found } = created(id);
+			if (!exists(found.path)) {
+				return {
+					problem: `${found.path} is gone: remove the worktree to clear it`,
+				};
+			}
+			setSettled.run(null, id);
+			changed();
 			return {};
 		},
 		onChange(listener) {

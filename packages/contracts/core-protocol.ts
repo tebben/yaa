@@ -123,6 +123,11 @@ export const coreProtocol = defineProtocol({
 			}),
 			result: z.object({ problem: z.string().optional() }),
 		},
+		// Puts a settled worktree back in use; refused when its folder is gone.
+		"worktrees.reopen": {
+			params: z.object({ id: z.string() }),
+			result: z.object({ problem: z.string().optional() }),
+		},
 		// The states derived from core's events; `worktrees.statesChanged`
 		// carries them again after each change.
 		"worktrees.states": { params: z.object({}), result: worktreeStates },

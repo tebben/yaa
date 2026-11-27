@@ -88,7 +88,13 @@ const setup = ({
 	return { db, projects, worktrees, shared, folders, ran };
 };
 
-const main = { id: "id2", branch: "main", path: "/repo", index: 0 };
+const main = {
+	id: "id2",
+	branch: "main",
+	path: "/repo",
+	index: 0,
+	settled: false,
+};
 
 describe("projects", () => {
 	it("adds a repository by its main checkout, from any folder in it, with the main checkout as its first worktree", async () => {
@@ -171,13 +177,14 @@ describe("worktrees", () => {
 				branch: "PROJ-482-fix-tile-cache",
 				path: "/home/me/wt/repo/PROJ-482-fix-tile-cache",
 				index: 1,
+				settled: false,
 			},
 		});
 		expect(shared).toEqual([
 			"/repo worktree add --no-track -b PROJ-482-fix-tile-cache /home/me/wt/repo/PROJ-482-fix-tile-cache origin/main",
 		]);
 		await worktrees.create({ project: "id1", text: "2", base: "main" });
-		await worktrees.finish("id3", "close", false);
+		await worktrees.finish("id3", "remove", false);
 		await worktrees.create({ project: "id1", text: "3", base: "main" });
 		expect(
 			projects.list()[0]?.worktrees.map(({ branch, index }) => [branch, index]),
@@ -242,7 +249,7 @@ describe("worktrees", () => {
 			remoteBranch: null,
 		});
 		await expect(worktrees.finishCheck("id2")).rejects.toThrow("main checkout");
-		await expect(worktrees.finish("id2", "close", false)).rejects.toThrow(
+		await expect(worktrees.finish("id2", "settle", false)).rejects.toThrow(
 			"main checkout",
 		);
 	});
@@ -323,7 +330,27 @@ describe("worktrees", () => {
 		});
 		expect(shared).toEqual([]);
 		expect(projects.list()[0]?.worktrees).toHaveLength(2);
-		await expect(worktrees.finish("id3", "close", false)).resolves.toEqual({});
-		expect(projects.list()[0]?.worktrees).toEqual([main]);
+		await expect(worktrees.finish("id3", "settle", false)).resolves.toEqual({});
+		expect(projects.list()[0]?.worktrees[1]).toMatchObject({ settled: true });
+	});
+
+	it("settles a worktree, keeping it and its index, and reopens it while its folder is there", async () => {
+		const { projects, worktrees, shared, folders } = await withProject();
+		await worktrees.create({ project: "id1", text: "1", base: "main" });
+		folders.add("/home/me/wt/repo/PROJ-1");
+		shared.length = 0;
+		await expect(worktrees.finish("id3", "settle", false)).resolves.toEqual({});
+		expect(shared).toEqual([]);
+		expect(projects.list()[0]?.worktrees[1]).toMatchObject({
+			index: 1,
+			settled: true,
+		});
+		expect(worktrees.reopen("id3")).toEqual({});
+		expect(projects.list()[0]?.worktrees[1]).toMatchObject({ settled: false });
+		await worktrees.finish("id3", "settle", false);
+		folders.delete("/home/me/wt/repo/PROJ-1");
+		expect(worktrees.reopen("id3")).toEqual({
+			problem: expect.stringContaining("is gone"),
+		});
 	});
 });
