@@ -41,19 +41,30 @@ const outputs = (content: ToolCallContent[] | null | undefined) =>
 const locations = (list: ToolCallLocation[] | null | undefined) =>
 	list?.map(({ path, line }) => ({ path, line: present(line) }));
 
+type SelectOptions = Extract<
+	SessionConfigOption,
+	{ type: "select" }
+>["options"];
+
+// The values an option offers, each once, as its first entry names it: a value
+// is what picks a choice, and Copilot CLI lists the model `auto` twice.
+const choices = (options: SelectOptions) => {
+	const entries = options.flatMap((entry) =>
+		"group" in entry ? entry.options : [entry],
+	);
+	const labels = new Map<string, string>();
+	for (const { value, name } of entries) {
+		if (!labels.has(value)) labels.set(value, name);
+	}
+	return Array.from(labels, ([value, label]) => ({ value, label }));
+};
+
 const configOption = (option: SessionConfigOption) => ({
 	id: option.id,
 	name: option.name,
 	category: present(option.category),
 	value: option.currentValue,
-	choices:
-		option.type === "select"
-			? option.options.flatMap((entry) =>
-					"group" in entry
-						? entry.options.map(({ value, name }) => ({ value, label: name }))
-						: [{ value: entry.value, label: entry.name }],
-				)
-			: undefined,
+	choices: option.type === "select" ? choices(option.options) : undefined,
 });
 
 export const configEvent = (options: SessionConfigOption[]): AgentEvent => ({
