@@ -3,11 +3,13 @@ import type { KeybindingsState } from "@yaa/contracts/keybindings";
 import { errorData, type Logger } from "@yaa/contracts/log";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import { createServer, type Server } from "@yaa/contracts/server";
-import type { SettingsState } from "@yaa/contracts/settings";
+import type { AgentContext } from "./agents/agent-context.ts";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
+import type { RecentLogs } from "./log/recent-logs.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
 import type { Projects } from "./projects/projects.ts";
 import type { Worktrees } from "./projects/worktrees.ts";
+import type { AppSettings } from "./settings/app-settings.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { StateTracker } from "./state/state-tracker.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
@@ -16,12 +18,14 @@ import type { Terminals } from "./terminals/terminals.ts";
 
 export type CoreServerOptions = {
 	log: Logger;
-	settings: SettingsFile<SettingsState>;
+	recentLogs: RecentLogs;
+	settings: AppSettings;
 	keybindings: SettingsFile<KeybindingsState>;
 	layouts: LayoutStore;
 	place: PlaceStore;
 	plugins: PluginManager;
 	agents: AgentSessions;
+	agentContext: AgentContext;
 	projects: Projects;
 	worktrees: Worktrees;
 	states: StateTracker;
@@ -37,16 +41,23 @@ export const createCoreServer = ({
 	place,
 	plugins,
 	agents,
+	agentContext,
 	projects,
 	worktrees,
 	states,
 	terminals,
 	pick,
+	recentLogs,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
 		coreProtocol,
 		{
+			"logs.recent": () => recentLogs.list(),
 			"settings.get": () => settings.current(),
+			"settings.set": (change) => {
+				settings.set(change);
+				return {};
+			},
 			"keybindings.get": () => keybindings.current(),
 			"layout.get": ({ worktree }) => ({
 				layout: layouts.get(worktree) ?? null,
@@ -79,6 +90,11 @@ export const createCoreServer = ({
 			"worktrees.finish": ({ id, action, force }) =>
 				worktrees.finish(id, action, force),
 			"worktrees.reopen": ({ id }) => worktrees.reopen(id),
+			"worktrees.setPermissionMode": async ({ id, mode }) => {
+				worktrees.setPermissionMode(id, mode);
+				await agents.permissionModeChanged(id);
+				return {};
+			},
 			"worktrees.states": () => ({ states: states.states() }),
 			"worktrees.setDone": ({ id, done }) => {
 				states.append({ type: "worktree.done.set", worktree: id, done });
@@ -120,6 +136,18 @@ export const createCoreServer = ({
 				return {};
 			},
 			"providers.status": ({ provider }) => plugins.providerStatus(provider),
+			"context.discover": async ({ worktree }) => ({
+				providers: await agentContext.discover(worktree),
+			}),
+			"context.toggles": ({ worktree }) => agentContext.toggles(worktree),
+			"context.set": (change) => {
+				agentContext.set(change);
+				return {};
+			},
+			"agent.restart": async ({ sessionId }) => {
+				await agents.restart(sessionId);
+				return {};
+			},
 			"agent.start": async ({ worktree, provider }) => ({
 				sessionId: await agents.start(worktree, provider),
 			}),
@@ -147,6 +175,8 @@ export const createCoreServer = ({
 		},
 		{ onError: (error) => log.error("protocol error", errorData(error)) },
 	);
+	agentContext.onChange(() => server.emit("context.changed", {}));
+	recentLogs.onAdd((line) => server.emit("logs.added", line));
 	settings.onChange((state) => server.emit("settings.changed", state));
 	keybindings.onChange((state) => server.emit("keybindings.changed", state));
 	const projectsChanged = () =>

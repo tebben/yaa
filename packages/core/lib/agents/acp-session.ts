@@ -1,7 +1,10 @@
 import {
+	type AuthMethod,
 	type CreateElicitationResponse,
 	client,
+	type NewSessionRequest,
 	PROTOCOL_VERSION,
+	RequestError,
 	type RequestPermissionResponse,
 	type SessionConfigOption,
 	type Stream,
@@ -54,6 +57,19 @@ export type AcpSession = {
 const describe = (error: unknown) =>
 	error instanceof Error ? error.message : String(error);
 
+// ACP's error for a session the agent opens only once the user signs in.
+const AUTH_REQUIRED = -32000;
+
+// Says how to sign in, in the words of the methods the agent offers, such as
+// Copilot CLI's "Run `copilot login` in the terminal".
+const signInNeeded = (methods: readonly AuthMethod[]) =>
+	new Error(
+		[
+			"The agent needs you to sign in.",
+			...methods.map(({ name, description }) => description ?? name),
+		].join(" "),
+	);
+
 const elicitationResponse = (
 	answer: QuestionAnswer,
 ): CreateElicitationResponse =>
@@ -73,11 +89,9 @@ export const openAcpSession = async ({
 	log,
 	emit,
 }: AcpSessionOptions): Promise<AcpSession> => {
-	const setup = {
-		cwd,
-		mcpServers: [],
-		...(meta === undefined ? {} : { _meta: meta }),
-	};
+	// What every request that opens or resumes a session says.
+	const setup: NewSessionRequest = { cwd, mcpServers: [] };
+	if (meta !== undefined) setup._meta = meta;
 	const permissions = new Map<
 		string,
 		(response: RequestPermissionResponse) => void
@@ -183,30 +197,41 @@ export const openAcpSession = async ({
 		configOptions?: SessionConfigOption[] | null;
 		images: boolean;
 	}> => {
-		const { agentCapabilities } = await agent.request("initialize", {
-			protocolVersion: PROTOCOL_VERSION,
-			clientCapabilities: { elicitation: { form: {} } },
-			clientInfo: { name: "yaa", version: "0.0.0" },
-		});
+		const { agentCapabilities, authMethods = [] } = await agent.request(
+			"initialize",
+			{
+				protocolVersion: PROTOCOL_VERSION,
+				clientCapabilities: { elicitation: { form: {} } },
+				clientInfo: { name: "yaa", version: "0.0.0" },
+			},
+		);
+		// A session refused for want of a sign-in fails with how to sign in.
+		const explained = (error: unknown): never => {
+			throw error instanceof RequestError && error.code === AUTH_REQUIRED
+				? signInNeeded(authMethods)
+				: error;
+		};
 		const images = agentCapabilities?.promptCapabilities?.image === true;
 		if (resume === undefined) {
-			const session = await agent.request("session/new", setup);
+			const session = await agent
+				.request("session/new", setup)
+				.catch(explained);
 			return { ...session, images };
 		}
 		// Resuming keeps the agent's context without replaying it; an agent that
 		// can only load replays it, and the chat has it already
 		// (docs/decisions/0014-acp-coverage.md).
 		if (agentCapabilities?.sessionCapabilities?.resume != null) {
-			const session = await agent.request("session/resume", {
-				...setup,
-				sessionId: resume,
-			});
+			const session = await agent
+				.request("session/resume", { ...setup, sessionId: resume })
+				.catch(explained);
 			return { ...session, sessionId: resume, images };
 		}
 		if (agentCapabilities?.loadSession === true) {
 			replaying = true;
 			const session = await agent
 				.request("session/load", { ...setup, sessionId: resume })
+				.catch(explained)
 				.finally(() => {
 					replaying = false;
 				});

@@ -25,9 +25,9 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 | Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the panel bar before the UI module loads |
 | Header and footer items | components in named slots |
 | Commands and keybindings | actions in the palette, default keys |
-| Settings | a schema-rendered settings page, or a custom panel |
+| Settings | a page of the settings screen, rendered from the specs of its settings (`11-platform-services.md`); a custom panel instead (proposed) |
 | Connectors | an issue-tracker or source-control implementation |
-| Agent providers | detection, spawn configuration, capabilities and models for an agent CLI; core runs the process |
+| Agent providers | detection, spawn configuration, capabilities, permission mode mapping and models for an agent CLI; core runs the process |
 | Chat renderers | custom rendering for a message part or tool-call kind |
 | Editor extensions | Monaco decorations, gutter actions, widgets |
 | Context menu items | actions on files, worktrees, issues and messages |
@@ -36,13 +36,17 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 - A typed context object gives access to commands, views, settings, storage, git, worktrees, agent sessions and the event bus.
 - **Worktrees** (backend): look one up by id; git's files, ignored files and uncommitted changes in it; and, in its folder, read a folder, read and write a text file, create, rename and remove, and watch for changes. A write names the version it replaces and changes nothing if the file is at another. Core does the work and refuses a path that leaves the folder or touches `.git`.
-- **Providers** (backend): register an agent for a contributed provider: detect it, read its sign-in state, and say how to start it (`05-agents-chat.md`).
+- **Providers** (backend): register an agent for a contributed provider: detect it, read its sign-in state, list the MCP servers and skills its agent would load, and say how to start it with some switched off (`05-agents-chat.md`, `09-mcp-skills.md`).
 - **Programs** (backend): find a program on the PATH, and run one to its end for its output.
+- **User files** (backend): read a file or folder outside the worktrees, such as an agent's own configuration, by its absolute path or one from `~`.
 - **Storage** (backend): JSON values by worktree and key, apart for each plugin, kept in the database until the worktree is finished.
 - **A panel and its backend:** the plugin defines a protocol with `defineProtocol`; the backend `serve`s it, and a panel calls it and subscribes to its events, which are the events the plugin declares. A call activates the plugin. A panel knows its worktree, is told when the backend started over after a host crash, and has everything it registered disposed when it closes (`docs/decisions/0029-worktree-plugin-api.md`).
 - **Terminals** (UI): a panel lists and watches its worktree's terminals, creates and closes them, and connects a screen to one, which core feeds and keeps in step with the program. It talks to core directly, so terminals need no backend. A panel can also mark an element as capturing the keyboard, as a terminal does (see `01-ui-layout-theming.md`).
 - **A panel and the app:** a panel can show its own content in the panel header in place of its title, be asked first when it is closed by command, open a file, take the files to open, and show a list in the palette (`docs/decisions/0030-editor-monaco.md`).
-- **Agent sessions** (UI): a panel lists the providers and their state, follows its worktree's sessions with their events, starts one, sends prompts, cancels, changes config options and answers permission requests and questions. It can also have the system's file picker choose files (`docs/decisions/0034-chat-plugin.md`).
+- **Settings** (UI): a panel watches every setting's value, its plugin's among them, called at once and after each change; a panel renders only once they are read.
+- **Agent sessions** (UI): a panel lists the providers and their state, follows its worktree's sessions with their events, starts one, sends prompts, cancels, restarts its agent, changes config options and answers permission requests and questions. It can also have the system's file picker choose files (`docs/decisions/0034-chat-plugin.md`).
+- **Agent context** (UI): a panel watches what the providers find for its worktree and what is switched off at each layer, and changes that (`09-mcp-skills.md`). It talks to core directly.
+- **Logs** (UI): a panel reads the lines core keeps and follows the ones logged after, as the debug panel does (`11-platform-services.md`). It talks to core directly.
 - **Events:** core emits typed events (`worktree.*`, `agent.*`, `git.*`, including agent questions, permission requests, tool calls and usage). Plugins subscribe, and may emit their own events under their namespace. This is how a plugin can show a questionnaire panel when an agent asks a question, or a panel of the skills an agent loaded.
 - **Services:** a plugin exposes functions to others with `services.expose(name, api)`. Consumers declare the dependency in their manifest and receive a versioned handle, so load order is resolved by the manager.
 
@@ -56,7 +60,7 @@ Backend plugin code runs in a separate plugin host process, so a crashing plugin
 
 **Plugin UI in the renderer**
 
-- Plugin UI runs on the app's single Svelte runtime and the app's `ui` package, never a bundled copy. Two Svelte runtimes in one page break context and reactivity. The app exposes a registry of the shared modules' real namespaces (every public client entry of `svelte`, the private entries compiled code imports, and the `ui` package's `@yaa/ui` and `@yaa/ui/focus`), and the yaa plugin build compiles a plugin's imports of them into reads from that registry. Import maps do not work, because compiled Svelte code reads live bindings from the runtime (`docs/decisions/0015-plugin-ui-loading.md`).
+- Plugin UI runs on the app's single Svelte runtime and the app's `ui` package, never a bundled copy. Two Svelte runtimes in one page break context and reactivity. The app exposes a registry of the shared modules' real namespaces (every public client entry of `svelte`, the private entries compiled code imports, and the `ui` package's `@yaa/ui`, `@yaa/ui/focus` and `@yaa/ui/scroll`), and the yaa plugin build compiles a plugin's imports of them into reads from that registry. Import maps do not work, because compiled Svelte code reads live bindings from the runtime (`docs/decisions/0015-plugin-ui-loading.md`).
 - The plugin build (esbuild plus the Svelte compiler) compiles in runes mode and stamps the Svelte version into the output. The loader runs a plugin only on the exact Svelte version it was built with; on a mismatch the plugin manager refuses it and shows the command that rebuilds it. A plugin folder ships its built output beside its source, and third-party plugins are rebuilt when an app upgrade changes Svelte.
 - The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins never rely on Tailwind classes: they style with `ui` components, the token CSS variables and scoped `<style>` blocks, which the plugin build extracts into one CSS file declared in the manifest.
 - Plugin UI modules, styles and icons are served from `yaa://plugins/<id>/`, which the renderer's CSP allows. The app renders each plugin panel inside its own tree, so context reaches it, wrapped in an error boundary keyed by the plugin version, so a plugin that throws shows an error in its panel and a fixed version renders again. Until hot reload (M3) the boundary is the dock's, around every panel.

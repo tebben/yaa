@@ -34,8 +34,8 @@ export const authStatus = z.discriminatedUnion("state", [
 	z.strictObject({ state: z.literal("unknown") }),
 ]);
 
-// Where the agent finds an MCP server or a skill: its own config for the
-// user, the repository's files, or its config for this one folder.
+// Where the agent finds an MCP server or a skill: its config for the user,
+// its config for this repository, or a file in the worktree's folder.
 export const contextLevel = z.enum(["user", "project", "worktree"]);
 
 // An MCP server or skill an agent's configuration names.

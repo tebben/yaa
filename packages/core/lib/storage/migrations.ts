@@ -85,7 +85,10 @@ export const migrations: Migrations = [
 	// 8: when a worktree was settled: put away with its folder, branch and
 	// chats kept (docs/spec/02-worktrees.md); null while it is in use.
 	"ALTER TABLE worktrees ADD COLUMN settled_at INTEGER;",
-	// 9: the MCP servers and skills switched off, per layer
+	// 9: how far a worktree's agents go without asking
+	// (docs/spec/11-platform-services.md).
+	"ALTER TABLE worktrees ADD COLUMN permission_mode TEXT NOT NULL DEFAULT 'ask' CHECK (permission_mode IN ('ask', 'risky', 'allow'));",
+	// 10: the MCP servers and skills switched off, per layer
 	// (docs/spec/09-mcp-skills.md). `scope` is `app`, `project:<id>` or
 	// `worktree:<id>`; the ids are repeated so a layer goes with what it
 	// belongs to. `toggles` is the layer's settings as JSON.

@@ -57,7 +57,7 @@ Build order, one pull request each:
 7. Session restore and recovery: worktrees reopen with their layout and chats, a running turn is marked interrupted, a crashed agent sets Error and resumes where the agent supports it.
 8. Permission modes per worktree, shown in the chat header.
 9. Debug panel: the logs with level, source and worktree filters.
-10. Copilot CLI provider, including how it detects a signed-out state (unverified in `docs/spec/05-agents-chat.md`).
+10. Copilot CLI provider, including how it detects a signed-out state (`docs/decisions/0039-copilot-sign-in-state.md`).
 11. MCP servers and skills per worktree (`docs/spec/09-mcp-skills.md`), with their counts in the chat header.
 12. Exit check: the smoke test opens a worktree, measure worktree switch time and chat streaming.
 
@@ -79,7 +79,8 @@ Build order, one pull request each. M3 starts when M2 has met its exit check, ex
 9. Conflicts, rebase and stash, after 5 (`docs/spec/11-platform-services.md`): the conflicted files, a three-way merge in the editor, abort, continue, rebase onto the default branch, stash, and "resolve with agent". Monaco's three-way merge support is unverified: check it first and record how the merge view is built.
 10. Dev-mode plugin hot reload, after 2: the watcher and incremental build in the plugin host, backend and UI swap, the error boundary keyed by plugin version, and the plugin manager panel with load errors and Svelte version mismatches. State that must survive a reload moves to plugin storage.
 11. Agent-authored plugins, after 10: the user and per-project plugin folders, and the skill and tools that scaffold a plugin, read the API reference, validate it, tail its logs and return each reload's result. Decide how the tools reach the agent.
-12. Exit check, after all the others: the smoke test opens a file, a diff and a terminal, and the worktree switch time is measured again with tabs and terminals open.
+12. Settings screen, after 2 and 3 (`docs/decisions/0038-settings-screen.md`): the page rendered from setting specs that core and plugins declare, written back to `settings.json`; appearance settings over the tokens; the editor's and the terminal's settings, vim keys among them.
+13. Exit check, after all the others: the smoke test opens a file, a diff and a terminal, and the worktree switch time is measured again with tabs and terminals open.
 
 Exit: review an agent's change in the diff, annotate two lines, send them, and see the agent fix them. An agent writes a small plugin in yaa and sees it reload.
 

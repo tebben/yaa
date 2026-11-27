@@ -55,6 +55,13 @@
 				"reveal": true
 			},
 			{
+				"id": "chat.restart",
+				"title": "Restart the chat's agent",
+				"category": "Chat",
+				"panel": "chat",
+				"reveal": true
+			},
+			{
 				"id": "chat.stop",
 				"title": "Stop the turn",
 				"category": "Chat",

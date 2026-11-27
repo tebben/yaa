@@ -2,24 +2,28 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
 import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
+import { pluginSettingDefinitions } from "@yaa/contracts/plugin-manifest";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
+import { createAgentContext } from "./agents/agent-context.ts";
 import { createAgentSessions } from "./agents/agent-sessions.ts";
 import { createCoreServer } from "./core-server.ts";
 import { createWorktreeWatches } from "./files/worktree-watches.ts";
 import { createGitService } from "./git/git-service.ts";
 import { openLogFile } from "./log/log-file.ts";
+import { createRecentLogs } from "./log/recent-logs.ts";
 import { createPluginApiServer } from "./plugins/plugin-api-server.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
 import { createProjects } from "./projects/projects.ts";
 import { createWorktrees } from "./projects/worktrees.ts";
+import { createAppSettings } from "./settings/app-settings.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
-import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
 import { createStateTracker } from "./state/state-tracker.ts";
 import { createStepsRunner } from "./steps/worktree-steps.ts";
 import { createChatStore } from "./storage/chat-store.ts";
+import { createContextStore } from "./storage/context-store.ts";
 import { openDatabase } from "./storage/database.ts";
 import { createEventLog } from "./storage/event-log.ts";
 import { createLayoutStore } from "./storage/layout-store.ts";
@@ -59,7 +63,12 @@ export const startCore = ({
 		level: dev ? "debug" : "info",
 		...(dev ? { echo: (line: string) => console.log(line) } : {}),
 	});
-	const log = createLogger(logFile.write, "core");
+	const recentLogs = createRecentLogs();
+	const write = (record: LogRecord) => {
+		logFile.write(record);
+		recentLogs.add(record);
+	};
+	const log = createLogger(write, "core");
 	// Logged, then fatal: main forks a new core.
 	process.on("uncaughtException", (error) => {
 		log.error("uncaught exception", errorData(error));
@@ -69,12 +78,6 @@ export const startCore = ({
 	const db = openDatabase(join(dataDir, "yaa.db"));
 	const states = createStateTracker(createEventLog(db, coreEvent));
 	states.append({ type: "core.started", pid: process.pid });
-	const settings = watchSettingsFile({
-		dir: dataDir,
-		name: "settings.json",
-		resolve: (text) => resolveSettings(coreSettings, text),
-		log,
-	});
 	const keybindings = watchSettingsFile({
 		dir: dataDir,
 		name: "keybindings.json",
@@ -86,17 +89,21 @@ export const startCore = ({
 	const worktrees = createWorktrees({
 		db,
 		git,
+		// Read only once a worktree is made, after `settings` exists.
 		settings: () => settings.current().values,
 		steps,
 		home: homedir(),
 	});
 	const agents = createAgentSessions({
-		launch: (provider, cwd) => plugins.launchAgent(provider, cwd),
+		context: (worktree, provider) =>
+			agentContext.forSession(worktree, provider),
+		launch: (provider, cwd, off) => plugins.launchAgent(provider, cwd, off),
+		permissionModes: (provider) => plugins.permissionModes(provider),
 		worktree: (id) => worktree(id),
 		store: createChatStore(db),
 		record: states.append,
 		log,
-		agentLog: createLogger(logFile.write, "agent"),
+		agentLog: createLogger(write, "agent"),
 		// Sessions emit only after a client starts one, once `server` exists.
 		emit: (event) => server.emit("agent.event", event),
 	});
@@ -147,7 +154,7 @@ export const startCore = ({
 		dev,
 		log,
 		requestHost: requestPluginHost,
-		write: logFile.write,
+		write,
 		serve: pluginApi.connect,
 		// A host runs only once a client or startup asks for a plugin, and
 		// `server` exists before either hears from it.
@@ -157,8 +164,43 @@ export const startCore = ({
 			server.emit("plugins.reset", {});
 		},
 	});
-	const server = createCoreServer({
+	// After the plugins, whose settings settings.json may hold too.
+	const settings = createAppSettings({
+		dir: dataDir,
+		definitions: {
+			...Object.fromEntries(
+				plugins.plugins.flatMap((plugin) =>
+					Object.entries(pluginSettingDefinitions(plugin)),
+				),
+			),
+			...coreSettings,
+		},
 		log,
+	});
+	const agentContext = createAgentContext({
+		store: createContextStore(db),
+		worktree: (id) => {
+			for (const project of projects.list()) {
+				const found = project.worktrees.find((one) => one.id === id);
+				if (found !== undefined) {
+					return {
+						path: found.path,
+						project: project.id,
+						repository: project.path,
+					};
+				}
+			}
+			throw new Error(`No worktree ${id}`);
+		},
+		providers: plugins.plugins.flatMap(
+			(plugin) => plugin.contributes.providers,
+		),
+		discover: (provider, folders) => plugins.discover(provider, folders),
+	});
+	const server = createCoreServer({
+		agentContext,
+		log,
+		recentLogs,
 		settings,
 		keybindings,
 		layouts: createLayoutStore(db),
@@ -176,6 +218,6 @@ export const startCore = ({
 	return {
 		connect: server.connect,
 		attachPluginHost: plugins.attachHost,
-		log: logFile.write,
+		log: write,
 	};
 };

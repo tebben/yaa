@@ -18,7 +18,8 @@
 		"@xterm/xterm": "6.0.0",
 		"@yaa/contracts": "workspace:*",
 		"@yaa/plugin-api": "workspace:*",
-		"@yaa/ui": "workspace:*"
+		"@yaa/ui": "workspace:*",
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@yaa/plugin-build": "workspace:*",

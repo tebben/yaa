@@ -3,6 +3,11 @@ export {
 	createChatStore,
 	type StoredChat,
 } from "./lib/storage/chat-store.ts";
+export {
+	type ContextScope,
+	type ContextStore,
+	createContextStore,
+} from "./lib/storage/context-store.ts";
 export { openDatabase } from "./lib/storage/database.ts";
 export {
 	createEventLog,
@@ -27,8 +32,3 @@ export {
 	type PluginKey,
 	type PluginStore,
 } from "./lib/storage/plugin-store.ts";
-export {
-	type ContextScope,
-	type ContextStore,
-	createContextStore,
-} from "./lib/storage/context-store.ts";

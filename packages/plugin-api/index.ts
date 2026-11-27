@@ -59,8 +59,9 @@ export type AgentProvider = {
 	// `skill-toggling` has the agent leave out (docs/spec/09-mcp-skills.md).
 	spawn(session: { cwd: string; off: SwitchedOff }): Promise<AgentSpawn>;
 	// For a provider with `discovery`: the MCP servers and skills the agent's
-	// configuration names for a session in the folder.
-	discover?(session: { cwd: string }): Promise<Discovery>;
+	// configuration names for a session in the folder. `repository` is the main
+	// checkout of the repository the folder is a worktree of.
+	discover?(session: { cwd: string; repository: string }): Promise<Discovery>;
 };
 
 // How a program that ran to its end ended.

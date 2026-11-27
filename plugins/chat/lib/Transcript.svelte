@@ -1,7 +1,7 @@
 <script lang="ts">
+import { followEnd } from "@yaa/ui/scroll";
 import { VList, type VListHandle } from "virtua/svelte";
 import Entry from "./Entry.svelte";
-import { followEnd } from "./follow-end.svelte.ts";
 import type { Transcript } from "./transcript.ts";
 import type { TranscriptView } from "./transcript-view.svelte.ts";
 

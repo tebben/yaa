@@ -1,6 +1,13 @@
 import * as z from "zod";
 import { keybinding } from "./keybindings.ts";
+import { permissionModeMapping } from "./permission-modes.ts";
 import { providerCapability } from "./providers.ts";
+import {
+	coreSettings,
+	type SettingDefinitions,
+	settingSchema,
+	settingSpec,
+} from "./settings.ts";
 
 // plugin.json (docs/spec/03-plugins.md). Core reads it from disk and sends it
 // to the renderer, so both ends parse it with this schema.
@@ -54,6 +61,24 @@ const pluginProvider = z.strictObject({
 	id: z.string(),
 	title: z.string().min(1),
 	capabilities: z.array(providerCapability).default([]),
+	// Without it, the agent runs in its own mode whatever the worktree's.
+	permissionModes: permissionModeMapping.exactOptional(),
+});
+
+// The plugin's page of the settings screen: its settings, keyed
+// `<plugin>.<name>`, in titled groups.
+const pluginSettings = z.strictObject({
+	title: z.string().min(1),
+	description: z.string().min(1),
+	icon: pluginPath.exactOptional(),
+	groups: z
+		.array(
+			z.strictObject({
+				title: z.string().min(1),
+				settings: z.record(z.string(), settingSpec),
+			}),
+		)
+		.min(1),
 });
 
 // Running a contributed command activates the plugin anyway; onStartup
@@ -65,6 +90,7 @@ const contributions = z.strictObject({
 	keybindings: z.array(keybinding).default([]),
 	panels: z.array(pluginPanel).default([]),
 	providers: z.array(pluginProvider).default([]),
+	settings: pluginSettings.exactOptional(),
 });
 
 const ownId = (plugin: string, id: string) =>
@@ -122,6 +148,33 @@ export const pluginManifest = z
 			if (providerIds.has(id)) issue(path, `Provider ${id} is listed twice`);
 			providerIds.add(id);
 		});
+		const settingKeys = new Set<string>();
+		manifest.contributes.settings?.groups.forEach(({ settings }, group) => {
+			for (const [key, spec] of Object.entries(settings)) {
+				const path = [
+					"contributes",
+					"settings",
+					"groups",
+					group,
+					"settings",
+					key,
+				];
+				if (!key.startsWith(`${manifest.id}.`)) {
+					issue(path, `Expected ${manifest.id}.<name>`);
+				}
+				if (Object.hasOwn(coreSettings, key)) {
+					issue(path, `Core defines ${key}`);
+				}
+				if (settingKeys.has(key)) issue(path, `Setting ${key} is listed twice`);
+				settingKeys.add(key);
+				if (
+					spec.enabledBy !== undefined &&
+					!Object.hasOwn(settings, spec.enabledBy)
+				) {
+					issue([...path, "enabledBy"], "Expected a setting of this group");
+				}
+			}
+		});
 		keybindings.forEach(({ command }, index) => {
 			if (!commandIds.has(command)) {
 				issue(
@@ -172,3 +225,16 @@ export type PluginManifest = z.infer<typeof pluginManifest>;
 export type PluginCommand = z.infer<typeof pluginCommand>;
 export type PluginPanel = z.infer<typeof pluginPanel>;
 export type PluginProvider = z.infer<typeof pluginProvider>;
+export type PluginSettings = z.infer<typeof pluginSettings>;
+
+// The schemas of the settings a plugin contributes, by key.
+export const pluginSettingDefinitions = ({
+	contributes,
+}: PluginManifest): SettingDefinitions =>
+	Object.fromEntries(
+		(contributes.settings?.groups ?? []).flatMap(({ settings }) =>
+			Object.entries(settings).map(
+				([key, spec]) => [key, settingSchema(spec)] as const,
+			),
+		),
+	);

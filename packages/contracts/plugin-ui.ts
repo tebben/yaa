@@ -24,6 +24,7 @@ export const sharedModules = [
 	"svelte/internal/init-operations",
 	"@yaa/ui",
 	"@yaa/ui/focus",
+	"@yaa/ui/scroll",
 ] as const;
 
 export type SharedModule = (typeof sharedModules)[number];

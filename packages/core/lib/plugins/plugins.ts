@@ -135,11 +135,24 @@ export const createPluginManager = ({
 			await providing(provider);
 			return host.client().request("provider.status", { provider });
 		},
+		// How the provider's agent takes the worktree's permission mode, if it
+		// does.
+		permissionModes(provider: string) {
+			return providers
+				.get(provider)
+				?.contributes.providers.find(({ id }) => id === provider)
+				?.permissionModes;
+		},
 		// The MCP servers and skills the provider's agent would load in the
 		// folder.
-		async discover(provider: string, cwd: string) {
+		async discover(
+			provider: string,
+			folders: { cwd: string; repository: string },
+		) {
 			await providing(provider);
-			return host.client().request("provider.discover", { provider, cwd });
+			return host
+				.client()
+				.request("provider.discover", { provider, ...folders });
 		},
 		// The command that starts a provider's agent in the folder, with what
 		// yaa switches off.

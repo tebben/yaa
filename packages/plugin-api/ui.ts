@@ -2,11 +2,18 @@
 // run on the app's Svelte runtime and use @yaa/ui; build them with the yaa
 // plugin build (docs/decisions/0015-plugin-ui-loading.md).
 import type {
+	ContextKind,
+	ContextLayer,
+	LayeredToggles,
+	ProviderDiscovery,
+} from "@yaa/contracts/agent-context";
+import type {
 	AgentEvent,
 	PromptAttachment,
 	QuestionAnswer,
 } from "@yaa/contracts/agent-events";
 import type { Client } from "@yaa/contracts/client";
+import type { LogRecord } from "@yaa/contracts/log";
 import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
 import type { Disposable, ProtocolDefinition } from "@yaa/contracts/protocol";
@@ -87,6 +94,9 @@ export type PanelAgents = {
 		attachments: readonly PromptAttachment[],
 	): Promise<void>;
 	cancel(sessionId: string): Promise<void>;
+	// Ends the chat's agent and starts it again on the same session, so it
+	// picks up what changed. Refused while a turn runs.
+	restart(sessionId: string): Promise<void>;
 	setConfig(sessionId: string, configId: string, value: string): Promise<void>;
 	answerPermission(
 		sessionId: string,
@@ -136,6 +146,55 @@ export type PanelTerminals = {
 	connect(id: string, screen: TerminalScreen): TerminalLink;
 };
 
+// The app's log: the lines of every process at every level that core keeps
+// (docs/spec/11-platform-services.md).
+export type PanelLogs = {
+	// Calls the listener first with the lines kept, oldest first, and then
+	// with the lines logged since; none twice and none left out. `failed` is
+	// called when the lines cannot be read.
+	subscribe(
+		listener: (records: readonly LogRecord[]) => void,
+		failed: (reason: unknown) => void,
+	): Disposable;
+};
+
+// The app's settings, the ones the plugin contributes among them
+// (docs/spec/11-platform-services.md).
+export type PanelSettings = {
+	// Calls `listener` with every setting's value by key, defaults filled
+	// in: at once, since a panel renders only after they are read, and again
+	// after each change.
+	watch(
+		listener: (values: Readonly<Record<string, unknown>>) => void,
+	): Disposable;
+};
+
+// The MCP servers and skills of the worktree's agents, and what is switched
+// off (docs/spec/09-mcp-skills.md).
+export type WorktreeAgentContext = {
+	// What each provider that lists them finds.
+	providers: readonly ProviderDiscovery[];
+	toggles: LayeredToggles;
+};
+
+export type PanelAgentContext = {
+	// Calls `listener` once both are read, and again after each change of what
+	// is switched off. `failed` is called when they cannot be read. `refresh`
+	// reads what the providers find anew, as after a config file changed.
+	watch(
+		listener: (context: WorktreeAgentContext) => void,
+		failed: (reason: unknown) => void,
+	): Disposable & { refresh(): void };
+	// Switches an item, or without `name` the whole list, at one of the
+	// worktree's layers; without `enabled` the layer stops setting it.
+	set(change: {
+		layer: ContextLayer;
+		kind: ContextKind;
+		name?: string;
+		enabled?: boolean;
+	}): Promise<void>;
+};
+
 // What one panel gets. Everything registered through it is disposed when the
 // panel closes.
 export type PanelContext = {
@@ -143,6 +202,7 @@ export type PanelContext = {
 	readonly worktree: Worktree;
 	backend<P extends ProtocolDefinition>(protocol: P): PluginBackendClient<P>;
 	readonly agents: PanelAgents;
+	readonly agentContext: PanelAgentContext;
 	// The system's picker for files: their absolute paths, none when
 	// cancelled.
 	pickFiles(): Promise<readonly string[]>;
@@ -165,6 +225,8 @@ export type PanelContext = {
 	// Opens the palette on the source, while the panel's worktree is open.
 	pick(source: PickSource): void;
 	readonly terminals: PanelTerminals;
+	readonly logs: PanelLogs;
+	readonly settings: PanelSettings;
 	// While focus is inside the element, keys go to it, except the ones the
 	// app keeps for itself (the `keyboard.terminalAppKeys` setting). For a
 	// terminal.

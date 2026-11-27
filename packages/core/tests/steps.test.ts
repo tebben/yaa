@@ -63,7 +63,10 @@ describe("worktree steps", () => {
 				["two", "out of two"],
 			],
 		);
-		expect(lines[0]?.data).toMatchObject({ worktree: "w1", phase: "setup" });
+		expect(lines[0]).toMatchObject({
+			worktree: "w1",
+			data: { phase: "setup" },
+		});
 		expect(types(events)).toEqual([
 			"worktree.steps.started",
 			"worktree.steps.succeeded",

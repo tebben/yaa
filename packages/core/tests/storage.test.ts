@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import * as z from "zod";
 import {
 	createChatStore,
+	createContextStore,
 	createEventLog,
 	createLayoutStore,
 	createPlaceStore,
@@ -97,7 +98,7 @@ describe("plugin store", () => {
 	it("keeps values apart by plugin and worktree, and drops them with the worktree", () => {
 		const db = openDatabase(":memory:");
 		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
-			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL);`);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL, 'ask');`);
 		const store = createPluginStore(db);
 		const at = { plugin: "editor", worktree: "a", key: "tabs" };
 		store.set(at, "first");
@@ -116,8 +117,8 @@ describe("layout store", () => {
 	it("keeps the last layout saved for each worktree, and drops it with the worktree", () => {
 		const db = openDatabase(":memory:");
 		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
-			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL);
-			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0, NULL);`);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL, 'ask');
+			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0, NULL, 'ask');`);
 		const layouts = createLayoutStore(db);
 		expect(layouts.get("a")).toBeUndefined();
 		layouts.save("a", "first");
@@ -135,8 +136,8 @@ describe("chat store", () => {
 	it("reads chats back oldest first with their events, and drops them with the worktree", () => {
 		const db = openDatabase(":memory:");
 		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
-			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL);
-			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0, NULL);`);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL, 'ask');
+			INSERT INTO worktrees VALUES ('b', 'p', 'x', '/w/x', 1, 0, NULL, 'ask');`);
 		let clock = 0;
 		const chats = createChatStore(db, () => clock++);
 		chats.add({
@@ -177,6 +178,28 @@ describe("chat store", () => {
 		).toThrow();
 		db.exec("DELETE FROM worktrees WHERE id = 'a'");
 		expect(chats.all().map(({ id }) => id)).toEqual(["two"]);
+	});
+});
+
+describe("context store", () => {
+	it("keeps each layer apart and drops it with what it belongs to", () => {
+		const db = openDatabase(":memory:");
+		db.exec(`INSERT INTO projects VALUES ('p', '/r', 'r', 'main', 0);
+			INSERT INTO worktrees VALUES ('a', 'p', 'main', '/r', 0, 0, NULL, 'ask');`);
+		const store = createContextStore(db);
+		const off = {
+			mcpServers: { items: { docs: false } },
+			skills: { all: false, items: {} },
+		};
+		const none = { mcpServers: { items: {} }, skills: { items: {} } };
+		store.set({ layer: "app" }, off);
+		store.set({ layer: "project", project: "p" }, off);
+		store.set({ layer: "worktree", worktree: "a" }, off);
+		expect(store.get({ layer: "worktree", worktree: "a" })).toEqual(off);
+		db.exec("DELETE FROM projects WHERE id = 'p'");
+		expect(store.get({ layer: "worktree", worktree: "a" })).toEqual(none);
+		expect(store.get({ layer: "project", project: "p" })).toEqual(none);
+		expect(store.get({ layer: "app" })).toEqual(off);
 	});
 });
 

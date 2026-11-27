@@ -21,6 +21,7 @@
 		"./agent-events": "./agent-events.ts",
 		"./agent-context": "./agent-context.ts",
 		"./projects": "./projects.ts",
+		"./permission-modes": "./permission-modes.ts",
 		"./worktree-name": "./worktree-name.ts",
 		"./worktree-state": "./worktree-state.ts",
 		"./worktree-steps": "./worktree-steps.ts",

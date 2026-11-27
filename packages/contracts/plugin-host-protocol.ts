@@ -65,7 +65,11 @@ export const pluginHostProtocol = defineProtocol({
 		// The MCP servers and skills the agent would load in the folder, read
 		// anew on each call.
 		"provider.discover": {
-			params: z.object({ provider: z.string(), cwd: z.string() }),
+			params: z.object({
+				provider: z.string(),
+				cwd: z.string(),
+				repository: z.string(),
+			}),
 			result: discovery,
 		},
 		// A request from a plugin's UI to what its backend serves. The

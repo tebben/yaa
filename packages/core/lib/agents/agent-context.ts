@@ -8,15 +8,23 @@ import {
 import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import type { Discovery } from "@yaa/contracts/providers";
 import type { ContextScope, ContextStore } from "../storage/context-store.ts";
-import { type SessionContext, sessionContext } from "./session-context.ts";
+import {
+	type SessionContext,
+	sessionContext,
+	UNLISTED,
+} from "./session-context.ts";
 
 export type AgentContextOptions = {
 	store: ContextStore;
-	// A listed worktree's folder and project; throws for one that is gone.
-	worktree(id: string): { path: string; project: string };
+	// A listed worktree's folder and its project, whose main checkout is the
+	// repository; throws for one that is gone.
+	worktree(id: string): { path: string; project: string; repository: string };
 	// The providers the loaded plugins contribute.
 	providers: readonly PluginProvider[];
-	discover(provider: string, cwd: string): Promise<Discovery>;
+	discover(
+		provider: string,
+		folders: { cwd: string; repository: string },
+	): Promise<Discovery>;
 };
 
 export type ContextChange = {
@@ -43,6 +51,11 @@ export const createAgentContext = ({
 	const listing = providers.filter(({ capabilities }) =>
 		capabilities.includes("discovery"),
 	);
+
+	const folders = (worktree: string) => {
+		const { path, repository } = listed(worktree);
+		return { cwd: path, repository };
+	};
 
 	const scope = (worktree: string, layer: ContextLayer): ContextScope => {
 		switch (layer) {
@@ -74,10 +87,10 @@ export const createAgentContext = ({
 		// Each listing provider's finds; one that fails says why, and the
 		// others still count.
 		discover(worktree: string): Promise<ProviderDiscovery[]> {
-			const { path } = listed(worktree);
+			const where = folders(worktree);
 			return Promise.all(
 				listing.map(({ id: provider }) =>
-					discover(provider, path).then(
+					discover(provider, where).then(
 						(discovery): ProviderDiscovery => ({
 							provider,
 							found: true,
@@ -92,15 +105,15 @@ export const createAgentContext = ({
 				),
 			);
 		},
-		// Undefined for a provider that lists nothing, whose agent loads what
-		// its configuration says.
+		// A provider that lists nothing has its agent load what its
+		// configuration says.
 		async forSession(
 			worktree: string,
 			provider: string,
-		): Promise<SessionContext | undefined> {
+		): Promise<SessionContext> {
 			const declared = listing.find(({ id }) => id === provider);
-			if (declared === undefined) return undefined;
-			const found = await discover(provider, listed(worktree).path);
+			if (declared === undefined) return UNLISTED;
+			const found = await discover(provider, folders(worktree));
 			return sessionContext(found, toggles(worktree), declared.capabilities);
 		},
 	};

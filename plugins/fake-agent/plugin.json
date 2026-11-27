@@ -9,7 +9,22 @@
 			{
 				"id": "fake-agent",
 				"title": "Fake agent",
-				"capabilities": ["resume", "effort", "usage"]
+				"capabilities": [
+					"resume",
+					"effort",
+					"usage",
+					"discovery",
+					"mcp-toggling",
+					"skill-toggling"
+				],
+				"permissionModes": {
+					"option": "mode",
+					"values": {
+						"ask": ["default"],
+						"risky": ["acceptEdits"],
+						"allow": ["bypassPermissions"]
+					}
+				}
 			}
 		]
 	}

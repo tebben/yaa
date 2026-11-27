@@ -13,7 +13,12 @@ import type {
 // switches off, for the provider to pass on, and those the agent then loads.
 export type SessionContext = {
 	off: SwitchedOff;
-	loaded: { mcpServers: string[]; skills: string[] };
+	// Undefined for a provider that lists nothing.
+	loaded?: { mcpServers: string[]; skills: string[] };
+};
+
+export const UNLISTED: SessionContext = {
+	off: { mcpServers: [], skills: [] },
 };
 
 const TOGGLING = {
@@ -22,7 +27,8 @@ const TOGGLING = {
 } as const satisfies Record<ContextKind, ProviderCapability>;
 
 // An item the agent's own configuration leaves out is neither loaded nor
-// switched off. One the provider cannot switch off stays loaded.
+// switched off. One the provider cannot switch off stays loaded. A name
+// found at two levels counts once.
 export const sessionContext = (
 	found: Discovery,
 	toggles: LayeredToggles,
@@ -38,9 +44,6 @@ export const sessionContext = (
 				off.add(name);
 			} else loaded.add(name);
 		}
-		// Named twice, as at user and project level: off wins, as the agent
-		// leaves out every item of that name.
-		for (const name of off) loaded.delete(name);
 		return { loaded: [...loaded], off: [...off] };
 	};
 	const mcpServers = split("mcpServers");

@@ -1,10 +1,18 @@
 // The ui primitives. Apps and plugins use these, never Bits UI directly.
 export { default as Button } from "./lib/Button.svelte";
+export { default as ColorField } from "./lib/ColorField.svelte";
 export { default as FileIcon } from "./lib/file-icons/FileIcon.svelte";
+export { fontStack } from "./lib/font-stack.ts";
 export { default as Icon } from "./lib/Icon.svelte";
 export { default as IconButton } from "./lib/IconButton.svelte";
 export type { IconSource } from "./lib/icon-source.ts";
 export { default as Kbd } from "./lib/Kbd.svelte";
+export { default as NumberField } from "./lib/NumberField.svelte";
+export type { Option } from "./lib/option.ts";
+export { default as Segmented } from "./lib/Segmented.svelte";
+export { default as Select } from "./lib/Select.svelte";
+export { default as Switch } from "./lib/Switch.svelte";
+export { type NumberRange, stepNumber } from "./lib/step-number.ts";
 export { default as TabClose } from "./lib/TabClose.svelte";
 export { default as TabStrip } from "./lib/TabStrip.svelte";
 export { default as TextField } from "./lib/TextField.svelte";

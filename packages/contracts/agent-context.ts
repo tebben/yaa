@@ -86,7 +86,8 @@ export const setToggle = (
 	if (name === undefined) {
 		return {
 			...toggles,
-			[kind]: enabled === undefined ? { items: {} } : { all: enabled, items: {} },
+			[kind]:
+				enabled === undefined ? { items: {} } : { all: enabled, items: {} },
 		};
 	}
 	const items = Object.fromEntries(
