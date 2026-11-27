@@ -22,6 +22,19 @@ export const createWorktreeApi = (
 				(await core.request("git.ignored", { worktree })).paths,
 			changes: async (worktree) =>
 				(await core.request("git.changes", { worktree })).changes,
+			read: (worktree, source, path) =>
+				core.request("git.read", { worktree, source, path }),
+			async change(worktree, action, section, paths) {
+				await core.request("git.change", {
+					worktree,
+					action,
+					section,
+					paths: [...paths],
+				});
+			},
+			async commit(worktree, message) {
+				await core.request("git.commit", { worktree, message });
+			},
 		},
 		files: {
 			readDir: async (worktree, path) =>

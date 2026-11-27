@@ -1,0 +1,28 @@
+{
+	"name": "@yaa/plugin-git",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./main": "./main.ts",
+		"./ui": "./ui.ts",
+		"./protocol": "./protocol.ts",
+		"./rows": "./rows.ts",
+		"./plugin.json": "./plugin.json"
+	},
+	"scripts": {
+		"build": "yaa-plugin-build .",
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@lucide/svelte": "~1.79.0",
+		"@yaa/contracts": "workspace:*",
+		"@yaa/plugin-api": "workspace:*",
+		"@yaa/ui": "workspace:*",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@yaa/plugin-build": "workspace:*",
+		"svelte": "~5.59.1"
+	}
+}

@@ -24,8 +24,11 @@ import type {
 	FileBytes,
 	FileContent,
 	FileWrite,
+	GitAction,
 	GitChange,
 	GitFiles,
+	GitSection,
+	GitSource,
 	RemoteImage,
 } from "@yaa/contracts/worktree-files";
 
@@ -113,6 +116,18 @@ export type PluginContext = {
 		// everything in it.
 		ignored(worktree: string): Promise<string[]>;
 		changes(worktree: string): Promise<GitChange[]>;
+		read(
+			worktree: string,
+			source: GitSource,
+			path: string,
+		): Promise<FileContent>;
+		change(
+			worktree: string,
+			action: GitAction,
+			section: GitSection,
+			paths: readonly string[],
+		): Promise<void>;
+		commit(worktree: string, message: string): Promise<void>;
 	};
 	// A worktree's folder. Paths are relative to it, with `/`; one that
 	// leaves the folder or touches `.git` is refused.

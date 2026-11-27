@@ -8,7 +8,7 @@ import {
 	safeParse,
 } from "@yaa/contracts/protocol";
 import type {
-	OpenFile,
+	OpenDocument,
 	PanelContext,
 	PanelSettings,
 	PickSource,
@@ -29,8 +29,8 @@ type PanelContextOptions = {
 	// What panels registered for their commands and for files to open.
 	commands: PanelHandlers<void>;
 	keysFor(command: string): readonly string[];
-	files: PanelHandlers<OpenFile>;
-	openFile(file: OpenFile): void;
+	files: PanelHandlers<OpenDocument>;
+	openDocument(document: OpenDocument): void;
 	pick(source: PickSource): void;
 	providers: Promise<readonly PluginProvider[]>;
 	frame: PanelFrame;
@@ -50,7 +50,7 @@ export const createPanelContext = ({
 	commands,
 	keysFor,
 	files,
-	openFile,
+	openDocument,
 	pick,
 	providers,
 	frame,
@@ -128,8 +128,8 @@ export const createPanelContext = ({
 		},
 		header: frame.header,
 		handleClose: (handler) => track({ dispose: frame.handleClose(handler) }),
-		openFile,
-		handleOpenFile: (handler) =>
+		openDocument,
+		handleOpenDocument: (handler) =>
 			track(files.register(worktree.id, kind, handler)),
 		pick,
 		terminals: {

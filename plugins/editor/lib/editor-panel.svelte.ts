@@ -1,9 +1,11 @@
 import { fuzzyMatch } from "@yaa/commands/fuzzy-match";
 import type { Disposable } from "@yaa/contracts/protocol";
 import type { PanelContext } from "@yaa/plugin-api/ui";
-import { onDestroy, tick } from "svelte";
+import { onDestroy, tick, untrack } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 import { editorProtocol, type TabsState } from "../protocol.ts";
+import { createDiffModels } from "./diff-models.svelte.ts";
+import { createDiffView } from "./diff-view.svelte.ts";
 import { createDocuments } from "./documents.svelte.ts";
 import { editorSettings } from "./editor-options.ts";
 import { createEditorView } from "./editor-view.svelte.ts";
@@ -17,6 +19,7 @@ import {
 	openTab,
 	reopenTab,
 	tabLabels,
+	targetKey,
 } from "./tabs.ts";
 
 // How many files quick open lists.
@@ -44,32 +47,52 @@ export const createEditorPanel = (panel: PanelContext) => {
 	};
 
 	const view = createEditorView(() => saveActive(), panel.captureKeys);
-	panel.settings.watch((values) =>
-		view.configure(editorSettings.parse(values)),
-	);
+	const diffView = createDiffView(() => saveActive(), panel.captureKeys);
+	const diffs = createDiffModels(panel, fail);
+	panel.settings.watch((values) => {
+		const settings = editorSettings.parse(values);
+		view.configure(settings);
+		diffView.configure(settings);
+	});
 	const documents = createDocuments({
 		panel,
 		// An edited file stays open.
 		edited: (path) => {
-			if (tabs.open.some((tab) => tab.path === path && tab.preview)) {
-				update(keepTab(tabs, path));
+			for (const tab of tabs.open) {
+				if (tab.target.path === path && tab.preview) {
+					update(keepTab(tabs, targetKey(tab.target)));
+				}
 			}
 		},
 		fail,
 	});
+	const selectedTarget = $derived(
+		tabs.open.find((tab) => targetKey(tab.target) === tabs.active)?.target,
+	);
 	const active = $derived(
-		tabs.active === null ? undefined : documents.get(tabs.active),
+		selectedTarget === undefined
+			? undefined
+			: documents.get(selectedTarget.path),
+	);
+	const diffModified = $derived(
+		selectedTarget !== undefined &&
+			active?.disk === "deleted" &&
+			!documents.isDirty(selectedTarget.path)
+			? undefined
+			: active?.model,
 	);
 	const markdown = $derived(
-		tabs.active !== null &&
-			/\.md$/i.test(tabs.active) &&
+		selectedTarget?.kind === "file" &&
+			/\.md$/i.test(selectedTarget.path) &&
 			active?.model !== undefined,
 	);
-	const readMode = $derived(tabs.active !== null && reading.has(tabs.active));
+	const readMode = $derived(
+		selectedTarget?.kind === "file" && reading.has(selectedTarget.path),
+	);
 	let preview: HTMLElement | undefined;
 	const toggleMarkdown = () => {
-		const path = tabs.active;
-		if (!markdown || path === null) return;
+		const path = selectedTarget?.path;
+		if (!markdown || path === undefined) return;
 		if (reading.has(path)) {
 			reading.delete(path);
 			void tick().then(() => view.focus());
@@ -79,8 +102,8 @@ export const createEditorPanel = (panel: PanelContext) => {
 		}
 	};
 	const toggleToc = () => {
-		const path = tabs.active;
-		if (path === null || !markdown || !readMode) return;
+		const path = selectedTarget?.path;
+		if (path === undefined || !markdown || !readMode) return;
 		if (outlines.has(path)) outlines.delete(path);
 		else outlines.add(path);
 	};
@@ -102,15 +125,31 @@ export const createEditorPanel = (panel: PanelContext) => {
 	// Takes the tabs, lets go of the files no tab shows, loads the active one
 	// and stores the result.
 	const show = (next: TabsState) => {
-		for (const { path } of tabs.open) {
-			if (!next.open.some((tab) => tab.path === path)) {
+		for (const { target } of tabs.open) {
+			const { path } = target;
+			if (!next.open.some((tab) => tab.target.path === path)) {
 				documents.discard(path);
 				reading.delete(path);
 				outlines.delete(path);
 			}
 		}
 		tabs = next;
-		if (next.active !== null) documents.open(next.active).catch(fail);
+		const target = next.open.find(
+			(tab) => targetKey(tab.target) === next.active,
+		)?.target;
+		if (
+			target !== undefined &&
+			(target.kind === "file" || target.section === "unstaged")
+		) {
+			documents
+				.open(target.path)
+				.then(() => {
+					if (target.kind === "diff" && target.section === "unstaged") {
+						documents.createMissing(target.path);
+					}
+				})
+				.catch(fail);
+		}
 	};
 	// Nothing opens or closes until what was open is back, so it is not
 	// overwritten.
@@ -141,17 +180,47 @@ export const createEditorPanel = (panel: PanelContext) => {
 		}, fail);
 	void watch();
 	server.subscribe("changed", (changed) => {
-		if (changed.worktree === worktree) documents.sync().catch(fail);
+		if (changed.worktree === worktree) {
+			documents.sync().catch(fail);
+			void diffs.load(
+				selectedTarget?.kind === "diff" ? selectedTarget : undefined,
+				diffModified,
+				active?.unreadable,
+			);
+		}
 	});
 	server.onRestart(() => {
 		void watch();
 		documents.sync().catch(fail);
+		void diffs.load(
+			selectedTarget?.kind === "diff" ? selectedTarget : undefined,
+			diffModified,
+			active?.unreadable,
+		);
 	});
 
 	$effect(() => {
-		view.display(tabs.active ?? undefined, active?.model);
+		view.display(
+			selectedTarget?.kind === "file" ? selectedTarget.path : undefined,
+			selectedTarget?.kind === "file" ? active?.model : undefined,
+		);
 	});
+	$effect(() => {
+		const target = selectedTarget;
+		const model = diffModified;
+		const unreadable = active?.unreadable;
+		untrack(
+			() =>
+				void diffs.load(
+					target?.kind === "diff" ? target : undefined,
+					model,
+					unreadable,
+				),
+		);
+	});
+	$effect(() => diffView.display(diffs.models));
 	onDestroy(documents.dispose);
+	onDestroy(diffs.dispose);
 
 	const stopClosing = () => {
 		closing = undefined;
@@ -165,22 +234,33 @@ export const createEditorPanel = (panel: PanelContext) => {
 		} else view.goTo(path, to);
 	};
 
-	const close = (path: string) => {
+	const close = (id: string) => {
 		stopClosing();
-		reading.delete(path);
-		outlines.delete(path);
-		update(closeTab(tabs, path));
-		if (tabs.active !== null) goTo(tabs.active);
+		update(closeTab(tabs, id));
+		const next = tabs.open.find(
+			(tab) => targetKey(tab.target) === tabs.active,
+		)?.target;
+		if (next?.kind === "file") goTo(next.path);
 	};
 
 	// A tab with unsaved text asks first.
-	const requestClose = (path: string) => {
-		if (!documents.isDirty(path)) {
-			close(path);
+	const requestClose = (id: string) => {
+		const target = tabs.open.find(
+			(tab) => targetKey(tab.target) === id,
+		)?.target;
+		if (target === undefined) return;
+		const { path } = target;
+		if (
+			!documents.isDirty(path) ||
+			tabs.open.some(
+				(tab) => tab.target.path === path && targetKey(tab.target) !== id,
+			)
+		) {
+			close(id);
 			return;
 		}
-		update(activateTab(tabs, path));
-		closing = path;
+		update(activateTab(tabs, id));
+		closing = id;
 		// Registered only while there is something to cancel, so Escape is the
 		// editor's otherwise.
 		cancel ??= panel.commands.register("editor.cancel", () => {
@@ -191,10 +271,15 @@ export const createEditorPanel = (panel: PanelContext) => {
 
 	const select = (next: TabsState, to?: Parameters<typeof view.goTo>[1]) => {
 		stopClosing();
-		if (next.active !== null && to?.line !== undefined)
-			reading.delete(next.active);
+		const target = next.open.find(
+			(tab) => targetKey(tab.target) === next.active,
+		)?.target;
+		if (target !== undefined && to?.line !== undefined)
+			reading.delete(target.path);
 		update(next);
-		if (next.active !== null) goTo(next.active, to);
+		if (target?.kind === "file") goTo(target.path, to);
+		else if (target?.kind === "diff" && to?.focus !== false)
+			void tick().then(() => diffView.focus());
 	};
 
 	const save = async (path: string, overwrite = false) => {
@@ -219,22 +304,31 @@ export const createEditorPanel = (panel: PanelContext) => {
 					.slice(0, PICK_LIMIT)
 					.map((path) => ({ id: path, label: path, mono: true })),
 			empty: () => "No matching files",
-			accept: ({ id }) => select(openTab(tabs, id, false)),
+			accept: ({ id }) =>
+				select(openTab(tabs, { kind: "file", path: id }, false)),
 		});
 	};
 
-	const onActive = (task: (path: string) => void) => () => {
-		if (tabs.active !== null) task(tabs.active);
+	const saveActive = () => {
+		if (
+			selectedTarget !== undefined &&
+			(selectedTarget.kind === "file" || selectedTarget.section === "unstaged")
+		) {
+			void save(selectedTarget.path);
+		}
 	};
-	const saveActive = onActive((path) => void save(path));
 	const commands: Record<string, () => void> = {
 		"editor.quickOpen": () => whenRestored(() => quickOpen().catch(fail)),
 		"editor.save": saveActive,
 		"editor.nextTab": () => select(cycleTab(tabs, 1)),
 		"editor.previousTab": () => select(cycleTab(tabs, -1)),
-		"editor.closeTab": onActive(requestClose),
+		"editor.closeTab": () => {
+			if (tabs.active !== null) requestClose(tabs.active);
+		},
 		"editor.reopenTab": () => select(reopenTab(tabs)),
-		"editor.keepTab": onActive((path) => update(keepTab(tabs, path))),
+		"editor.keepTab": () => {
+			if (tabs.active !== null) update(keepTab(tabs, tabs.active));
+		},
 	};
 	for (const [command, run] of Object.entries(commands)) {
 		panel.commands.register(command, run);
@@ -245,14 +339,26 @@ export const createEditorPanel = (panel: PanelContext) => {
 		if (closing !== path) requestClose(path);
 		return true;
 	});
-	panel.handleOpenFile(({ path, line, keep, focus }) =>
+	panel.handleOpenDocument(({ target, line, keep, focus }) =>
 		whenRestored(() =>
-			select(openTab(tabs, path, keep ?? false), { line, focus }),
+			select(
+				openTab(
+					tabs,
+					target,
+					keep === true ||
+						(target.kind === "diff" && tabs.active === targetKey(target)),
+				),
+				{ line, focus },
+			),
 		),
 	);
 
 	return {
 		view,
+		diffView,
+		get diffProblem() {
+			return diffs.problem;
+		},
 		get markdown() {
 			return markdown;
 		},
@@ -260,7 +366,7 @@ export const createEditorPanel = (panel: PanelContext) => {
 			return readMode;
 		},
 		get toc() {
-			return tabs.active !== null && outlines.has(tabs.active);
+			return selectedTarget !== undefined && outlines.has(selectedTarget.path);
 		},
 		toggleMarkdown,
 		toggleToc,
@@ -275,28 +381,40 @@ export const createEditorPanel = (panel: PanelContext) => {
 			return { data: result.data, mime };
 		},
 		fetchImage: (url: string) => server.request("fetchImage", { url }),
-		openMarkdownFile: (path: string) => select(openTab(tabs, path, false)),
+		openMarkdownFile: (path: string) =>
+			select(openTab(tabs, { kind: "file", path }, false)),
 		get tabs() {
-			const labels = tabLabels(tabs.open.map((tab) => tab.path));
+			const labels = tabLabels(tabs.open.map((tab) => tab.target.path));
 			return tabs.open.map((tab, index) => ({
-				id: tab.path,
-				name: labels[index]?.name ?? tab.path,
-				detail: labels[index]?.folder,
-				title: tab.path,
-				active: tab.path === tabs.active,
+				id: targetKey(tab.target),
+				name: labels[index]?.name ?? tab.target.path,
+				detail:
+					tab.target.kind === "diff"
+						? tab.target.section
+						: labels[index]?.folder,
+				title: tab.target.path,
+				active: targetKey(tab.target) === tabs.active,
 				italic: tab.preview,
-				struck: documents.get(tab.path)?.disk === "deleted",
-				dot: documents.isDirty(tab.path) ? "unsaved" : undefined,
+				struck: documents.get(tab.target.path)?.disk === "deleted",
+				dot: documents.isDirty(tab.target.path) ? "unsaved" : undefined,
 			}));
 		},
 		// The file on screen, if a tab is open.
 		get active() {
-			return tabs.active === null
+			return selectedTarget === undefined
 				? undefined
-				: { path: tabs.active, document: active };
+				: {
+						path: selectedTarget.path,
+						target: selectedTarget,
+						document: active,
+					};
 		},
 		get closing() {
 			return closing;
+		},
+		get closingPath() {
+			return tabs.open.find((tab) => targetKey(tab.target) === closing)?.target
+				.path;
 		},
 		get problem() {
 			return failure ?? unwatched;
@@ -304,14 +422,20 @@ export const createEditorPanel = (panel: PanelContext) => {
 		select: (path: string) => select(activateTab(tabs, path)),
 		keep: (path: string) => update(keepTab(tabs, path)),
 		close: requestClose,
+		closeActive() {
+			if (tabs.active !== null) requestClose(tabs.active);
+		},
 		save: (path: string) => void save(path),
 		overwrite: (path: string) => void save(path, true),
 		revert(path: string) {
 			documents.revert(path).catch(fail);
 		},
 		// The answers to the question before closing.
-		async saveAndClose(path: string) {
-			if (await save(path)) close(path);
+		async saveAndClose(id: string) {
+			const target = tabs.open.find(
+				(tab) => targetKey(tab.target) === id,
+			)?.target;
+			if (target !== undefined && (await save(target.path))) close(id);
 			else stopClosing();
 		},
 		discardAndClose: close,

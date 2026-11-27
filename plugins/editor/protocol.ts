@@ -1,8 +1,11 @@
 import { defineProtocol } from "@yaa/contracts/protocol";
 import {
+	editorTarget,
 	fileBytes,
 	fileContent,
 	fileWrite,
+	gitChange,
+	gitSource,
 	remoteImage,
 } from "@yaa/contracts/worktree-files";
 import * as z from "zod";
@@ -14,9 +17,9 @@ const done = z.object({});
 // A worktree's tabs, left to right. The one preview tab is reused by the next
 // file opened. `closed` holds the paths to reopen, the latest last.
 export const tabsState = z.object({
-	open: z.array(z.object({ path: z.string(), preview: z.boolean() })),
+	open: z.array(z.object({ target: editorTarget, preview: z.boolean() })),
 	active: z.string().nullable(),
-	closed: z.array(z.string()),
+	closed: z.array(editorTarget),
 });
 
 // A file's unsaved text, and the version on disk it was made from.
@@ -35,6 +38,14 @@ export const editorProtocol = defineProtocol({
 			result: z.object({ files: z.array(z.string()) }),
 		},
 		read: { params: z.object(atPath), result: fileContent },
+		readGit: {
+			params: z.object({ ...atPath, source: gitSource }),
+			result: fileContent,
+		},
+		changes: {
+			params: z.object(inWorktree),
+			result: z.object({ changes: z.array(gitChange) }),
+		},
 		readBytes: { params: z.object(atPath), result: fileBytes },
 		fetchImage: {
 			params: z.object({ url: z.string().url() }),

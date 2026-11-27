@@ -16,7 +16,7 @@ export type Document = {
 	unreadable: "binary" | "tooLarge" | "missing" | undefined;
 	// Where the disk stands against the text: `changed` under unsaved text,
 	// or `deleted`.
-	disk: "same" | "changed" | "deleted";
+	disk: "same" | "changed" | "deleted" | "new";
 };
 
 // What the controller knows of a model beside what it shows: the version on
@@ -184,7 +184,7 @@ export const createDocuments = ({ panel, edited, fail }: DocumentsOptions) => {
 			});
 		} else if (change === "conflict") set(path, { disk: "changed" });
 		else if (change === "deleted") set(path, { disk: "deleted" });
-		else set(path, { disk: source.version === null ? "deleted" : "same" });
+		else set(path, { disk: source.version === null ? "new" : "same" });
 	};
 
 	const write = async (path: string, overwrite: boolean) => {
@@ -192,7 +192,7 @@ export const createDocuments = ({ panel, edited, fail }: DocumentsOptions) => {
 		const source = sources.get(path);
 		const model = document?.model;
 		if (model === undefined || source === undefined) return false;
-		const deleted = document?.disk === "deleted";
+		const deleted = document?.disk === "deleted" || document?.disk === "new";
 		if (!dirty.has(path) && !deleted && !overwrite) return true;
 		// Typing during the write leaves the file unsaved.
 		const saving = model.getAlternativeVersionId();
@@ -247,6 +247,12 @@ export const createDocuments = ({ panel, edited, fail }: DocumentsOptions) => {
 				});
 			}
 			return inTurn(() => refresh(path));
+		},
+		// Make an editable document for a path that is not on disk.
+		createMissing(path: string) {
+			if (documents.get(path)?.unreadable !== "missing") return;
+			hold(path, "", null, true);
+			set(path, { disk: "new" });
 		},
 		// Checks every loaded file against the disk.
 		async sync(): Promise<void> {

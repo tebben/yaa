@@ -14,7 +14,7 @@ import Placeholder from "./Placeholder.svelte";
 // own them arrive. A plugin's panel with the same id takes its place.
 export const panelKinds: ReadonlyMap<string, PanelKind> = new Map([
 	["files", { title: "Files", icon: ListTree, component: Placeholder }],
-	["changes", { title: "Changes", icon: Diff, component: Placeholder }],
+	["git", { title: "Git", icon: Diff, component: Placeholder }],
 	["chat", { title: "Chat", icon: MessageCircle, component: Placeholder }],
 	["terminal", { title: "Terminal", icon: Terminal, component: Placeholder }],
 	["review", { title: "Review", icon: ListChecks, component: Placeholder }],
@@ -22,11 +22,11 @@ export const panelKinds: ReadonlyMap<string, PanelKind> = new Map([
 	["workflows", { title: "Workflows", icon: Zap, component: Placeholder }],
 ]);
 
-// Changes on the left, the editor with the terminal under it, chat on the
+// Git on the left, the editor with the terminal under it, chat on the
 // right, after docs/design/mockups/Main.png.
 export const defaultLayout: readonly DockPlacement[] = [
-	{ kind: "changes" },
-	{ kind: "editor", beside: { kind: "changes", direction: "right" } },
+	{ kind: "git" },
+	{ kind: "editor", beside: { kind: "git", direction: "right" } },
 	{ kind: "chat", beside: { kind: "editor", direction: "right" } },
 	{ kind: "terminal", beside: { kind: "editor", direction: "below" } },
 ];

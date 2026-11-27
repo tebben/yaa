@@ -49,7 +49,12 @@ describe("parseChanges", () => {
 		expect(parseChanges(output)).toEqual([
 			{ path: "staged.ts", staged: "modified", unstaged: null },
 			{ path: "with space.ts", staged: "added", unstaged: "modified" },
-			{ path: "new.ts", staged: "renamed", unstaged: null },
+			{
+				path: "new.ts",
+				originalPath: "old.ts",
+				staged: "renamed",
+				unstaged: null,
+			},
 			{ path: "both.ts", staged: null, unstaged: "unmerged" },
 			{ path: "loose.ts", staged: null, unstaged: "untracked" },
 		]);

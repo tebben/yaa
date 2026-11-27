@@ -36,7 +36,8 @@ export const createTranscriptView = ({
 		// under its folder.
 		openFile(path: string, line?: number) {
 			const found = worktreeFile(path, root);
-			if (found !== undefined) panel.openFile({ path: found, line });
+			if (found !== undefined)
+				panel.openDocument({ target: { kind: "file", path: found }, line });
 		},
 		isOpen: (key: number, otherwise: boolean) =>
 			toggled.get(entry(key)) ?? otherwise,

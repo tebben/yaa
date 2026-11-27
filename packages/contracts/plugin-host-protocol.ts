@@ -14,8 +14,11 @@ import {
 	fileBytes,
 	fileContent,
 	fileWrite,
+	gitAction,
 	gitChange,
 	gitFiles,
+	gitSection,
+	gitSource,
 	remoteImage,
 } from "./worktree-files.ts";
 
@@ -116,6 +119,23 @@ export const pluginCoreProtocol = defineProtocol({
 		"git.changes": {
 			params: z.object(inWorktree),
 			result: z.object({ changes: z.array(gitChange) }),
+		},
+		"git.read": {
+			params: z.object({ ...atPath, source: gitSource }),
+			result: fileContent,
+		},
+		"git.change": {
+			params: z.object({
+				...inWorktree,
+				action: gitAction,
+				section: gitSection,
+				paths: z.array(z.string()).min(1),
+			}),
+			result: done,
+		},
+		"git.commit": {
+			params: z.object({ ...inWorktree, message: z.string().min(1) }),
+			result: done,
 		},
 		"files.readDir": {
 			params: z.object(atPath),

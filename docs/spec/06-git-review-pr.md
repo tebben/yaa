@@ -9,6 +9,7 @@ The git panel is a built-in plugin that uses the `git` CLI through the core's gi
 **Changes**
 
 - Lists changed files for the worktree as a flat list or a tree, grouped into staged and unstaged, with per-file and per-folder stage, unstage and discard.
+- Discard affects only the selected staged or unstaged changes and asks for confirmation. If the staged changes cannot be removed without disturbing unstaged edits, discard fails without changing them. An unstaged diff's worktree side is editable.
 - Clicking a file opens its diff as a tab in the editor area (Monaco diff editor). A single click opens a reusable preview tab, and a second click or an edit pins it.
 
 **Annotations**

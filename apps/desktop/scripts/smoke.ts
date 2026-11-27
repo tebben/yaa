@@ -272,10 +272,10 @@ const clickElement = async (page: Connection, element: string) => {
 const DOCK = `[...document.querySelectorAll(".yaa-dock")].find((dock) => dock.offsetParent !== null)`;
 
 const checkPanelBarPlacement = async (page: Connection) => {
-	const changes = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Changes")`;
+	const git = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Git")`;
 	const files = `document.querySelector('[aria-label="Panels"] button[aria-label="Files"]')`;
 	const filesTab = `[...(${DOCK}).querySelectorAll(".dv-tab")].find((tab) => tab.textContent.trim() === "Files")`;
-	await clickElement(page, changes);
+	await clickElement(page, git);
 	await clickElement(page, files);
 	await waitFor(page, filesTab);
 	await waitFor(
@@ -443,6 +443,118 @@ const useEditor = async (page: Connection, repo: string) => {
 	await waitFor(page, editorTab("first.ts"));
 };
 
+const useGit = async (page: Connection, repo: string) => {
+	const file = join(repo, "git-smoke.txt");
+	const gitPanel = `(${DOCK}).querySelector('[aria-label="Git changes"]')`;
+	const section = (name: string) =>
+		`${gitPanel}.querySelector('[aria-label="${name} changes"]')`;
+	const row = (name: string) =>
+		`${section(name)}.querySelector('button[title="git-smoke.txt"]').closest(".row")`;
+	const action = (name: string, label: string) =>
+		label === "Discard"
+			? `(${row(name)}).querySelector('button[aria-label^="Discard "]')`
+			: `(${row(name)}).querySelector('button[aria-label^="${label} "]')`;
+	await writeFile(file, "git smoke\n");
+	await waitFor(
+		page,
+		`(${section("Unstaged")})?.querySelector('button[title="git-smoke.txt"]')`,
+	);
+	await clickElement(
+		page,
+		`${section("Unstaged")}.querySelector('button[title="git-smoke.txt"]')`,
+	);
+	await waitFor(
+		page,
+		`[...(${DOCK}).querySelectorAll(".monaco-diff-editor .view-lines")].some((line) => /git\\s+smoke/.test(line.textContent))`,
+	);
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`document.activeElement?.closest(".monaco-diff-editor .modified")`,
+	);
+	await press(page, VIM_INSERT);
+	await type(page, "edited ");
+	await press(page, ESCAPE);
+	await press(page, { key: "s", code: "KeyS", keyCode: 83, modifiers: CTRL });
+	await poll("the edited diff to be saved", async () =>
+		(await readFile(file, "utf8")).startsWith("edited git smoke")
+			? true
+			: undefined,
+	);
+	await clickElement(page, action("Unstaged", "Stage"));
+	await waitFor(
+		page,
+		`(${section("Staged")})?.querySelector('button[title="git-smoke.txt"]')`,
+	);
+	await clickElement(page, action("Staged", "Unstage"));
+	await waitFor(
+		page,
+		`(${section("Unstaged")})?.querySelector('button[title="git-smoke.txt"]')`,
+	);
+	await clickElement(page, action("Unstaged", "Discard"));
+	await clickElement(
+		page,
+		`[...${gitPanel}.querySelectorAll("button")].find((button) => button.textContent.trim() === "Discard" && !button.closest(".row"))`,
+	);
+	await poll("the discarded file to disappear", () =>
+		access(file).then(
+			() => undefined,
+			() => true,
+		),
+	);
+	await writeFile(file, "ready to commit\n");
+	await waitFor(
+		page,
+		`(${section("Unstaged")})?.querySelector('button[title="git-smoke.txt"]')`,
+	);
+	await clickElement(page, action("Unstaged", "Stage"));
+	await waitFor(
+		page,
+		`(${section("Staged")})?.querySelector('button[title="git-smoke.txt"]')`,
+	);
+	await clickElement(page, `${gitPanel}.querySelector("textarea")`);
+	await type(page, "Git smoke");
+	await clickElement(
+		page,
+		`[...${gitPanel}.querySelectorAll("button")].find((button) => button.textContent.trim() === "Commit")`,
+	);
+	await poll("the Git panel commit", async () =>
+		execFileSync("git", ["-C", repo, "log", "-1", "--format=%s"], {
+			encoding: "utf8",
+		}).trim() === "Git smoke"
+			? true
+			: undefined,
+	);
+	const deleted = join(repo, "deleted-smoke.txt");
+	await writeFile(deleted, "original text\n");
+	execFileSync("git", ["-C", repo, "add", "deleted-smoke.txt"]);
+	execFileSync("git", ["-C", repo, "commit", "-m", "Deleted diff fixture"]);
+	await rm(deleted);
+	const deletedRow = `${section("Unstaged")}.querySelector('button[title="deleted-smoke.txt"]')`;
+	await waitFor(page, deletedRow);
+	await clickElement(page, deletedRow);
+	await waitFor(
+		page,
+		`[...(${DOCK}).querySelectorAll(".monaco-diff-editor .original .view-lines")].some((line) => /original\\s+text/.test(line.textContent))`,
+	);
+	await waitFor(
+		page,
+		`[...(${DOCK}).querySelectorAll(".monaco-diff-editor .modified .view-lines")].every((line) => !/original\\s+text/.test(line.textContent))`,
+	);
+	await press(page, ENTER);
+	await waitFor(
+		page,
+		`document.activeElement?.closest(".monaco-diff-editor .modified")`,
+	);
+	await press(page, VIM_INSERT);
+	await type(page, "restored");
+	await press(page, ESCAPE);
+	await press(page, { key: "s", code: "KeyS", keyCode: 83, modifiers: CTRL });
+	await poll("the deleted file to be recreated from its diff", async () =>
+		(await readFile(deleted, "utf8")) === "restored" ? true : undefined,
+	);
+};
+
 const useMarkdownPreview = async (page: Connection, repo: string) => {
 	await page.send("Emulation.setDeviceMetricsOverride", {
 		width: 1280,
@@ -582,6 +694,8 @@ const addRepo = async (dataDir: string, dir: string) => {
 	const git = (...args: string[]) =>
 		execFileSync("git", ["-C", dir, ...args], { stdio: "ignore" });
 	git("init", "--initial-branch=main");
+	git("config", "user.name", "yaa");
+	git("config", "user.email", "yaa@localhost");
 	git(
 		"-c",
 		"user.name=yaa",
@@ -866,6 +980,10 @@ try {
 	console.log("The app started.");
 	await openProject(first.page);
 	console.log("The project's overview, search and main checkout opened.");
+	await useGit(first.page, join(dataDir, "repo"));
+	console.log(
+		"The Git panel opened a diff, staged, unstaged, discarded and committed a file.",
+	);
 	await createAndFinishWorktree(first.page, dataDir);
 	console.log(
 		"A worktree was created, set up, settled, reopened, torn down and finished.",

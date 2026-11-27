@@ -2,7 +2,11 @@ import { execFile } from "node:child_process";
 
 // Runs git in `dir` and gives its output. Git's own message, without the
 // "fatal: " prefix, becomes the error's message, so a caller can show it.
-export type RunGit = (dir: string, args: readonly string[]) => Promise<string>;
+export type RunGit = (
+	dir: string,
+	args: readonly string[],
+	input?: string,
+) => Promise<string>;
 
 // Plain English output, and never a prompt for credentials: nobody would
 // see it.
@@ -14,9 +18,9 @@ const gitMessage = (stderr: string) =>
 		.split("\n")[0]
 		?.replace(/^(fatal|error): /, "");
 
-export const runGit: RunGit = (dir, args) =>
+export const runGit: RunGit = (dir, args, input) =>
 	new Promise((resolve, reject) => {
-		execFile(
+		const child = execFile(
 			"git",
 			["-C", dir, ...args],
 			{ env, maxBuffer: 64 * 1024 * 1024 },
@@ -26,6 +30,20 @@ export const runGit: RunGit = (dir, args) =>
 					reject(
 						new Error(gitMessage(stderr) || error.message, { cause: error }),
 					);
+			},
+		);
+		child.stdin?.end(input);
+	});
+
+export const runGitBytes = (dir: string, args: readonly string[]) =>
+	new Promise<Buffer>((resolve, reject) => {
+		execFile(
+			"git",
+			["-C", dir, ...args],
+			{ env, encoding: "buffer", maxBuffer: 11 * 1024 * 1024 },
+			(error, stdout, stderr) => {
+				if (error === null) resolve(stdout);
+				else reject(new Error(gitMessage(stderr.toString()) || error.message));
 			},
 		);
 	});

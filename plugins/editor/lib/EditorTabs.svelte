@@ -14,6 +14,6 @@ let { editor }: { editor: EditorPanelController } = $props();
 	onclose={editor.close}
 >
 	{#snippet icon(tab)}
-		<FileIcon path={tab.id} />
+		<FileIcon path={tab.title} />
 	{/snippet}
 </TabStrip>

@@ -21,7 +21,10 @@ import type { PluginStore } from "../storage/plugin-store.ts";
 
 type PluginApiOptions = {
 	worktree(id: string): Worktree;
-	git: Pick<GitService, "files" | "ignored" | "changes">;
+	git: Pick<
+		GitService,
+		"files" | "ignored" | "changes" | "read" | "change" | "commit"
+	>;
 	watches: WorktreeWatches;
 	store: PluginStore;
 	log: Logger;
@@ -48,6 +51,16 @@ export const createPluginApiServer = ({
 			"git.changes": async (params) => ({
 				changes: await git.changes(pathOf(params.worktree)),
 			}),
+			"git.read": ({ worktree, source, path }) =>
+				git.read(pathOf(worktree), source, path),
+			"git.change": async ({ worktree, action, section, paths }) => {
+				await git.change(pathOf(worktree), action, section, paths);
+				return {};
+			},
+			"git.commit": async ({ worktree, message }) => {
+				await git.commit(pathOf(worktree), message);
+				return {};
+			},
 			"files.readDir": async (params) => ({
 				entries: await readFolder(pathOf(params.worktree), params.path),
 			}),
