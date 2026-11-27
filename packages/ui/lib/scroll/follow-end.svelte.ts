@@ -1,15 +1,22 @@
 import { tick } from "svelte";
-import type { VListHandle } from "virtua/svelte";
 
 // How close to the end, in pixels, still counts as at the end.
 const SLACK = 24;
 // The share of the viewport one page step scrolls.
 const PAGE = 0.8;
 
+// What followEnd needs of a virtual list, such as virtua's VListHandle.
+export type ScrollList = {
+	scrollToIndex(index: number, options: { align: "end" }): void;
+	scrollBy(offset: number): void;
+	getViewportSize(): number;
+	getScrollSize(): number;
+};
+
 // Keeps a virtual list at its end as items arrive and grow, until it is
 // scrolled away from there. Call while the component sets up.
 export const followEnd = (
-	list: () => VListHandle | undefined,
+	list: () => ScrollList | undefined,
 	items: () => readonly unknown[],
 ) => {
 	let atEnd = true;

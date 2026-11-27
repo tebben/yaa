@@ -5,7 +5,7 @@ import type { Worktree } from "@yaa/contracts/projects";
 import type { OpenFile, PanelSettings, PickSource } from "@yaa/plugin-api/ui";
 import type { DockController, PanelKind } from "@yaa/ui/dock";
 import type { Command } from "../commands/index.ts";
-import type { CoreClient } from "../core-connection.ts";
+import type { CoreConnection } from "../core-connection.ts";
 import type { TerminalLinks } from "../terminals/index.ts";
 import PluginPanel from "./PluginPanel.svelte";
 import { createPanelContext } from "./panel-context.ts";
@@ -14,7 +14,7 @@ import type { PluginPanels } from "./plugin-panels.ts";
 import { loadPluginUi, type PluginUiModule } from "./plugin-ui.ts";
 
 type PluginsOptions = {
-	client: CoreClient;
+	core: CoreConnection;
 	terminals: TerminalLinks;
 	// The settings, for panels: `loaded` settles once they are read.
 	settings: PanelSettings & { loaded: Promise<unknown> };
@@ -37,7 +37,7 @@ const message = (error: unknown) =>
 // their commands and keys, and their UI modules, each loaded when one of
 // its panels first renders (docs/spec/03-plugins.md).
 export const createPlugins = ({
-	client,
+	core,
 	terminals,
 	settings,
 	report,
@@ -46,6 +46,7 @@ export const createPlugins = ({
 	dock,
 	pick,
 }: PluginsOptions) => {
+	const { client } = core;
 	const panelCommands = createPanelHandlers<void>();
 	const panelFiles = createPanelHandlers<OpenFile>();
 	// The panel kind that opens files: the first a plugin declares.
@@ -111,7 +112,7 @@ export const createPlugins = ({
 			const found = worktree(id);
 			if (found === undefined) throw new Error(`No worktree ${id}`);
 			const { context, dispose } = createPanelContext({
-				client,
+				core,
 				terminals,
 				settings,
 				commands: panelCommands,

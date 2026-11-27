@@ -8,6 +8,7 @@
 		"./dock": "./dock.ts",
 		"./file-icons": "./file-icons.ts",
 		"./focus": "./focus.ts",
+		"./scroll": "./scroll.ts",
 		"./styles.css": "./styles.css",
 		"./tokens": "./tokens.ts",
 		"./token-codegen": "./token-codegen.ts"

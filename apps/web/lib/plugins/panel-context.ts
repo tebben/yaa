@@ -15,13 +15,14 @@ import type {
 } from "@yaa/plugin-api/ui";
 import type { PanelFrame } from "@yaa/ui/dock";
 import { captureKeys } from "../commands/index.ts";
-import type { CoreClient } from "../core-connection.ts";
+import type { CoreConnection } from "../core-connection.ts";
 import type { TerminalLinks } from "../terminals/index.ts";
 import { createPanelAgents } from "./panel-agents.ts";
 import type { PanelHandlers } from "./panel-handlers.ts";
+import { createPanelLogs } from "./panel-logs.ts";
 
 type PanelContextOptions = {
-	client: CoreClient;
+	core: CoreConnection;
 	terminals: TerminalLinks;
 	settings: PanelSettings;
 	// What panels registered for their commands and for files to open.
@@ -41,7 +42,7 @@ type PanelContextOptions = {
 // The context of one plugin panel. `dispose` undoes everything the panel
 // registered through it.
 export const createPanelContext = ({
-	client,
+	core,
 	terminals,
 	settings,
 	commands,
@@ -55,6 +56,7 @@ export const createPanelContext = ({
 	declared,
 	worktree,
 }: PanelContextOptions): { context: PanelContext; dispose(): void } => {
+	const { client } = core;
 	const registered = new Set<Disposable>();
 	const track = (disposable: Disposable): Disposable => {
 		registered.add(disposable);
@@ -131,6 +133,7 @@ export const createPanelContext = ({
 				return { ...link, dispose };
 			},
 		},
+		logs: createPanelLogs({ core, track }),
 		settings: {
 			watch: (listener) => track(settings.watch(listener)),
 		},

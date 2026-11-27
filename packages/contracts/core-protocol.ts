@@ -7,6 +7,7 @@ import {
 } from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
+import { numberedLogRecord } from "./log.ts";
 import { permissionMode } from "./permission-modes.ts";
 import { pluginEvent } from "./plugin-host-protocol.ts";
 import { pluginId, pluginManifest } from "./plugin-manifest.ts";
@@ -40,6 +41,15 @@ const worktreeStates = z.object({
 // has its own protocol (plugin-host-protocol.ts).
 export const coreProtocol = defineProtocol({
 	requests: {
+		// The lines core keeps, of every process and level, oldest first;
+		// `logs.added` carries each line from `next` on.
+		"logs.recent": {
+			params: z.object({}),
+			result: z.object({
+				records: z.array(numberedLogRecord),
+				next: z.number(),
+			}),
+		},
 		"settings.get": { params: z.object({}), result: settingsState },
 		// Writes one setting to settings.json; its default takes it out. Rejects
 		// a value its schema rejects, and a file that does not parse, which it
@@ -270,6 +280,7 @@ export const coreProtocol = defineProtocol({
 	},
 	events: {
 		"agent.event": sessionEvent,
+		"logs.added": numberedLogRecord,
 		"terminals.output": terminalOutput,
 		"terminals.changed": z.object({
 			worktree: z.string(),

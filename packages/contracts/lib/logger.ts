@@ -2,12 +2,19 @@ import type { LogLevel, LogRecord, LogSource } from "../log.ts";
 
 type Data = Record<string, unknown>;
 
-export type Logger = Record<LogLevel, (message: string, data?: Data) => void>;
+export type Logger = Record<
+	LogLevel,
+	(message: string, data?: Data) => void
+> & {
+	// The same logger with each line tagged with the worktree it is about.
+	forWorktree(worktree: string): Logger;
+};
 
 export const createLogger = (
 	write: (record: LogRecord) => void,
 	source: LogSource,
 	now: () => number = Date.now,
+	worktree?: string,
 ): Logger => {
 	const at =
 		(level: LogLevel) =>
@@ -17,6 +24,7 @@ export const createLogger = (
 				level,
 				source,
 				message,
+				...(worktree === undefined ? {} : { worktree }),
 				...(data === undefined ? {} : { data }),
 			});
 	return {
@@ -24,6 +32,7 @@ export const createLogger = (
 		info: at("info"),
 		warn: at("warn"),
 		error: at("error"),
+		forWorktree: (id) => createLogger(write, source, now, id),
 	};
 };
 

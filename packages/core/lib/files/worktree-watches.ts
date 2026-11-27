@@ -39,10 +39,9 @@ export const createWorktreeWatches = ({
 				for (const listener of listeners) listener(worktree);
 			},
 			onError: (error) =>
-				log.warn("watching a worktree failed", {
-					worktree,
-					...errorData(error),
-				}),
+				log
+					.forWorktree(worktree)
+					.warn("watching a worktree failed", errorData(error)),
 		});
 	};
 

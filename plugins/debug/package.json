@@ -1,0 +1,27 @@
+{
+	"name": "@yaa/plugin-debug",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./ui": "./ui.ts",
+		"./log-filter": "./log-filter.ts",
+		"./plugin.json": "./plugin.json"
+	},
+	"scripts": {
+		"build": "yaa-plugin-build .",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@lucide/svelte": "~1.79.0",
+		"@yaa/commands": "workspace:*",
+		"@yaa/contracts": "workspace:*",
+		"@yaa/plugin-api": "workspace:*",
+		"@yaa/ui": "workspace:*",
+		"virtua": "^0.56.0"
+	},
+	"devDependencies": {
+		"@yaa/plugin-build": "workspace:*",
+		"svelte": "~5.59.1"
+	}
+}

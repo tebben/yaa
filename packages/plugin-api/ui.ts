@@ -7,6 +7,7 @@ import type {
 	QuestionAnswer,
 } from "@yaa/contracts/agent-events";
 import type { Client } from "@yaa/contracts/client";
+import type { LogRecord } from "@yaa/contracts/log";
 import type { PluginProvider } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
 import type { Disposable, ProtocolDefinition } from "@yaa/contracts/protocol";
@@ -136,6 +137,18 @@ export type PanelTerminals = {
 	connect(id: string, screen: TerminalScreen): TerminalLink;
 };
 
+// The app's log: the lines of every process at every level that core keeps
+// (docs/spec/11-platform-services.md).
+export type PanelLogs = {
+	// Calls the listener first with the lines kept, oldest first, and then
+	// with the lines logged since; none twice and none left out. `failed` is
+	// called when the lines cannot be read.
+	subscribe(
+		listener: (records: readonly LogRecord[]) => void,
+		failed: (reason: unknown) => void,
+	): Disposable;
+};
+
 // The app's settings, the ones the plugin contributes among them
 // (docs/spec/11-platform-services.md).
 export type PanelSettings = {
@@ -176,6 +189,7 @@ export type PanelContext = {
 	// Opens the palette on the source, while the panel's worktree is open.
 	pick(source: PickSource): void;
 	readonly terminals: PanelTerminals;
+	readonly logs: PanelLogs;
 	readonly settings: PanelSettings;
 	// While focus is inside the element, keys go to it, except the ones the
 	// app keeps for itself (the `keyboard.terminalAppKeys` setting). For a
