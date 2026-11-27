@@ -27,7 +27,7 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 | Commands and keybindings | actions in the palette, default keys |
 | Settings | a schema-rendered settings page, or a custom panel |
 | Connectors | an issue-tracker or source-control implementation |
-| Agent providers | detection, spawn configuration, capabilities and models for an agent CLI; core runs the process |
+| Agent providers | detection, spawn configuration, capabilities, permission mode mapping and models for an agent CLI; core runs the process |
 | Chat renderers | custom rendering for a message part or tool-call kind |
 | Editor extensions | Monaco decorations, gutter actions, widgets |
 | Context menu items | actions on files, worktrees, issues and messages |

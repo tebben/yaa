@@ -1,5 +1,10 @@
 import { fuzzyMatch } from "@yaa/commands/fuzzy-match";
 import {
+	PERMISSION_MODE_LABELS,
+	type PermissionMode,
+	permissionMode,
+} from "@yaa/contracts/permission-modes";
+import {
 	type FinishAction,
 	type FinishCheck,
 	finishAction,
@@ -127,6 +132,27 @@ export const settledPick = (
 
 // What finishing this way loses; empty when nothing. Removing the folder
 // loses its uncommitted changes, deleting the branch its unpushed commits.
+// How far the worktree's agents go without asking, strictest first.
+export const permissionModePick = (
+	current: PermissionMode,
+	accept: (mode: PermissionMode) => void,
+): PaletteSource => {
+	const items = permissionMode.options.map(
+		(mode): PaletteItem => ({
+			id: mode,
+			label: PERMISSION_MODE_LABELS[mode],
+			...(mode === current ? { detail: "current" } : {}),
+		}),
+	);
+	return {
+		label: "Permission mode",
+		placeholder: "How far the worktree's agents go without asking",
+		items: (query) => fuzzyMatch(query, items, ({ label }) => label),
+		empty: () => "No such mode",
+		accept: ({ id }) => accept(permissionMode.parse(id)),
+	};
+};
+
 const losses = (action: FinishAction, check: FinishCheck) => [
 	...(action !== "settle" && check.changes > 0 ? ["uncommitted changes"] : []),
 	...(action !== "settle" && action !== "remove" && check.unpushed > 0
