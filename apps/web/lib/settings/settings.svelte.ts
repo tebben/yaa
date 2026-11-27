@@ -1,3 +1,4 @@
+import Bot from "@lucide/svelte/icons/bot";
 import FolderGit2 from "@lucide/svelte/icons/folder-git-2";
 import Keyboard from "@lucide/svelte/icons/keyboard";
 import Palette from "@lucide/svelte/icons/palette";
@@ -16,8 +17,10 @@ import { SvelteMap } from "svelte/reactivity";
 import * as z from "zod";
 import type { CoreClient } from "../core-connection.ts";
 import type { Crumb } from "../shell/crumb.ts";
+import { createAgents } from "./agents.svelte.ts";
 import { appearanceVariables } from "./appearance.ts";
 import {
+	agentsPage,
 	corePages,
 	pluginPages,
 	type SettingsPage,
@@ -48,6 +51,7 @@ const appearance = z.object(coreSettings).pick({
 });
 
 const coreIcons: Record<string, IconSource> = {
+	agents: Bot,
 	appearance: Palette,
 	worktrees: FolderGit2,
 	keyboard: Keyboard,
@@ -103,9 +107,11 @@ export const createSettings = ({
 	});
 	client.subscribe("settings.changed", take);
 
-	let pages = $state<readonly SettingsPage[]>(
-		corePages(coreSettingsSections, coreSettings),
-	);
+	let pages = $state<readonly SettingsPage[]>([
+		...corePages(coreSettingsSections, coreSettings),
+		agentsPage,
+	]);
+	const agents = createAgents({ client, manifests });
 	manifests.then(
 		(plugins) => {
 			pages = [...pages, ...pluginPages(plugins)];
@@ -125,6 +131,7 @@ export const createSettings = ({
 				: pluginFileUrl(page.plugin.id, page.plugin.icon);
 
 	return {
+		agents,
 		loaded,
 		get values() {
 			return values;

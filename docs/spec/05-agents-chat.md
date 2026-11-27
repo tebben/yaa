@@ -14,6 +14,10 @@ The chat is the app's own interface on top of an existing agent. A provider plug
 - Sessions accept `send`, `cancel`, config changes (model, effort, mode), and answers to permission requests and agent questions, and emit normalized events.
 - Models, effort levels and modes come from the session's ACP config options, grouped by category (`model`, `thought_level`, `mode`). Effort levels depend on the model, so the pickers follow every config update from the agent. A value an agent lists twice is offered once. Before a chat exists, for example in settings, core opens a session without a prompt to read them; neither agent persists such a session (`docs/decisions/0014-acp-coverage.md`).
 
+**Connected**
+
+A provider is connected when its agent is installed, not known to be signed out, and opens a session. Core checks this for the settings screen: it opens a session without a prompt in a folder of the app's own, reads the models from its config options, and ends the agent, giving up after 30 s. A session refused with `auth_required` reads as signed out, with the agent's own instructions.
+
 * `authStatus()` and `login()` report the sign-in state and start sign-in.
 * `complete(prompt, model)`, optional: a one-shot call without a chat, used for generated text. A provider that cannot do it is not offered for that setting.
 

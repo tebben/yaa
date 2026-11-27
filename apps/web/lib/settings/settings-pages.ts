@@ -19,6 +19,8 @@ export type SettingsPage = {
 	description: string;
 	// The plugin that contributes it; core's pages have none.
 	plugin?: { id: string; icon: string | undefined };
+	// A page that shows something of its own in place of groups of settings.
+	view?: "agents";
 	groups: readonly SettingsPageGroup[];
 };
 
@@ -41,6 +43,15 @@ export const corePages = (
 			}),
 		})),
 	}));
+
+export const agentsPage: SettingsPage = {
+	id: "agents",
+	title: "Agents",
+	description:
+		"The coding agents yaa works with. Opening this page starts each installed one to see whether it is connected.",
+	view: "agents",
+	groups: [],
+};
 
 // One page per plugin that contributes settings, in plugin order.
 export const pluginPages = (

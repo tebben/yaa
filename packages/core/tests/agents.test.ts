@@ -1,3 +1,4 @@
+import { tmpdir } from "node:os";
 import {
 	agent as acpAgent,
 	ndJsonStream,
@@ -7,9 +8,11 @@ import {
 } from "@agentclientprotocol/sdk/unstable";
 import type { AgentEvent } from "@yaa/contracts/agent-events";
 import { createLogger } from "@yaa/contracts/log";
+import type { ProviderStatus } from "@yaa/contracts/providers";
 import { connectFakeAgent } from "@yaa/fake-agent";
 import { describe, expect, it } from "vitest";
 import {
+	createAgentInspector,
 	normalizeQuestion,
 	openAcpSession,
 	promptContent,
@@ -156,31 +159,31 @@ describe("openAcpSession with the fake agent", () => {
 	});
 });
 
-describe("openAcpSession with a signed-out agent", () => {
-	// Copilot CLI 1.0.116 signed out: a terminal login method, and every
-	// session refused with ACP's auth_required.
-	const signedOut = (): Stream => {
-		const toAgent = new TransformStream<Uint8Array, Uint8Array>();
-		const toClient = new TransformStream<Uint8Array, Uint8Array>();
-		acpAgent({ name: "signed-out" })
-			.onRequest("initialize", () => ({
-				protocolVersion: PROTOCOL_VERSION,
-				authMethods: [
-					{
-						type: "terminal",
-						id: "copilot-login",
-						name: "Log in with Copilot CLI",
-						description: "Run `copilot login` in the terminal",
-					},
-				],
-			}))
-			.onRequest("session/new", () => {
-				throw RequestError.authRequired();
-			})
-			.connect(ndJsonStream(toClient.writable, toAgent.readable));
-		return ndJsonStream(toAgent.writable, toClient.readable);
-	};
+// Copilot CLI 1.0.116 signed out: a terminal login method, and every
+// session refused with ACP's auth_required.
+const signedOut = (): Stream => {
+	const toAgent = new TransformStream<Uint8Array, Uint8Array>();
+	const toClient = new TransformStream<Uint8Array, Uint8Array>();
+	acpAgent({ name: "signed-out" })
+		.onRequest("initialize", () => ({
+			protocolVersion: PROTOCOL_VERSION,
+			authMethods: [
+				{
+					type: "terminal",
+					id: "copilot-login",
+					name: "Log in with Copilot CLI",
+					description: "Run `copilot login` in the terminal",
+				},
+			],
+		}))
+		.onRequest("session/new", () => {
+			throw RequestError.authRequired();
+		})
+		.connect(ndJsonStream(toClient.writable, toAgent.readable));
+	return ndJsonStream(toAgent.writable, toClient.readable);
+};
 
+describe("openAcpSession with a signed-out agent", () => {
 	it("fails the start with how to sign in", async () => {
 		await expect(
 			openAcpSession({
@@ -192,6 +195,51 @@ describe("openAcpSession with a signed-out agent", () => {
 		).rejects.toThrow(
 			"The agent needs you to sign in. Run `copilot login` in the terminal",
 		);
+	});
+});
+
+describe("createAgentInspector", () => {
+	const inspect = (status: ProviderStatus, stream: () => Stream) =>
+		createAgentInspector({
+			status: async () => status,
+			launch: async () => ({ command: "agent", args: [], env: {} }),
+			dir: tmpdir(),
+			log,
+			agentLog: log,
+			start: () => ({
+				stream: stream(),
+				exited: new Promise(() => {}),
+				stop() {},
+				kill() {},
+			}),
+		}).inspect("agent");
+	const ready: ProviderStatus = { state: "ready", version: "1.0" };
+
+	it("reports the models of an agent that opens a session", async () => {
+		await expect(
+			inspect(ready, () => connectFakeAgent({ delayScale: 0 })),
+		).resolves.toMatchObject({
+			state: "connected",
+			version: "1.0",
+			models: expect.arrayContaining([
+				expect.objectContaining({ value: "fake-small" }),
+			]),
+		});
+	});
+
+	it("reports signed out when the agent refuses the session", async () => {
+		await expect(inspect(ready, signedOut)).resolves.toMatchObject({
+			state: "signed-out",
+			how: expect.stringContaining("copilot login"),
+		});
+	});
+
+	it("starts no agent for a provider that is not ready", async () => {
+		await expect(
+			inspect({ state: "missing", problem: "not found" }, () => {
+				throw new Error("started");
+			}),
+		).resolves.toEqual({ state: "missing", problem: "not found" });
 	});
 });
 

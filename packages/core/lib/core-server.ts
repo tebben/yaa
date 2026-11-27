@@ -4,6 +4,7 @@ import { errorData, type Logger } from "@yaa/contracts/log";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import { createServer, type Server } from "@yaa/contracts/server";
 import type { AgentContext } from "./agents/agent-context.ts";
+import type { AgentInspector } from "./agents/agent-inspector.ts";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
 import type { RecentLogs } from "./log/recent-logs.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
@@ -26,6 +27,7 @@ export type CoreServerOptions = {
 	plugins: PluginManager;
 	agents: AgentSessions;
 	agentContext: AgentContext;
+	agentInspector: AgentInspector;
 	projects: Projects;
 	worktrees: Worktrees;
 	states: StateTracker;
@@ -42,6 +44,7 @@ export const createCoreServer = ({
 	plugins,
 	agents,
 	agentContext,
+	agentInspector,
 	projects,
 	worktrees,
 	states,
@@ -136,6 +139,7 @@ export const createCoreServer = ({
 				return {};
 			},
 			"providers.status": ({ provider }) => plugins.providerStatus(provider),
+			"providers.inspect": ({ provider }) => agentInspector.inspect(provider),
 			"context.discover": async ({ worktree }) => ({
 				providers: await agentContext.discover(worktree),
 			}),
