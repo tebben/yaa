@@ -21,6 +21,8 @@ export type Command = {
 	// have keys, and every other key types in it; while it is closed they
 	// have none.
 	inPalette?: boolean;
+	// The panel the command runs in, whose focus its keys wait for.
+	panel?: string;
 	run(): void;
 };
 
@@ -137,11 +139,11 @@ export const createCommands = ({
 			const inPalette = paletteOpen();
 			const id = keymap.resolve(key, now, (candidate) => {
 				const command = registry.get(candidate);
-				return (
-					command !== undefined &&
+				return command !== undefined &&
 					(command.inPalette ?? false) === inPalette &&
 					command.holds(now)
-				);
+					? command
+					: undefined;
 			});
 			if (id === undefined) return;
 			event.preventDefault();

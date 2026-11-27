@@ -2,19 +2,28 @@ import type { Keybinding } from "@yaa/contracts/keybindings";
 import { normalizeKey } from "./key-chord.ts";
 import { type Context, parseWhen } from "./when.ts";
 
+// What the keymap needs of a command that can run now.
+export type Runnable = {
+	// The panel a command runs in, if it runs in one.
+	panel?: string | undefined;
+};
+
 type Entry = {
 	command: string;
+	global: boolean;
 	test(context: Context): boolean;
 };
 
 export type Keymap = {
 	// The command of the first binding for `key` whose condition holds and
 	// whose command can run now; a binding to a command that is missing,
-	// such as one from a removed plugin, does not take the key.
+	// such as one from a removed plugin, does not take the key. `runnable`
+	// returns undefined for a command that cannot run. A binding of a panel's
+	// command holds only while that panel is focused, unless it is global.
 	resolve(
 		key: string,
 		context: Context,
-		canRun: (command: string) => boolean,
+		runnable: (command: string) => Runnable | undefined,
 	): string | undefined;
 	// The keys bound to a command, user bindings first, for display.
 	keysFor(command: string): readonly string[];
@@ -24,9 +33,13 @@ const REMOVE = "-";
 
 const always = () => true;
 
+const focused = (context: Context, panel: string) =>
+	context["focus.region"] === "dock" && context["panel.kind"] === panel;
+
 const compile = (binding: Keybinding): Entry => {
+	const { command, global = false } = binding;
 	if (binding.when === undefined) {
-		return { command: binding.command, test: always };
+		return { command, global, test: always };
 	}
 	const when = parseWhen(binding.when);
 	// Core drops user bindings with a bad condition and the defaults are ours,
@@ -34,7 +47,7 @@ const compile = (binding: Keybinding): Entry => {
 	if (!when.ok) {
 		throw new Error(`Bad when “${binding.when}”: ${when.message}`);
 	}
-	return { command: binding.command, test: when.test };
+	return { command, global, test: when.test };
 };
 
 // User bindings are checked before the defaults. A user binding whose
@@ -68,11 +81,14 @@ export const createKeymap = (
 		byCommand.set(binding.command, keys);
 	}
 	return {
-		resolve: (key, context, canRun) =>
-			byKey
-				.get(key)
-				?.find((entry) => entry.test(context) && canRun(entry.command))
-				?.command,
+		resolve: (key, context, runnable) =>
+			byKey.get(key)?.find(({ command, global, test }) => {
+				if (!test(context)) return false;
+				const target = runnable(command);
+				if (target === undefined) return false;
+				const { panel } = target;
+				return global || panel === undefined || focused(context, panel);
+			})?.command,
 		keysFor: (command) => byCommand.get(command) ?? [],
 	};
 };

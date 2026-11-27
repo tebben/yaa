@@ -47,31 +47,29 @@
 		"keybindings": [
 			{
 				"key": "ctrl+`",
-				"command": "terminal.focus"
+				"command": "terminal.focus",
+				"global": true
 			},
 			{
 				"key": "ctrl+shift+~",
-				"command": "terminal.new"
+				"command": "terminal.new",
+				"global": true
 			},
 			{
 				"key": "ctrl+shift+w",
-				"command": "terminal.close",
-				"when": "panel.kind == terminal && focus.region == dock"
+				"command": "terminal.close"
 			},
 			{
 				"key": "ctrl+pagedown",
-				"command": "terminal.next",
-				"when": "panel.kind == terminal && focus.region == dock"
+				"command": "terminal.next"
 			},
 			{
 				"key": "ctrl+pageup",
-				"command": "terminal.previous",
-				"when": "panel.kind == terminal && focus.region == dock"
+				"command": "terminal.previous"
 			},
 			{
 				"key": "ctrl+shift+c",
-				"command": "terminal.copy",
-				"when": "panel.kind == terminal && focus.region == dock"
+				"command": "terminal.copy"
 			}
 		],
 		"panels": [

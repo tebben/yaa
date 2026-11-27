@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createKeymap } from "../keymap.ts";
 
-const all = () => true;
+const all = () => ({});
 
 describe("createKeymap", () => {
 	const defaults = [
@@ -39,8 +39,32 @@ describe("createKeymap", () => {
 		const keymap = createKeymap(defaults, [
 			{ key: "ctrl+w", command: "plugin.gone" },
 		]);
-		const canRun = (command: string) => command !== "plugin.gone";
-		expect(keymap.resolve("ctrl+w", {}, canRun)).toBe("panel.close");
+		const runnable = (command: string) =>
+			command === "plugin.gone" ? undefined : {};
+		expect(keymap.resolve("ctrl+w", {}, runnable)).toBe("panel.close");
+	});
+
+	it("keeps a panel command's key to its focused panel unless global", () => {
+		const keymap = createKeymap(
+			[
+				{ key: "j", command: "files.next" },
+				{ key: "alt+n", command: "chat.new", global: true },
+			],
+			[],
+		);
+		const inFiles = () => ({ panel: "files" });
+		const at = (region: string, kind: string) => ({
+			"focus.region": region,
+			"panel.kind": kind,
+		});
+		expect(keymap.resolve("j", at("dock", "files"), inFiles)).toBe(
+			"files.next",
+		);
+		expect(keymap.resolve("j", at("dock", "chat"), inFiles)).toBeUndefined();
+		expect(keymap.resolve("j", at("menu", "files"), inFiles)).toBeUndefined();
+		expect(keymap.resolve("alt+n", at("menu", "files"), inFiles)).toBe(
+			"chat.new",
+		);
 	});
 
 	it("matches modifiers in any order", () => {
