@@ -1,15 +1,17 @@
 <script lang="ts">
+import Settings from "@lucide/svelte/icons/settings";
 import { keyParts } from "@yaa/commands/key-chord";
-import { TooltipProvider } from "@yaa/ui";
+import { IconButton, TooltipProvider } from "@yaa/ui";
 import { Palette } from "./palette/index.ts";
 import { setPluginPanels } from "./plugins/index.ts";
 import { ProjectMenu, ProjectOverview } from "./projects/index.ts";
+import { SettingsMenu, SettingsScreen } from "./settings/index.ts";
 import { Footer, Header, LeftMenu, PanelBar } from "./shell/index.ts";
 import WorktreeDock from "./WorktreeDock.svelte";
 import type { Workbench } from "./workbench.svelte.ts";
 
 let { workbench }: { workbench: Workbench } = $props();
-const { layouts, regions, commands, palette, projects, worktrees } =
+const { layouts, regions, commands, palette, projects, worktrees, settings } =
 	$derived(workbench);
 setPluginPanels({
 	mount: (kind, worktree, frame) =>
@@ -40,12 +42,30 @@ const shortcut = (id: string) => {
 		data-focus-highlight={regions.highlighted || undefined}
 	>
 		{#if workbench.menuOpen}
-			<LeftMenu region={regions.region("menu", "vertical")}>
-				<ProjectMenu
-					{projects}
-					{worktrees}
-					addShortcut={shortcut("project.add")}
-				/>
+			<LeftMenu
+				region={regions.region("menu", "vertical")}
+				label={settings.open ? "Settings" : "Projects"}
+			>
+				{#if settings.open}
+					<SettingsMenu
+						{settings}
+						onclose={() => commands.run("settings.close")}
+					/>
+				{:else}
+					<ProjectMenu
+						{projects}
+						{worktrees}
+						addShortcut={shortcut("project.add")}
+					/>
+					<div class="mt-2 flex border-t border-border px-1.5 pt-2">
+						<IconButton
+							icon={Settings}
+							label="Settings"
+							shortcut={shortcut("settings.open")}
+							onclick={() => commands.run("settings.open")}
+						/>
+					</div>
+				{/if}
 			</LeftMenu>
 		{/if}
 		<Header
@@ -53,10 +73,10 @@ const shortcut = (id: string) => {
 			menuOpen={workbench.menuOpen}
 			menuShortcut={shortcut("menu.toggle")}
 			ontogglemenu={() => commands.run("menu.toggle")}
-			crumbs={projects.crumbs}
+			crumbs={settings.open ? settings.crumbs : projects.crumbs}
 		>
 			{#snippet end()}
-				{#if projects.view === "worktree"}
+				{#if projects.view === "worktree" && !settings.open}
 					<PanelBar
 						kinds={layouts.kinds}
 						open={workbench.dock?.open ?? []}
@@ -68,7 +88,9 @@ const shortcut = (id: string) => {
 			{/snippet}
 		</Header>
 		<main class="col-start-2 row-start-2 min-h-0 bg-grid p-panel-gap">
-			{#if projects.selected && projects.view === "overview"}
+			{#if settings.open}
+				<SettingsScreen {settings} />
+			{:else if projects.selected && projects.view === "overview"}
 				{@const project = projects.selected}
 				<ProjectOverview
 					{project}
@@ -83,7 +105,12 @@ const shortcut = (id: string) => {
 			<!-- Every opened worktree keeps its dock while hidden, so its panels
 			     keep their state. -->
 			{#each layouts.docks as [id, dock] (id)}
-				<div class={["size-full", projects.worktree?.id !== id && "hidden"]}>
+				<div
+					class={[
+						"size-full",
+						(settings.open || projects.worktree?.id !== id) && "hidden",
+					]}
+				>
 					<WorktreeDock worktree={id} {dock} />
 				</div>
 			{/each}

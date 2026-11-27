@@ -108,6 +108,209 @@
 				"icon": "icon.svg",
 				"opensFiles": true
 			}
-		]
+		],
+		"settings": {
+			"title": "Editor",
+			"description": "How the editor shows text and what its keys do.",
+			"icon": "icon.svg",
+			"groups": [
+				{
+					"title": "Text",
+					"settings": {
+						"editor.fontFamily": {
+							"type": "text",
+							"title": "Font",
+							"description": "A font family installed on this computer. Empty follows the app's code font.",
+							"default": "",
+							"placeholder": "Code font"
+						},
+						"editor.fontSize": {
+							"type": "number",
+							"title": "Font size",
+							"default": 14,
+							"min": 8,
+							"max": 32,
+							"step": 1,
+							"unit": "px"
+						},
+						"editor.lineHeight": {
+							"type": "number",
+							"title": "Line height",
+							"description": "As a multiple of the font size.",
+							"default": 1.4,
+							"min": 1,
+							"max": 2.5,
+							"step": 0.1,
+							"unit": "×"
+						},
+						"editor.fontLigatures": {
+							"type": "boolean",
+							"title": "Ligatures",
+							"description": "Join character pairs such as => into one glyph, where the font has them.",
+							"default": false
+						}
+					}
+				},
+				{
+					"title": "Layout",
+					"settings": {
+						"editor.wordWrap": {
+							"type": "choice",
+							"title": "Line wrap",
+							"default": "off",
+							"options": [
+								{ "value": "off", "label": "Off" },
+								{ "value": "on", "label": "Panel edge" },
+								{ "value": "wordWrapColumn", "label": "Column" }
+							]
+						},
+						"editor.wordWrapColumn": {
+							"type": "number",
+							"title": "Wrap column",
+							"description": "Where lines wrap when line wrap is set to Column.",
+							"default": 80,
+							"min": 40,
+							"max": 200,
+							"step": 10
+						},
+						"editor.lineNumbers": {
+							"type": "choice",
+							"title": "Line numbers",
+							"default": "relative",
+							"options": [
+								{ "value": "on", "label": "On" },
+								{ "value": "relative", "label": "Relative" },
+								{ "value": "off", "label": "Off" }
+							]
+						},
+						"editor.renderWhitespace": {
+							"type": "choice",
+							"title": "Show whitespace",
+							"default": "selection",
+							"options": [
+								{ "value": "none", "label": "Never" },
+								{ "value": "selection", "label": "In the selection" },
+								{
+									"value": "boundary",
+									"label": "Between words, not single spaces"
+								},
+								{ "value": "trailing", "label": "At line ends" },
+								{ "value": "all", "label": "Always" }
+							]
+						},
+						"editor.renderLineHighlight": {
+							"type": "choice",
+							"title": "Current line",
+							"default": "line",
+							"options": [
+								{ "value": "none", "label": "Not marked" },
+								{ "value": "gutter", "label": "In the gutter" },
+								{ "value": "line", "label": "Across the text" },
+								{ "value": "all", "label": "Gutter and text" }
+							]
+						},
+						"editor.minimap": {
+							"type": "boolean",
+							"title": "Minimap",
+							"description": "A zoomed-out view of the file beside the scrollbar.",
+							"default": false
+						},
+						"editor.stickyScroll": {
+							"type": "boolean",
+							"title": "Sticky scroll",
+							"description": "Keep the lines of the enclosing blocks at the top while scrolling.",
+							"default": true
+						},
+						"editor.indentGuides": {
+							"type": "boolean",
+							"title": "Indent guides",
+							"default": true
+						},
+						"editor.bracketPairColorization": {
+							"type": "boolean",
+							"title": "Coloured bracket pairs",
+							"default": true
+						},
+						"editor.scrollBeyondLastLine": {
+							"type": "boolean",
+							"title": "Scroll past the last line",
+							"default": false
+						}
+					}
+				},
+				{
+					"title": "Indentation",
+					"settings": {
+						"editor.detectIndentation": {
+							"type": "boolean",
+							"title": "Detect indentation",
+							"description": "Take tab size and tabs or spaces from each file's content, falling back to the settings below.",
+							"default": true
+						},
+						"editor.tabSize": {
+							"type": "number",
+							"title": "Tab size",
+							"default": 4,
+							"min": 1,
+							"max": 8,
+							"step": 1
+						},
+						"editor.insertSpaces": {
+							"type": "boolean",
+							"title": "Indent with spaces",
+							"default": true
+						}
+					}
+				},
+				{
+					"title": "Cursor",
+					"settings": {
+						"editor.cursorStyle": {
+							"type": "choice",
+							"title": "Cursor style",
+							"default": "line",
+							"options": [
+								{ "value": "line", "label": "Line" },
+								{ "value": "block", "label": "Block" },
+								{ "value": "underline", "label": "Underline" }
+							]
+						},
+						"editor.cursorBlinking": {
+							"type": "choice",
+							"title": "Cursor blinking",
+							"default": "blink",
+							"options": [
+								{ "value": "blink", "label": "Blink" },
+								{ "value": "smooth", "label": "Smooth" },
+								{ "value": "phase", "label": "Phase" },
+								{ "value": "expand", "label": "Expand" },
+								{ "value": "solid", "label": "Solid" }
+							]
+						},
+						"editor.smoothCaret": {
+							"type": "boolean",
+							"title": "Smooth cursor movement",
+							"default": false
+						},
+						"editor.smoothScrolling": {
+							"type": "boolean",
+							"title": "Smooth scrolling",
+							"default": false
+						}
+					}
+				},
+				{
+					"title": "Keys",
+					"settings": {
+						"editor.vim": {
+							"type": "boolean",
+							"title": "Vim keys",
+							"description": "Modal editing with a status line under the text; :w saves.",
+							"default": true
+						}
+					}
+				}
+			]
+		}
 	}
 }

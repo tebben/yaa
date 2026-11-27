@@ -14,6 +14,7 @@ import {
 	createWorktrees,
 	projectCommands,
 } from "./projects/index.ts";
+import { createSettings, settingsCommands } from "./settings/index.ts";
 import { createTerminalLinks } from "./terminals/index.ts";
 
 const describe = (reason: unknown) =>
@@ -35,6 +36,13 @@ export const createWorkbench = (core: CoreConnection) => {
 	const plugins = createPlugins({
 		client,
 		terminals: createTerminalLinks(core),
+		// Panels render only after `settings` exists.
+		settings: {
+			watch: (listener) => settings.watch(listener),
+			get loaded() {
+				return settings.loaded;
+			},
+		},
 		report,
 		// Panels render and commands run only after `projects` exists.
 		worktree: (id) =>
@@ -53,6 +61,14 @@ export const createWorkbench = (core: CoreConnection) => {
 		.kinds()
 		.then((contributed) => new Map([...panelKinds, ...contributed]));
 	const layouts = createLayouts({ client, kinds, fail: unreachable });
+	const settings = createSettings({
+		client,
+		manifests: plugins.manifests,
+		report,
+		restyle: () => {
+			for (const dock of layouts.docks.values()) dock.restyle();
+		},
+	});
 	const projects = createProjects({
 		client,
 		report,
@@ -83,6 +99,7 @@ export const createWorkbench = (core: CoreConnection) => {
 		textField: isTextField(document.activeElement),
 		"focus.parked": isParked(document.activeElement),
 		"palette.open": palette.open,
+		"settings.open": settings.open,
 	});
 	const commands = createCommands({ client, context });
 	const palette = createPalette({
@@ -117,6 +134,21 @@ export const createWorkbench = (core: CoreConnection) => {
 		}),
 		keybindings: [],
 	});
+	commands.register({
+		commands: settingsCommands({
+			settings,
+			enterMenu: () => {
+				menuOpen = true;
+				tick().then(() => regions.enter("menu"));
+			},
+			leave: () => {
+				if (regions.current() === "menu") {
+					tick().then(() => regions.enter("menu"));
+				}
+			},
+		}),
+		keybindings: [],
+	});
 	kinds.then((all) => {
 		commands.register({
 			commands: panelCommands(all, dock),
@@ -142,6 +174,7 @@ export const createWorkbench = (core: CoreConnection) => {
 		},
 		projects,
 		worktrees,
+		settings,
 		regions,
 		commands,
 		palette,

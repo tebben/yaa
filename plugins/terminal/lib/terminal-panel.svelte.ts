@@ -7,6 +7,10 @@ import {
 	createTerminalView,
 	type TerminalView,
 } from "./terminal-view.svelte.ts";
+import {
+	type TerminalSettings,
+	terminalSettings,
+} from "./xterm-options.svelte.ts";
 
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
@@ -30,10 +34,25 @@ export const createTerminalPanel = (panel: PanelContext) => {
 	// Focus was asked for while there was no terminal to give it to.
 	let wanted = false;
 
+	// The latest settings, which come before the panel renders.
+	let settings: TerminalSettings | undefined;
+	panel.settings.watch((values) => {
+		settings = terminalSettings.parse(values);
+		for (const each of views.values()) each.configure(settings);
+	});
+
 	const view = (id: string) => {
 		let found = views.get(id);
 		if (found === undefined) {
-			found = createTerminalView({ id, terminals: panel.terminals, fail });
+			if (settings === undefined) {
+				throw new Error("A terminal shows before its settings");
+			}
+			found = createTerminalView({
+				id,
+				terminals: panel.terminals,
+				settings,
+				fail,
+			});
 			views.set(id, found);
 		}
 		return found;

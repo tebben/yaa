@@ -1,0 +1,14 @@
+# 0038 Settings screen: specs core and plugins declare, written back to settings.json
+
+Status: decided, 2026-11-27.
+
+Context: settings.json had a schema per setting but no page, and plugins could not declare settings or read them. The settings screen was moved ahead of its milestone so new features can add their options as they land, and so appearance changes can be tried in the running app.
+
+Decision:
+- **One spec format.** Every setting has a spec: a title, an optional description, a type (boolean, number with min, max, step and unit, text, choice, colour, list of texts), a default, and optionally `enabledBy`, the switch it waits for. Core declares its settings with builders in `contracts` that make the Zod schema and register the spec with it; a plugin declares the same shapes as JSON under `contributes.settings`, which core turns into schemas with the same builders. Rendering arbitrary JSON Schema, VS Code's way, was rejected: the page would have to handle every schema shape, and core's settings would have been declared twice.
+- **Pages.** Core's pages and their groups are listed in `contracts`; each plugin with settings adds one page, keyed by its plugin id, with its keys under its own namespace.
+- **Writing.** The page sends `settings.set`; core checks the value against the schema, writes the file through a temporary file and a rename, and resolves it at once. A value equal to its default is taken out of the file, so the file holds only what the user changed. A file that does not parse is left alone and the write is refused: it is the user's to fix, and decision 0020 resets such a file to the defaults anyway.
+- **Appearance** settings override the theme's tokens as CSS variables on the root element, in the renderer, so they apply while the page is open and themes keep working underneath. A custom accent derives `accentSoft` and `focus` by mixing it over `surface` at the dark theme's own strengths. Text size scales the `text` and `leading` tokens rather than zooming the window: zoom needs main and the preload, and scales spacing too. Panel spacing 0 draws a hairline between panels instead of the gap.
+- **Plugins** read settings through `panel.settings.watch`, called with every value at once; a plugin panel renders only after the settings are read, so a panel never starts without them. The editor and terminal plugins declare their own settings; the editor's vim keys become one of them.
+
+Consequences: the settings page needs no comment-preserving writer, since settings.json is plain JSON (decision 0020). A plugin reading its settings parses them with its own schema, which a test keeps in step with its plugin.json. Project and worktree layers (M6) will need the page to say which layer it writes to. Custom settings panels for plugins, which `docs/spec/03-plugins.md` allows, are not built yet.

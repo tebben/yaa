@@ -1,4 +1,6 @@
 import type { ITerminalOptions, ITheme } from "@xterm/xterm";
+import { fontStack } from "@yaa/ui";
+import * as z from "zod";
 
 // xterm's colours by the token each takes: the theme's terminal palette
 // (docs/spec/07-editor-files-terminal.md).
@@ -29,9 +31,26 @@ const colors = {
 	brightWhite: "terminal-bright-white",
 } as const;
 
-// The app's tokens as xterm's options, read from the page, so a theme that
-// changes the CSS variables changes the terminal.
-export const optionsFromTokens = (element: Element) => {
+// The terminal's settings, as plugin.json declares them; the app sends them
+// checked and with their defaults.
+export const terminalSettings = z.object({
+	"terminal.fontFamily": z.string(),
+	"terminal.fontSize": z.number(),
+	"terminal.lineHeight": z.number(),
+	"terminal.letterSpacing": z.number(),
+	"terminal.cursorStyle": z.enum(["block", "bar", "underline"]),
+	"terminal.cursorBlink": z.boolean(),
+});
+
+export type TerminalSettings = z.infer<typeof terminalSettings>;
+
+// xterm's options from the settings and the app's tokens, read from the
+// page, so a theme or setting that changes the CSS variables changes the
+// terminal.
+export const terminalOptions = (
+	element: Element,
+	settings: TerminalSettings,
+) => {
 	const styles = getComputedStyle(element);
 	const value = (name: string) => styles.getPropertyValue(name).trim();
 	const theme: ITheme = Object.fromEntries(
@@ -42,7 +61,14 @@ export const optionsFromTokens = (element: Element) => {
 	);
 	return {
 		theme,
-		fontFamily: value("--font-mono"),
-		fontSize: Number.parseFloat(value("--text-xs")),
+		fontFamily: fontStack(
+			settings["terminal.fontFamily"],
+			value("--font-mono"),
+		),
+		fontSize: settings["terminal.fontSize"],
+		lineHeight: settings["terminal.lineHeight"],
+		letterSpacing: settings["terminal.letterSpacing"],
+		cursorStyle: settings["terminal.cursorStyle"],
+		cursorBlink: settings["terminal.cursorBlink"],
 	} satisfies ITerminalOptions;
 };

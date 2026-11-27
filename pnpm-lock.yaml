@@ -566,6 +566,9 @@ importers:
       '@yaa/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@yaa/plugin-build':
         specifier: workspace:*
