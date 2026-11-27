@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import * as z from "zod";
-import { resolveKeybindings, resolveSettings } from "../settings.ts";
+import {
+	editSettingsText,
+	resolveKeybindings,
+	resolveSettings,
+} from "../settings.ts";
 
 const definitions = {
 	"editor.fontSize": z.number().int().min(6).default(13),
@@ -18,6 +22,30 @@ describe("resolveSettings", () => {
 			problems: [],
 		});
 		expect(resolveSettings(definitions, "  \n").values).toEqual(defaults);
+	});
+
+	it("is what the settings page writes, keeping the rest of the file", () => {
+		const text = JSON.stringify({ "editor.wrap": true, "old.key": 1 });
+		expect(JSON.parse(editSettingsText(text, "editor.fontSize", 15))).toEqual({
+			"editor.wrap": true,
+			"old.key": 1,
+			"editor.fontSize": 15,
+		});
+		expect(editSettingsText(text, "editor.wrap", undefined)).toBe(
+			'{\n\t"old.key": 1\n}\n',
+		);
+		expect(
+			JSON.parse(editSettingsText(undefined, "editor.wrap", true)),
+		).toEqual({ "editor.wrap": true });
+	});
+
+	it("refuses to write over a file that does not parse or is not an object", () => {
+		expect(() => editSettingsText("{", "editor.wrap", true)).toThrow(
+			/does not parse/,
+		);
+		expect(() => editSettingsText("[]", "editor.wrap", true)).toThrow(
+			/not a JSON object/,
+		);
 	});
 
 	it("applies valid values", () => {

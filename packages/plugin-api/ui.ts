@@ -149,6 +149,17 @@ export type PanelLogs = {
 	): Disposable;
 };
 
+// The app's settings, the ones the plugin contributes among them
+// (docs/spec/11-platform-services.md).
+export type PanelSettings = {
+	// Calls `listener` with every setting's value by key, defaults filled
+	// in: at once, since a panel renders only after they are read, and again
+	// after each change.
+	watch(
+		listener: (values: Readonly<Record<string, unknown>>) => void,
+	): Disposable;
+};
+
 // What one panel gets. Everything registered through it is disposed when the
 // panel closes.
 export type PanelContext = {
@@ -179,6 +190,7 @@ export type PanelContext = {
 	pick(source: PickSource): void;
 	readonly terminals: PanelTerminals;
 	readonly logs: PanelLogs;
+	readonly settings: PanelSettings;
 	// While focus is inside the element, keys go to it, except the ones the
 	// app keeps for itself (the `keyboard.terminalAppKeys` setting). For a
 	// terminal.

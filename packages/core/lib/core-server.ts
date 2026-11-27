@@ -3,12 +3,12 @@ import type { KeybindingsState } from "@yaa/contracts/keybindings";
 import { errorData, type Logger } from "@yaa/contracts/log";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import { createServer, type Server } from "@yaa/contracts/server";
-import type { SettingsState } from "@yaa/contracts/settings";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
 import type { RecentLogs } from "./log/recent-logs.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
 import type { Projects } from "./projects/projects.ts";
 import type { Worktrees } from "./projects/worktrees.ts";
+import type { AppSettings } from "./settings/app-settings.ts";
 import type { SettingsFile } from "./settings/watch-settings-file.ts";
 import type { StateTracker } from "./state/state-tracker.ts";
 import type { LayoutStore } from "./storage/layout-store.ts";
@@ -18,7 +18,7 @@ import type { Terminals } from "./terminals/terminals.ts";
 export type CoreServerOptions = {
 	log: Logger;
 	recentLogs: RecentLogs;
-	settings: SettingsFile<SettingsState>;
+	settings: AppSettings;
 	keybindings: SettingsFile<KeybindingsState>;
 	layouts: LayoutStore;
 	place: PlaceStore;
@@ -51,6 +51,10 @@ export const createCoreServer = ({
 		{
 			"logs.recent": () => recentLogs.list(),
 			"settings.get": () => settings.current(),
+			"settings.set": (change) => {
+				settings.set(change);
+				return {};
+			},
 			"keybindings.get": () => keybindings.current(),
 			"layout.get": ({ worktree }) => ({
 				layout: layouts.get(worktree) ?? null,

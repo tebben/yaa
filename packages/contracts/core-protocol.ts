@@ -21,7 +21,7 @@ import {
 	project,
 } from "./projects.ts";
 import { providerStatus } from "./providers.ts";
-import { settingsState } from "./settings.ts";
+import { settingChange, settingsState } from "./settings.ts";
 import {
 	terminal,
 	terminalOutput,
@@ -51,6 +51,10 @@ export const coreProtocol = defineProtocol({
 			}),
 		},
 		"settings.get": { params: z.object({}), result: settingsState },
+		// Writes one setting to settings.json; its default takes it out. Rejects
+		// a value its schema rejects, and a file that does not parse, which it
+		// leaves for the user to fix.
+		"settings.set": { params: settingChange, result: z.object({}) },
 		"keybindings.get": { params: z.object({}), result: keybindingsState },
 		// A worktree's dock layout as the renderer serialized it. Core stores
 		// it as opaque text; the renderer validates it before restoring it.

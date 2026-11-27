@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { coreEvent } from "@yaa/contracts/core-events";
 import { createLogger, errorData, type LogRecord } from "@yaa/contracts/log";
+import { pluginSettingDefinitions } from "@yaa/contracts/plugin-manifest";
 import type { PickTarget } from "@yaa/contracts/process-control";
 import type { Port } from "@yaa/contracts/protocol";
 import { coreSettings } from "@yaa/contracts/settings";
@@ -15,8 +16,8 @@ import { createPluginApiServer } from "./plugins/plugin-api-server.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
 import { createProjects } from "./projects/projects.ts";
 import { createWorktrees } from "./projects/worktrees.ts";
+import { createAppSettings } from "./settings/app-settings.ts";
 import { resolveKeybindings } from "./settings/resolve-keybindings.ts";
-import { resolveSettings } from "./settings/resolve-settings.ts";
 import { watchSettingsFile } from "./settings/watch-settings-file.ts";
 import { createStateTracker } from "./state/state-tracker.ts";
 import { createStepsRunner } from "./steps/worktree-steps.ts";
@@ -75,12 +76,6 @@ export const startCore = ({
 	const db = openDatabase(join(dataDir, "yaa.db"));
 	const states = createStateTracker(createEventLog(db, coreEvent));
 	states.append({ type: "core.started", pid: process.pid });
-	const settings = watchSettingsFile({
-		dir: dataDir,
-		name: "settings.json",
-		resolve: (text) => resolveSettings(coreSettings, text),
-		log,
-	});
 	const keybindings = watchSettingsFile({
 		dir: dataDir,
 		name: "keybindings.json",
@@ -92,6 +87,7 @@ export const startCore = ({
 	const worktrees = createWorktrees({
 		db,
 		git,
+		// Read only once a worktree is made, after `settings` exists.
 		settings: () => settings.current().values,
 		steps,
 		home: homedir(),
@@ -163,6 +159,19 @@ export const startCore = ({
 			watches.keep(new Set());
 			server.emit("plugins.reset", {});
 		},
+	});
+	// After the plugins, whose settings settings.json may hold too.
+	const settings = createAppSettings({
+		dir: dataDir,
+		definitions: {
+			...Object.fromEntries(
+				plugins.plugins.flatMap((plugin) =>
+					Object.entries(pluginSettingDefinitions(plugin)),
+				),
+			),
+			...coreSettings,
+		},
+		log,
 	});
 	const server = createCoreServer({
 		log,

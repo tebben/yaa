@@ -2,7 +2,7 @@ import { pluginFileUrl } from "@yaa/contracts/app-urls";
 import type { Keybinding } from "@yaa/contracts/keybindings";
 import type { PluginManifest } from "@yaa/contracts/plugin-manifest";
 import type { Worktree } from "@yaa/contracts/projects";
-import type { OpenFile, PickSource } from "@yaa/plugin-api/ui";
+import type { OpenFile, PanelSettings, PickSource } from "@yaa/plugin-api/ui";
 import type { DockController, PanelKind } from "@yaa/ui/dock";
 import type { Command } from "../commands/index.ts";
 import type { CoreConnection } from "../core-connection.ts";
@@ -16,6 +16,8 @@ import { loadPluginUi, type PluginUiModule } from "./plugin-ui.ts";
 type PluginsOptions = {
 	core: CoreConnection;
 	terminals: TerminalLinks;
+	// The settings, for panels: `loaded` settles once they are read.
+	settings: PanelSettings & { loaded: Promise<unknown> };
 	// Shows a failure the user should see, such as a command that failed.
 	report(message: string): void;
 	// A listed worktree, by id.
@@ -37,6 +39,7 @@ const message = (error: unknown) =>
 export const createPlugins = ({
 	core,
 	terminals,
+	settings,
 	report,
 	worktree,
 	openWorktree,
@@ -111,6 +114,7 @@ export const createPlugins = ({
 			const { context, dispose } = createPanelContext({
 				core,
 				terminals,
+				settings,
 				commands: panelCommands,
 				files: panelFiles,
 				openFile: (file) => openFile(found.id, file),
@@ -128,7 +132,9 @@ export const createPlugins = ({
 				),
 				worktree: found,
 			});
-			return { context, dispose, component: loadPanel(plugin, kind) };
+			// A panel hears the settings before it renders.
+			const component = settings.loaded.then(() => loadPanel(plugin, kind));
+			return { context, dispose, component };
 		},
 	};
 

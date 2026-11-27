@@ -1,4 +1,10 @@
-import { mkdirSync, readFileSync, watch } from "node:fs";
+import {
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	watch,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { FileProblem } from "@yaa/contracts/file-problem";
 import type { Logger } from "@yaa/contracts/log";
@@ -7,6 +13,11 @@ export type SettingsFile<T> = {
 	current(): T;
 	// Called after a save changes what the file resolves to.
 	onChange(listener: (value: T) => void): void;
+	// The file as it is on disk; undefined while there is none.
+	text(): string | undefined;
+	// Replaces the file, and resolves it at once rather than after the watch
+	// sees the save, so the listeners have heard of it when this returns.
+	write(text: string): void;
 };
 
 export type SettingsFileOptions<T> = {
@@ -79,6 +90,16 @@ export const watchSettingsFile = <T extends { problems: FileProblem[] }>({
 		current: () => value,
 		onChange: (listener) => {
 			listeners.add(listener);
+		},
+		text: () => readText(path),
+		// Renamed over the old file, so an editor that has it open, or the
+		// core's next read, never sees half of it.
+		write: (text) => {
+			const temporary = `${path}.${process.pid}.tmp`;
+			writeFileSync(temporary, text);
+			renameSync(temporary, path);
+			clearTimeout(timer);
+			reload();
 		},
 	};
 };

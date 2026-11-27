@@ -10,6 +10,7 @@
 		"./tabs": "./tabs.ts",
 		"./disk": "./disk.ts",
 		"./css-color": "./css-color.ts",
+		"./editor-options": "./editor-options.ts",
 		"./plugin.json": "./plugin.json"
 	},
 	"scripts": {
