@@ -5,6 +5,7 @@ import {
 	chatTitle,
 	configOption,
 	optionLabel,
+	optionsSummary,
 } from "./chat-summary.ts";
 import { createComposer } from "./composer.svelte.ts";
 import { createProviders } from "./providers.svelte.ts";
@@ -166,10 +167,10 @@ export const createChatPanel = (panel: PanelContext) => {
 			if (shown === undefined) return [];
 			return [
 				providers.title(shown.provider),
-				...(["model", "thought_level", "mode"] as const).flatMap((category) => {
-					const option = optionOf(category);
-					return option === undefined ? [] : [optionLabel(option)];
-				}),
+				...optionsSummary(
+					shown.transcript.config,
+					providers.permissionModes(shown.provider),
+				),
 			];
 		},
 		// The pickers the agent's options allow.

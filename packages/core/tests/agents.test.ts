@@ -1,3 +1,10 @@
+import {
+	agent as acpAgent,
+	ndJsonStream,
+	PROTOCOL_VERSION,
+	RequestError,
+	type Stream,
+} from "@agentclientprotocol/sdk/unstable";
 import type { AgentEvent } from "@yaa/contracts/agent-events";
 import { createLogger } from "@yaa/contracts/log";
 import { connectFakeAgent } from "@yaa/fake-agent";
@@ -146,6 +153,45 @@ describe("openAcpSession with the fake agent", () => {
 			type: "turn.end",
 			stopReason: "cancelled",
 		});
+	});
+});
+
+describe("openAcpSession with a signed-out agent", () => {
+	// Copilot CLI 1.0.116 signed out: a terminal login method, and every
+	// session refused with ACP's auth_required.
+	const signedOut = (): Stream => {
+		const toAgent = new TransformStream<Uint8Array, Uint8Array>();
+		const toClient = new TransformStream<Uint8Array, Uint8Array>();
+		acpAgent({ name: "signed-out" })
+			.onRequest("initialize", () => ({
+				protocolVersion: PROTOCOL_VERSION,
+				authMethods: [
+					{
+						type: "terminal",
+						id: "copilot-login",
+						name: "Log in with Copilot CLI",
+						description: "Run `copilot login` in the terminal",
+					},
+				],
+			}))
+			.onRequest("session/new", () => {
+				throw RequestError.authRequired();
+			})
+			.connect(ndJsonStream(toClient.writable, toAgent.readable));
+		return ndJsonStream(toAgent.writable, toClient.readable);
+	};
+
+	it("fails the start with how to sign in", async () => {
+		await expect(
+			openAcpSession({
+				agent: { stream: signedOut(), exited: new Promise(() => {}) },
+				cwd: "/fake",
+				log,
+				emit() {},
+			}),
+		).rejects.toThrow(
+			"The agent needs you to sign in. Run `copilot login` in the terminal",
+		);
 	});
 });
 

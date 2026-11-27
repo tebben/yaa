@@ -75,8 +75,7 @@ export const createStepsRunner = ({
 		{ phase, step }: Pick<Run, "phase" | "step">,
 		reason: string,
 	) => {
-		log.error(`${phase} failed: ${reason}`, {
-			worktree,
+		log.forWorktree(worktree).error(`${phase} failed: ${reason}`, {
 			phase,
 			step: step.name,
 		});

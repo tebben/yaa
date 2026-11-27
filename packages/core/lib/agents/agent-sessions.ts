@@ -7,6 +7,10 @@ import type {
 } from "@yaa/contracts/agent-events";
 import type { CoreEvent } from "@yaa/contracts/core-events";
 import type { Logger } from "@yaa/contracts/log";
+import {
+	applyPermissionMode,
+	type PermissionModeMapping,
+} from "@yaa/contracts/permission-modes";
 import type { Worktree } from "@yaa/contracts/projects";
 import { chatEvent } from "../state/chat-event.ts";
 import type { ChatStore } from "../storage/chat-store.ts";
@@ -18,8 +22,10 @@ import { workUnderWay } from "./work-under-way.ts";
 export type AgentSessionsOptions = {
 	// How to start a provider's agent in a folder, from its plugin.
 	launch(provider: string, cwd: string): Promise<AgentLaunch>;
+	// How the provider applies permission modes, if it does.
+	permissionModes(provider: string): PermissionModeMapping | undefined;
 	// A listed worktree, where its agents start; throws for one that is gone.
-	worktree(id: string): Pick<Worktree, "path" | "index">;
+	worktree(id: string): Pick<Worktree, "path" | "index" | "permissionMode">;
 	store: ChatStore;
 	// Logs the events the worktree's state is derived from.
 	record(event: CoreEvent): void;
@@ -55,6 +61,7 @@ const describe = (error: unknown) =>
 // (docs/spec/11-platform-services.md).
 export const createAgentSessions = ({
 	launch,
+	permissionModes,
 	worktree: listed,
 	store,
 	record,
@@ -106,14 +113,35 @@ export const createAgentSessions = ({
 		agent.stop();
 	};
 
-	// Starts the provider's agent in the worktree and opens a session on it,
-	// or resumes the agent's session `resume`.
+	// Puts the chat's agent in its worktree's permission mode, by the options
+	// it reported last (docs/spec/11-platform-services.md).
+	const applyMode = async (chat: Chat, acp: AcpSession) => {
+		const mapping = permissionModes(chat.provider);
+		if (mapping === undefined) return;
+		const mode = listed(chat.worktree).permissionMode;
+		const options =
+			chat.events.findLast((event) => event.type === "config")?.options ?? [];
+		const applied = applyPermissionMode(mapping, mode, options);
+		if (applied.action === "set") {
+			await acp.setConfig(mapping.option, applied.value);
+		} else if (applied.action === "missing") {
+			log
+				.forWorktree(chat.worktree)
+				.warn("the agent offers no value for the permission mode", {
+					provider: chat.provider,
+					mode,
+				});
+		}
+	};
+
+	// Starts the chat's agent in its worktree and opens a session on it, or
+	// resumes the agent's session `resume`, in the worktree's permission mode.
 	const open = async (
-		worktree: string,
-		provider: string,
+		chat: Chat,
 		emitEvent: (event: AgentEvent) => void,
 		resume?: string,
 	) => {
+		const { worktree, provider } = chat;
 		const how = await launch(provider, listed(worktree).path);
 		// Read again: the worktree may have been finished meanwhile.
 		const { path, index } = listed(worktree);
@@ -138,6 +166,10 @@ export const createAgentSessions = ({
 				acp.close();
 				throw new Error("The worktree was closed while its agent started");
 			}
+			await applyMode(chat, acp).catch((error: unknown) => {
+				acp.close();
+				throw error;
+			});
 			return { acp, agent };
 		} catch (error) {
 			stop(agent);
@@ -173,8 +205,7 @@ export const createAgentSessions = ({
 		if (chat.connection !== undefined) return chat.connection.ready;
 		push(id, chat, { type: "resuming" });
 		const ready = open(
-			chat.worktree,
-			chat.provider,
+			chat,
 			(event) => push(id, chat, event),
 			chat.agentSession,
 		);
@@ -208,9 +239,7 @@ export const createAgentSessions = ({
 		async start(worktree: string, provider: string): Promise<string> {
 			const id = randomUUID();
 			const chat: Chat = { worktree, provider, agentSession: "", events: [] };
-			const ready = open(worktree, provider, (event) =>
-				push(id, chat, event, chats.has(id)),
-			);
+			const ready = open(chat, (event) => push(id, chat, event, chats.has(id)));
 			const acp = await connect(chat, ready);
 			chat.agentSession = acp.id;
 			store.add({ id, worktree, provider, agentSession: acp.id });
@@ -260,6 +289,23 @@ export const createAgentSessions = ({
 		},
 		async setConfig(id: string, configId: string, value: string) {
 			await (await session(id)).setConfig(configId, value);
+		},
+		// After the worktree's permission mode changed: the agents running for
+		// it take it, and the others when they start.
+		async permissionModeChanged(worktree: string) {
+			await Promise.all(
+				[...chats.values()].flatMap((chat) =>
+					chat.worktree === worktree && chat.connection !== undefined
+						? [
+								chat.connection.ready.then(
+									(acp) => applyMode(chat, acp),
+									// Its start fails, and says why, on its own.
+									() => undefined,
+								),
+							]
+						: [],
+				),
+			);
 		},
 		// A chat without a running agent has no turn to stop.
 		cancel(id: string) {

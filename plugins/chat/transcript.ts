@@ -4,6 +4,7 @@ export {
 	chatTitle,
 	configOption,
 	optionLabel,
+	optionsSummary,
 } from "./lib/chat-summary.ts";
 export {
 	appendEvents,

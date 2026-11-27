@@ -92,6 +92,16 @@ export const projectCommands = ({
 		},
 	},
 	{
+		id: "worktree.permissionMode",
+		title: "Set permission mode",
+		category: "Worktree",
+		when: "worktree.open",
+		run: () => {
+			const { worktree } = projects;
+			if (worktree !== undefined) worktrees.pickPermissionMode(worktree);
+		},
+	},
+	{
 		id: "worktree.nextAttention",
 		title: "Next worktree that needs attention",
 		category: "Worktree",

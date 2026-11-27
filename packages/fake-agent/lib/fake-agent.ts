@@ -74,7 +74,9 @@ const configOptions = ({
 			]),
 	select("mode", "Mode", "mode", mode, [
 		{ value: "default", name: "Ask first" },
+		{ value: "acceptEdits", name: "Accept edits" },
 		{ value: "plan", name: "Plan" },
+		{ value: "bypassPermissions", name: "Allow all" },
 	]),
 ];
 

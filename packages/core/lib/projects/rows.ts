@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { permissionMode } from "@yaa/contracts/permission-modes";
 import type { Worktree } from "@yaa/contracts/projects";
 import * as z from "zod";
 
@@ -18,9 +19,11 @@ export const worktreeRow = z
 		path: z.string(),
 		idx: z.number(),
 		settled_at: z.number().nullable(),
+		permission_mode: permissionMode,
 	})
-	.transform(({ project_id, idx, settled_at, ...rest }) => ({
+	.transform(({ project_id, idx, settled_at, permission_mode, ...rest }) => ({
 		...rest,
+		permissionMode: permission_mode,
 		projectId: project_id,
 		index: idx,
 		settled: settled_at !== null,
@@ -28,7 +31,8 @@ export const worktreeRow = z
 
 export type WorktreeRow = z.infer<typeof worktreeRow>;
 
-export const WORKTREE_COLUMNS = "id, project_id, branch, path, idx, settled_at";
+export const WORKTREE_COLUMNS =
+	"id, project_id, branch, path, idx, settled_at, permission_mode";
 
 export const toWorktree = ({
 	id,
@@ -36,12 +40,14 @@ export const toWorktree = ({
 	path,
 	index,
 	settled,
+	permissionMode,
 }: WorktreeRow): Worktree => ({
 	id,
 	branch,
 	path,
 	index,
 	settled,
+	permissionMode,
 });
 
 // A leading ~ is the home folder.

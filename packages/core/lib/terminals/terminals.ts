@@ -156,7 +156,9 @@ export const createTerminals = ({
 				exited() {
 					// Not one that was closed, or ended with the core.
 					if (closed || running.get(id) !== terminal) return;
-					log.info("terminal ended", { terminal: id });
+					log
+						.forWorktree(terminal.worktree)
+						.info("terminal ended", { terminal: id });
 					close(id);
 				},
 			}),
@@ -203,7 +205,9 @@ export const createTerminals = ({
 				try {
 					look(id, terminal);
 				} catch (error) {
-					log.error("could not keep a terminal's directory", errorData(error));
+					log
+						.forWorktree(terminal.worktree)
+						.error("could not keep a terminal's directory", errorData(error));
 				}
 				stop(id);
 			}

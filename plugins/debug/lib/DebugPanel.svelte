@@ -63,7 +63,10 @@ const follow = followEnd(
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--spacing-1);
-	padding: var(--spacing-1) var(--spacing-2);
+	/* A ghost button pads its label by 7px, border included: this puts the
+	   first label on the 12px inset the lines start at. */
+	padding: var(--spacing-1) var(--spacing-2) var(--spacing-1)
+		calc(var(--spacing-1) + 1px);
 	border-bottom: 1px solid var(--color-border);
 }
 

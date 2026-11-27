@@ -8,7 +8,15 @@
 			{
 				"id": "claude",
 				"title": "Claude Code",
-				"capabilities": ["resume", "effort", "usage"]
+				"capabilities": ["resume", "effort", "usage"],
+				"permissionModes": {
+					"option": "mode",
+					"values": {
+						"ask": ["default"],
+						"risky": ["auto", "acceptEdits"],
+						"allow": ["bypassPermissions"]
+					}
+				}
 			}
 		]
 	}

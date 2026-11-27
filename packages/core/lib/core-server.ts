@@ -83,6 +83,11 @@ export const createCoreServer = ({
 			"worktrees.finish": ({ id, action, force }) =>
 				worktrees.finish(id, action, force),
 			"worktrees.reopen": ({ id }) => worktrees.reopen(id),
+			"worktrees.setPermissionMode": async ({ id, mode }) => {
+				worktrees.setPermissionMode(id, mode);
+				await agents.permissionModeChanged(id);
+				return {};
+			},
 			"worktrees.states": () => ({ states: states.states() }),
 			"worktrees.setDone": ({ id, done }) => {
 				states.append({ type: "worktree.done.set", worktree: id, done });
