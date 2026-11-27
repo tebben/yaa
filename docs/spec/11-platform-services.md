@@ -64,7 +64,10 @@ Core, plugin host, agent protocol and workflow logs go to one place with levels 
 
 - The core writes the file. Main and the plugin host send their lines to it, each line tagged with its source (main, core, plugin host, agent, workflow); a line main logs while the core restarts reaches the next core.
 - One JSON object per line in `yaa.log` in the app's log folder (`~/.config/yaa/logs` on Linux), written synchronously so the lines before a crash are on disk. The file rotates at 5 MB and the last three rotated files are kept (`yaa.1.log` is the newest).
+- A line may name the worktree it is about, such as a setup step's output, an agent's stderr and protocol, a terminal or a file watch.
 - Levels are debug, info, warn and error. Production writes info and above; dev mode writes debug too and echoes every line to the terminal. An uncaught exception in the core is logged before the core exits and main restarts it. A core that exits before it is ready, for example on a database from a newer app, is not restarted: main shows an error naming the log file and quits.
+- Core keeps the last 10,000 lines in memory at every level, debug included in production, numbered so a client that reads them while new ones arrive gets each once. They go with the core when it restarts; the file has the rest.
+- The debug panel, the built-in `debug` plugin, shows them as they arrive, at the end unless scrolled up: time, level, source, message and data. Filters pick a minimum level (info and above at first), one source or all, and the panel's worktree or all; each opens from the palette by command too.
 
 ## Plugin API versions and licence
 

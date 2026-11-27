@@ -5,6 +5,7 @@ import type { PickTarget } from "@yaa/contracts/process-control";
 import { createServer, type Server } from "@yaa/contracts/server";
 import type { SettingsState } from "@yaa/contracts/settings";
 import type { AgentSessions } from "./agents/agent-sessions.ts";
+import type { RecentLogs } from "./log/recent-logs.ts";
 import type { PluginManager } from "./plugins/plugins.ts";
 import type { Projects } from "./projects/projects.ts";
 import type { Worktrees } from "./projects/worktrees.ts";
@@ -16,6 +17,7 @@ import type { Terminals } from "./terminals/terminals.ts";
 
 export type CoreServerOptions = {
 	log: Logger;
+	recentLogs: RecentLogs;
 	settings: SettingsFile<SettingsState>;
 	keybindings: SettingsFile<KeybindingsState>;
 	layouts: LayoutStore;
@@ -42,10 +44,12 @@ export const createCoreServer = ({
 	states,
 	terminals,
 	pick,
+	recentLogs,
 }: CoreServerOptions): Server<typeof coreProtocol> => {
 	const server = createServer(
 		coreProtocol,
 		{
+			"logs.recent": () => recentLogs.list(),
 			"settings.get": () => settings.current(),
 			"keybindings.get": () => keybindings.current(),
 			"layout.get": ({ worktree }) => ({
@@ -147,6 +151,7 @@ export const createCoreServer = ({
 		},
 		{ onError: (error) => log.error("protocol error", errorData(error)) },
 	);
+	recentLogs.onAdd((line) => server.emit("logs.added", line));
 	settings.onChange((state) => server.emit("settings.changed", state));
 	keybindings.onChange((state) => server.emit("keybindings.changed", state));
 	const projectsChanged = () =>

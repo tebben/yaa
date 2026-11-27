@@ -18,7 +18,7 @@ describe("log file", () => {
 		const file = openLogFile({ dir, level: "info" });
 		const log = createLogger(file.write, "core", () => 0);
 		log.debug("hidden");
-		log.info("hello", { worktree: "w1" });
+		log.forWorktree("w1").info("hello", { step: "copy" });
 		log.error("broken");
 		file.close();
 		expect(lines(join(dir, "yaa.log"))).toEqual([
@@ -27,7 +27,8 @@ describe("log file", () => {
 				level: "info",
 				source: "core",
 				message: "hello",
-				data: { worktree: "w1" },
+				worktree: "w1",
+				data: { step: "copy" },
 			},
 			{
 				at: "1970-01-01T00:00:00.000Z",

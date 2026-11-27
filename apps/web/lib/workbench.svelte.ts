@@ -33,7 +33,7 @@ export const createWorkbench = (core: CoreConnection) => {
 		report(`Core unreachable: ${describe(reason)}`);
 
 	const plugins = createPlugins({
-		client,
+		core,
 		terminals: createTerminalLinks(core),
 		report,
 		// Panels render and commands run only after `projects` exists.

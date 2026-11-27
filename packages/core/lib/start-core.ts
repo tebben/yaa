@@ -10,6 +10,7 @@ import { createCoreServer } from "./core-server.ts";
 import { createWorktreeWatches } from "./files/worktree-watches.ts";
 import { createGitService } from "./git/git-service.ts";
 import { openLogFile } from "./log/log-file.ts";
+import { createRecentLogs } from "./log/recent-logs.ts";
 import { createPluginApiServer } from "./plugins/plugin-api-server.ts";
 import { createPluginManager } from "./plugins/plugins.ts";
 import { createProjects } from "./projects/projects.ts";
@@ -59,7 +60,12 @@ export const startCore = ({
 		level: dev ? "debug" : "info",
 		...(dev ? { echo: (line: string) => console.log(line) } : {}),
 	});
-	const log = createLogger(logFile.write, "core");
+	const recentLogs = createRecentLogs();
+	const write = (record: LogRecord) => {
+		logFile.write(record);
+		recentLogs.add(record);
+	};
+	const log = createLogger(write, "core");
 	// Logged, then fatal: main forks a new core.
 	process.on("uncaughtException", (error) => {
 		log.error("uncaught exception", errorData(error));
@@ -96,7 +102,7 @@ export const startCore = ({
 		store: createChatStore(db),
 		record: states.append,
 		log,
-		agentLog: createLogger(logFile.write, "agent"),
+		agentLog: createLogger(write, "agent"),
 		// Sessions emit only after a client starts one, once `server` exists.
 		emit: (event) => server.emit("agent.event", event),
 	});
@@ -147,7 +153,7 @@ export const startCore = ({
 		dev,
 		log,
 		requestHost: requestPluginHost,
-		write: logFile.write,
+		write,
 		serve: pluginApi.connect,
 		// A host runs only once a client or startup asks for a plugin, and
 		// `server` exists before either hears from it.
@@ -159,6 +165,7 @@ export const startCore = ({
 	});
 	const server = createCoreServer({
 		log,
+		recentLogs,
 		settings,
 		keybindings,
 		layouts: createLayoutStore(db),
@@ -176,6 +183,6 @@ export const startCore = ({
 	return {
 		connect: server.connect,
 		attachPluginHost: plugins.attachHost,
-		log: logFile.write,
+		log: write,
 	};
 };

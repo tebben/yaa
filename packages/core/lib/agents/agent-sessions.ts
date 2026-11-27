@@ -123,7 +123,7 @@ export const createAgentSessions = ({
 				env: { ...how.env, YAA_WORKTREE_INDEX: String(index) },
 			},
 			cwd: path,
-			log: agentLog,
+			log: agentLog.forWorktree(worktree),
 		});
 		agents.set(agent, worktree);
 		try {
@@ -131,7 +131,7 @@ export const createAgentSessions = ({
 				agent,
 				cwd: path,
 				...(resume === undefined ? {} : { resume }),
-				log,
+				log: log.forWorktree(worktree),
 				emit: emitEvent,
 			});
 			if (!agents.has(agent)) {
@@ -180,7 +180,9 @@ export const createAgentSessions = ({
 		);
 		return connect(chat, ready).then(
 			(acp) => {
-				log.info("agent session resumed", { sessionId: id });
+				log
+					.forWorktree(chat.worktree)
+					.info("agent session resumed", { sessionId: id });
 				return acp;
 			},
 			(error: unknown) => {
@@ -216,7 +218,9 @@ export const createAgentSessions = ({
 				store.append(id, seq, event);
 			}
 			chats.set(id, chat);
-			log.info("agent session started", { sessionId: id, worktree, provider });
+			log
+				.forWorktree(worktree)
+				.info("agent session started", { sessionId: id, provider });
 			return id;
 		},
 		// Ends the agents of worktrees not in use, such as settled ones, whose

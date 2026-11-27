@@ -162,7 +162,7 @@ export const createTerminals = ({
 			}),
 		};
 		running.set(id, terminal);
-		log.info("terminal started", { terminal: id, worktree: record.worktree });
+		log.forWorktree(record.worktree).info("terminal started", { terminal: id });
 		return terminal;
 	};
 

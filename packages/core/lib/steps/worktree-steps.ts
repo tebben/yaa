@@ -105,7 +105,7 @@ export const createStepsRunner = ({
 			current.step = step;
 			return (text: string) => {
 				step.output = [...step.output, text].slice(-KEPT_LINES);
-				log.info(text, { worktree, phase, step: name });
+				log.forWorktree(worktree).info(text, { phase, step: name });
 			};
 		};
 		if (copies) {

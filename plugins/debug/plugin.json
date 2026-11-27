@@ -1,0 +1,32 @@
+{
+	"id": "debug",
+	"version": "0.1.0",
+	"ui": "dist/ui.js",
+	"styles": "dist/ui.css",
+	"contributes": {
+		"commands": [
+			{
+				"id": "debug.level",
+				"title": "Filter logs by level",
+				"category": "Debug",
+				"panel": "debug",
+				"reveal": true
+			},
+			{
+				"id": "debug.source",
+				"title": "Filter logs by source",
+				"category": "Debug",
+				"panel": "debug",
+				"reveal": true
+			},
+			{
+				"id": "debug.worktree",
+				"title": "Filter logs by worktree",
+				"category": "Debug",
+				"panel": "debug",
+				"reveal": true
+			}
+		],
+		"panels": [{ "id": "debug", "title": "Debug", "icon": "icon.svg" }]
+	}
+}
