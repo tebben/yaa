@@ -176,7 +176,7 @@
 						"editor.lineNumbers": {
 							"type": "choice",
 							"title": "Line numbers",
-							"default": "on",
+							"default": "relative",
 							"options": [
 								{ "value": "on", "label": "On" },
 								{ "value": "relative", "label": "Relative" },

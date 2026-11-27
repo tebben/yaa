@@ -15,12 +15,13 @@ Lands in: M3.
 - Diffs open as tabs too.
 - Plugins can add decorations, gutter actions and widgets, and commands scoped to the editor.
 - Vim keys are on by default, from monaco-vim (`docs/decisions/0031-editor-vim-keys.md`): a status line under the text shows the mode and takes what is typed after / and :, and :w saves. The app's keys come first, so those it binds, such as Ctrl B, H, J, K, L, P, S and W, do not reach vim. The `editor.vim` setting turns them and the status line off.
+- Line numbers count from the cursor's line by default, which shows its own number, so vim counts such as 5j read off the gutter; the `editor.lineNumbers` setting switches to absolute numbers or none.
 - The editor's settings page (`11-platform-services.md`) sets its font (empty follows the app's code font), font size, line height, ligatures, line wrap and its column, line numbers, whitespace, the current line's highlight, minimap, sticky scroll, indent guides, coloured bracket pairs, scrolling past the last line, indentation (detected, tab size, spaces), the cursor's style, blinking and movement, smooth scrolling and vim keys. A change applies to open editors at once.
 
 **Files panel**
 
 - A tree of the active worktree, folders first, navigable with arrow or vim keys: Down or J and Up or K move, Right or L expands a folder and then steps into it, Left or H collapses it or steps out, and Enter opens: a folder expands or collapses, a file opens in the editor (see Editor above).
-- A filter box narrows the tree to the files whose path matches, with the palette's matching, as a flat list of at most 100, best first. F or / focuses it, Enter or Down moves to the matches, Escape clears it.
+- A filter box narrows the tree to the files whose path matches, with the palette's matching, as a flat list of at most 100, best first. F or / focuses it, Enter or Down moves to the matches. Escape parks the box with the matches still shown, so J and K move through them, and a second Escape clears it.
 - The file list comes from `git ls-files` plus untracked files and is kept fresh by a file watcher (`docs/decisions/0029-worktree-plugin-api.md`), so large repositories list quickly and ignored files stay hidden unless toggled on with `.`. An ignored folder, a submodule and a repository inside the worktree are read when expanded, and the filter finds only the files read so far.
 - Files carry git status decorations: M modified, A added, R renamed, U untracked, ! conflicted, and a dot on a folder with changes in it. Deleted files are not listed.
 - New file (N), rename (R or F2) and delete (D or Delete) are in the panel's toolbar and the palette. New file and rename ask for the path in the worktree, so a rename can move; folders the path needs are made. Delete asks for confirmation and removes a folder with everything in it. Nothing is written over, and a path that leaves the worktree or touches `.git` is refused.

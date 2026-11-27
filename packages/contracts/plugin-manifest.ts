@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { keybinding } from "./keybindings.ts";
+import { permissionModeMapping } from "./permission-modes.ts";
 import { providerCapability } from "./providers.ts";
 import {
 	coreSettings,
@@ -60,6 +61,8 @@ const pluginProvider = z.strictObject({
 	id: z.string(),
 	title: z.string().min(1),
 	capabilities: z.array(providerCapability).default([]),
+	// Without it, the agent runs in its own mode whatever the worktree's.
+	permissionModes: permissionModeMapping.exactOptional(),
 });
 
 // The plugin's page of the settings screen: its settings, keyed

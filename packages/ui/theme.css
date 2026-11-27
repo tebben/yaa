@@ -34,7 +34,6 @@
 	--spacing-focus-side: 1px;
 	--spacing-kbd: 20px;
 	--spacing-control: 26px;
-	--spacing-control-lg: 32px;
 	--spacing-panel-header: 36px;
 	--spacing-header: 40px;
 	--spacing-footer: 28px;
@@ -46,10 +45,10 @@
 	--spacing-field: 240px;
 	--spacing-settings-page: 760px;
 	--spacing-palette-offset: 96px;
+	--spacing-modal-inset: 32px;
 	--color-chrome: #0b0d12;
 	--color-grid: #1a1e27;
 	--color-menu: #0f1218;
-	--color-rail: #12151c;
 	--color-surface: #12151c;
 	--color-panel-header: #0f1218;
 	--color-panel-header-hover: #13161e;

@@ -6,7 +6,7 @@ import { Palette } from "./palette/index.ts";
 import { setPluginPanels } from "./plugins/index.ts";
 import { ProjectMenu, ProjectOverview } from "./projects/index.ts";
 import { SettingsMenu, SettingsScreen } from "./settings/index.ts";
-import { Footer, Header, LeftMenu, Rail } from "./shell/index.ts";
+import { Footer, Header, LeftMenu, PanelBar } from "./shell/index.ts";
 import WorktreeDock from "./WorktreeDock.svelte";
 import type { Workbench } from "./workbench.svelte.ts";
 
@@ -38,7 +38,7 @@ const shortcut = (id: string) => {
 
 <TooltipProvider>
 	<div
-		class="grid h-screen grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_minmax(0,1fr)_auto]"
+		class="grid h-screen grid-cols-[auto_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto]"
 		data-focus-highlight={regions.highlighted || undefined}
 	>
 		{#if workbench.menuOpen}
@@ -56,7 +56,6 @@ const shortcut = (id: string) => {
 						{projects}
 						{worktrees}
 						addShortcut={shortcut("project.add")}
-						searchShortcut={shortcut("menu.search")}
 					/>
 					<div class="mt-2 flex border-t border-border px-1.5 pt-2">
 						<IconButton
@@ -75,7 +74,19 @@ const shortcut = (id: string) => {
 			menuShortcut={shortcut("menu.toggle")}
 			ontogglemenu={() => commands.run("menu.toggle")}
 			crumbs={settings.open ? settings.crumbs : projects.crumbs}
-		/>
+		>
+			{#snippet end()}
+				{#if projects.view === "worktree" && !settings.open}
+					<PanelBar
+						kinds={layouts.kinds}
+						open={workbench.dock?.open ?? []}
+						shortcut={(kind) => shortcut(`panel.toggle.${kind}`)}
+						ontoggle={(kind) => commands.run(`panel.toggle.${kind}`)}
+						onpeek={(kind) => workbench.dock?.peek(kind)}
+					/>
+				{/if}
+			{/snippet}
+		</Header>
 		<main class="col-start-2 row-start-2 min-h-0 bg-grid p-panel-gap">
 			{#if settings.open}
 				<SettingsScreen {settings} />
@@ -110,15 +121,6 @@ const shortcut = (id: string) => {
 			message={workbench.failure}
 			region={regions.region("footer", "horizontal")}
 		/>
-		{#if projects.view === "worktree" && !settings.open}
-			<Rail
-				kinds={layouts.kinds}
-				isOpen={(kind) => workbench.dock?.isOpen(kind) ?? false}
-				shortcut={(kind) => shortcut(`panel.toggle.${kind}`)}
-				ontoggle={(kind) => commands.run(`panel.toggle.${kind}`)}
-				region={regions.region("rail", "vertical")}
-			/>
-		{/if}
 	</div>
 	<Palette {palette} />
 </TooltipProvider>

@@ -1,3 +1,8 @@
+import {
+	currentPermissionMode,
+	PERMISSION_MODE_LABELS,
+	type PermissionModeMapping,
+} from "@yaa/contracts/permission-modes";
 import type { ConfigOption, Transcript, TranscriptItem } from "./transcript.ts";
 
 // What a list of chats calls one: the agent's title, or what was asked
@@ -31,6 +36,34 @@ export const configOption = (
 // The chosen value as the agent names it.
 export const optionLabel = ({ value, choices }: ConfigOption): string =>
 	choices?.find((choice) => choice.value === value)?.label ?? String(value);
+
+// The options the agent runs with, as the chat's header names them: model,
+// permission mode, effort, then the agent's mode where that is another
+// option. The option that carries the permission mode is named by the mode
+// it means, or as the agent names it for a mode of its own, such as
+// planning.
+export const optionsSummary = (
+	config: readonly ConfigOption[],
+	permissionModes: PermissionModeMapping | undefined,
+): string[] => {
+	const permission = config.find(({ id }) => id === permissionModes?.option);
+	const mode =
+		permissionModes && currentPermissionMode(permissionModes, config);
+	const byCategory = (category: string) =>
+		config.find((option) => option.category === category);
+	const shown = new Set([
+		byCategory("model"),
+		permission,
+		byCategory("thought_level"),
+		byCategory("mode"),
+	]);
+	return [...shown].flatMap((option) => {
+		if (option === undefined) return [];
+		return option === permission && mode !== undefined
+			? [PERMISSION_MODE_LABELS[mode]]
+			: [optionLabel(option)];
+	});
+};
 
 // How a turn that did not finish ended, as the transcript says it.
 export const stoppedText = (

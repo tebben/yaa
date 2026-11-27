@@ -22,12 +22,12 @@ A plugin is a folder with a manifest (`plugin.json`: id, version, activation eve
 
 | Point | What a plugin adds |
 | --- | --- |
-| Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the rail before the UI module loads |
+| Panels | a view in the grid, scoped to the app, a project or a worktree; its icon is an SVG file in the plugin folder, shown in the panel bar before the UI module loads |
 | Header and footer items | components in named slots |
 | Commands and keybindings | actions in the palette, default keys |
 | Settings | a page of the settings screen, rendered from the specs of its settings (`11-platform-services.md`); a custom panel instead (proposed) |
 | Connectors | an issue-tracker or source-control implementation |
-| Agent providers | detection, spawn configuration, capabilities and models for an agent CLI; core runs the process |
+| Agent providers | detection, spawn configuration, capabilities, permission mode mapping and models for an agent CLI; core runs the process |
 | Chat renderers | custom rendering for a message part or tool-call kind |
 | Editor extensions | Monaco decorations, gutter actions, widgets |
 | Context menu items | actions on files, worktrees, issues and messages |
@@ -53,11 +53,11 @@ Backend plugin code runs in a separate plugin host process, so a crashing plugin
 
 - Core starts the host on first use and talks to it over its own typed protocol in `contracts`: activate a plugin, run a command, and the host's log lines. Backend commands run in the host; the palette and keys reach them through core. The same port carries the plugin API's requests from the host to core.
 - When the host crashes, core forgets what it had activated and starts a new host on the next use, at once if an `onStartup` plugin needs one. After 3 crashes within a minute it stops restarting the host until yaa restarts, and plugin commands fail with that reason in the footer.
-- A UI module loads when one of its panels first renders. A plugin's panel with the id of one of the app's placeholder panels takes its place in the rail.
+- A UI module loads when one of its panels first renders. A plugin's panel with the id of one of the app's placeholder panels takes its place in the panel bar.
 
 **Plugin UI in the renderer**
 
-- Plugin UI runs on the app's single Svelte runtime and the app's `ui` package, never a bundled copy. Two Svelte runtimes in one page break context and reactivity. The app exposes a registry of the shared modules' real namespaces (every public client entry of `svelte`, the private entries compiled code imports, and `ui`), and the yaa plugin build compiles a plugin's imports of them into reads from that registry. Import maps do not work, because compiled Svelte code reads live bindings from the runtime (`docs/decisions/0015-plugin-ui-loading.md`).
+- Plugin UI runs on the app's single Svelte runtime and the app's `ui` package, never a bundled copy. Two Svelte runtimes in one page break context and reactivity. The app exposes a registry of the shared modules' real namespaces (every public client entry of `svelte`, the private entries compiled code imports, and the `ui` package's `@yaa/ui` and `@yaa/ui/focus`), and the yaa plugin build compiles a plugin's imports of them into reads from that registry. Import maps do not work, because compiled Svelte code reads live bindings from the runtime (`docs/decisions/0015-plugin-ui-loading.md`).
 - The plugin build (esbuild plus the Svelte compiler) compiles in runes mode and stamps the Svelte version into the output. The loader runs a plugin only on the exact Svelte version it was built with; on a mismatch the plugin manager refuses it and shows the command that rebuilds it. A plugin folder ships its built output beside its source, and third-party plugins are rebuilt when an app upgrade changes Svelte.
 - The app's Tailwind CSS is compiled at app build time, so it does not contain classes that only a plugin uses. Plugins never rely on Tailwind classes: they style with `ui` components, the token CSS variables and scoped `<style>` blocks, which the plugin build extracts into one CSS file declared in the manifest.
 - Plugin UI modules, styles and icons are served from `yaa://plugins/<id>/`, which the renderer's CSP allows. The app renders each plugin panel inside its own tree, so context reaches it, wrapped in an error boundary keyed by the plugin version, so a plugin that throws shows an error in its panel and a fixed version renders again. Until hot reload (M3) the boundary is the dock's, around every panel.

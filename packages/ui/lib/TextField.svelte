@@ -1,20 +1,16 @@
 <script lang="ts">
-import type { Snippet } from "svelte";
 import type { HTMLInputAttributes } from "svelte/elements";
 import Icon from "./Icon.svelte";
 import type { IconSource } from "./icon-source.ts";
 
-// A one-line text input, with an icon before the text and, as `children`,
-// whatever follows it. Other attributes, attachments included, go to the
-// input.
+// A one-line text input, with an icon before the text. Other attributes,
+// attachments included, go to the input.
 let {
 	icon,
-	children,
 	value = $bindable(""),
 	...input
 }: Omit<HTMLInputAttributes, "class" | "children"> & {
 	icon?: IconSource;
-	children?: Snippet;
 } = $props();
 </script>
 
@@ -30,5 +26,4 @@ let {
 		{...input}
 		bind:value
 	>
-	{@render children?.()}
 </div>

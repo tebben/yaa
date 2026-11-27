@@ -1,0 +1,228 @@
+diff --git a/dist/package/main.cjs.js b/dist/package/main.cjs.js
+index 77c46d35a30b977c6e788ffefff428e17e59e12b..73d766c431ec3038a1604ccc9fee739194784b14 100644
+--- a/dist/package/main.cjs.js
++++ b/dist/package/main.cjs.js
+@@ -1233,6 +1233,13 @@ let Sizing;
+ 		};
+ 	}
+ 	_Sizing.Invisible = Invisible;
++	function Proportional(size) {
++		return {
++			type: "proportional",
++			size
++		};
++	}
++	_Sizing.Proportional = Proportional;
+ })(Sizing || (Sizing = {}));
+ var Splitview = class {
+ 	get contentSize() {
+@@ -1489,6 +1496,7 @@ var Splitview = class {
+ 				splitTarget.size = half;
+ 			} else viewSize = this.getViewSize(size.index) / 2;
+ 		} else if (size.type === "invisible") viewSize = { cachedVisibleSize: size.cachedVisibleSize };
++		else if (size.type === "proportional") viewSize = size.size ?? Math.round(this.size / (this.viewItems.length + 1));
+ 		else viewSize = view.minimumSize;
+ 		const disposable = view.onDidChange((newSize) => this.onDidChange(viewItem, newSize.size));
+ 		const viewItem = new ViewItem(container, view, viewSize, { dispose: () => {
+@@ -1571,10 +1579,33 @@ var Splitview = class {
+ 			this.sashContainer.appendChild(sash);
+ 			this.sashes.push(sashItem);
+ 		}
+-		if (!skipLayout) this.relayout([index]);
++		if (!skipLayout && typeof size !== "number" && size.type === "proportional") this.layoutProportionally(index, viewSize);
++		else if (!skipLayout) this.relayout([index]);
+ 		if (!skipLayout && typeof size !== "number" && size.type === "distribute") this.distributeViewSizes();
+ 		this._onDidAddView.fire(view);
+ 	}
++	/**
++	* Lays the views out by their saved proportions, after the view at `added`
++	* came in at `size`, or after one was removed: the others keep their shares
++	* of each other. Without proportions to keep, as in an empty view, it lays
++	* them out as before.
++	*/
++	layoutProportionally(added, size) {
++		const proportions = this._proportions;
++		const expected = added === void 0 ? this.viewItems.length : this.viewItems.length - 1;
++		if (!this.proportionalLayout || !proportions || proportions.length !== expected || this.size <= 0) {
++			if (added === void 0) this.relayout();
++			else this.relayout([added]);
++			return;
++		}
++		if (added !== void 0) {
++			const share = clamp(size / this.size, 0, 1);
++			for (let i = 0; i < proportions.length; i++) if (typeof proportions[i] === "number") proportions[i] *= 1 - share;
++			proportions.splice(added, 0, share);
++		}
++		this.layout(this.size, this.orthogonalSize);
++		this.saveProportions();
++	}
+ 	distributeViewSizes() {
+ 		const flexibleViewItems = [];
+ 		let flexibleSize = 0;
+@@ -1596,7 +1627,11 @@ var Splitview = class {
+ 			const sashIndex = Math.max(index - 1, 0);
+ 			this.sashes.splice(sashIndex, 1)[0].disposable();
+ 		}
+-		if (!skipLayout) this.relayout();
++		if ((sizing === null || sizing === void 0 ? void 0 : sizing.type) === "proportional") {
++			if (this._proportions && this._proportions.length === this.viewItems.length + 1) this._proportions.splice(index, 1);
++			else this._proportions = void 0;
++			if (!skipLayout) this.layoutProportionally();
++		} else if (!skipLayout) this.relayout();
+ 		if ((sizing === null || sizing === void 0 ? void 0 : sizing.type) === "distribute") this.distributeViewSizes();
+ 		this._onDidRemoveView.fire(viewItem.view);
+ 		return viewItem.view;
+@@ -3083,7 +3118,7 @@ var BaseGrid = class extends Resizable {
+ 	doRemoveGroup(group, options) {
+ 		if (!this._groups.has(group.id)) throw new Error("invalid operation");
+ 		const item = this._groups.get(group.id);
+-		const view = this.gridview.remove(group, Sizing.Distribute);
++		const view = this.gridview.remove(group, Sizing.Proportional());
+ 		if (item && !(options === null || options === void 0 ? void 0 : options.skipDispose)) {
+ 			item.disposable.dispose();
+ 			item.value.dispose();
+@@ -17670,7 +17705,7 @@ var DockviewComponent = class extends BaseGrid {
+ 		for (const member of members) member.model.location = { type: "floating" };
+ 		if (!(options === null || options === void 0 ? void 0 : options.skipActiveGroup)) this.doSetGroupAndPanelActive(anchorGroup);
+ 	}
+-	orthogonalize(position, options) {
++	orthogonalize(position, options, size) {
+ 		this.gridview.normalize();
+ 		switch (position) {
+ 			case "top":
+@@ -17686,9 +17721,9 @@ var DockviewComponent = class extends BaseGrid {
+ 		switch (position) {
+ 			case "top":
+ 			case "left":
+-			case "center": return this.createGroupAtLocation([0], void 0, options);
++			case "center": return this.createGroupAtLocation([0], Sizing.Proportional(size), options);
+ 			case "bottom":
+-			case "right": return this.createGroupAtLocation([this.gridview.length], void 0, options);
++			case "right": return this.createGroupAtLocation([this.gridview.length], Sizing.Proportional(size), options);
+ 			default: throw new Error(`dockview: unsupported position ${position}`);
+ 		}
+ 	}
+@@ -18565,7 +18600,8 @@ var DockviewComponent = class extends BaseGrid {
+ 				throw new Error(`dockview: referenceGroup '${referenceId}' does not exist`);
+ 			}
+ 		} else {
+-			const group = this.orthogonalize(directionToPosition(options.position.direction));
++			const edge = directionToPosition(options.position.direction);
++			const group = this.orthogonalize(edge, void 0, edge === "left" || edge === "right" ? initial.width : initial.height);
+ 			const panel = this.createPanel(options, group);
+ 			group.model.openPanel(panel, {
+ 				skipSetActive: shouldSkipSetActive(group),
+diff --git a/dist/package/main.esm.mjs b/dist/package/main.esm.mjs
+index 8dd6bccf723ccb86c7307a27b29c24e366c42408..95756b82874c2ed2b5e63baf2911889260d91684 100644
+--- a/dist/package/main.esm.mjs
++++ b/dist/package/main.esm.mjs
+@@ -1231,6 +1231,13 @@ let Sizing;
+ 		};
+ 	}
+ 	_Sizing.Invisible = Invisible;
++	function Proportional(size) {
++		return {
++			type: "proportional",
++			size
++		};
++	}
++	_Sizing.Proportional = Proportional;
+ })(Sizing || (Sizing = {}));
+ var Splitview = class {
+ 	get contentSize() {
+@@ -1487,6 +1494,7 @@ var Splitview = class {
+ 				splitTarget.size = half;
+ 			} else viewSize = this.getViewSize(size.index) / 2;
+ 		} else if (size.type === "invisible") viewSize = { cachedVisibleSize: size.cachedVisibleSize };
++		else if (size.type === "proportional") viewSize = size.size ?? Math.round(this.size / (this.viewItems.length + 1));
+ 		else viewSize = view.minimumSize;
+ 		const disposable = view.onDidChange((newSize) => this.onDidChange(viewItem, newSize.size));
+ 		const viewItem = new ViewItem(container, view, viewSize, { dispose: () => {
+@@ -1569,10 +1577,33 @@ var Splitview = class {
+ 			this.sashContainer.appendChild(sash);
+ 			this.sashes.push(sashItem);
+ 		}
+-		if (!skipLayout) this.relayout([index]);
++		if (!skipLayout && typeof size !== "number" && size.type === "proportional") this.layoutProportionally(index, viewSize);
++		else if (!skipLayout) this.relayout([index]);
+ 		if (!skipLayout && typeof size !== "number" && size.type === "distribute") this.distributeViewSizes();
+ 		this._onDidAddView.fire(view);
+ 	}
++	/**
++	* Lays the views out by their saved proportions, after the view at `added`
++	* came in at `size`, or after one was removed: the others keep their shares
++	* of each other. Without proportions to keep, as in an empty view, it lays
++	* them out as before.
++	*/
++	layoutProportionally(added, size) {
++		const proportions = this._proportions;
++		const expected = added === void 0 ? this.viewItems.length : this.viewItems.length - 1;
++		if (!this.proportionalLayout || !proportions || proportions.length !== expected || this.size <= 0) {
++			if (added === void 0) this.relayout();
++			else this.relayout([added]);
++			return;
++		}
++		if (added !== void 0) {
++			const share = clamp(size / this.size, 0, 1);
++			for (let i = 0; i < proportions.length; i++) if (typeof proportions[i] === "number") proportions[i] *= 1 - share;
++			proportions.splice(added, 0, share);
++		}
++		this.layout(this.size, this.orthogonalSize);
++		this.saveProportions();
++	}
+ 	distributeViewSizes() {
+ 		const flexibleViewItems = [];
+ 		let flexibleSize = 0;
+@@ -1594,7 +1625,11 @@ var Splitview = class {
+ 			const sashIndex = Math.max(index - 1, 0);
+ 			this.sashes.splice(sashIndex, 1)[0].disposable();
+ 		}
+-		if (!skipLayout) this.relayout();
++		if ((sizing === null || sizing === void 0 ? void 0 : sizing.type) === "proportional") {
++			if (this._proportions && this._proportions.length === this.viewItems.length + 1) this._proportions.splice(index, 1);
++			else this._proportions = void 0;
++			if (!skipLayout) this.layoutProportionally();
++		} else if (!skipLayout) this.relayout();
+ 		if ((sizing === null || sizing === void 0 ? void 0 : sizing.type) === "distribute") this.distributeViewSizes();
+ 		this._onDidRemoveView.fire(viewItem.view);
+ 		return viewItem.view;
+@@ -3081,7 +3116,7 @@ var BaseGrid = class extends Resizable {
+ 	doRemoveGroup(group, options) {
+ 		if (!this._groups.has(group.id)) throw new Error("invalid operation");
+ 		const item = this._groups.get(group.id);
+-		const view = this.gridview.remove(group, Sizing.Distribute);
++		const view = this.gridview.remove(group, Sizing.Proportional());
+ 		if (item && !(options === null || options === void 0 ? void 0 : options.skipDispose)) {
+ 			item.disposable.dispose();
+ 			item.value.dispose();
+@@ -17668,7 +17703,7 @@ var DockviewComponent = class extends BaseGrid {
+ 		for (const member of members) member.model.location = { type: "floating" };
+ 		if (!(options === null || options === void 0 ? void 0 : options.skipActiveGroup)) this.doSetGroupAndPanelActive(anchorGroup);
+ 	}
+-	orthogonalize(position, options) {
++	orthogonalize(position, options, size) {
+ 		this.gridview.normalize();
+ 		switch (position) {
+ 			case "top":
+@@ -17684,9 +17719,9 @@ var DockviewComponent = class extends BaseGrid {
+ 		switch (position) {
+ 			case "top":
+ 			case "left":
+-			case "center": return this.createGroupAtLocation([0], void 0, options);
++			case "center": return this.createGroupAtLocation([0], Sizing.Proportional(size), options);
+ 			case "bottom":
+-			case "right": return this.createGroupAtLocation([this.gridview.length], void 0, options);
++			case "right": return this.createGroupAtLocation([this.gridview.length], Sizing.Proportional(size), options);
+ 			default: throw new Error(`dockview: unsupported position ${position}`);
+ 		}
+ 	}
+@@ -18563,7 +18598,8 @@ var DockviewComponent = class extends BaseGrid {
+ 				throw new Error(`dockview: referenceGroup '${referenceId}' does not exist`);
+ 			}
+ 		} else {
+-			const group = this.orthogonalize(directionToPosition(options.position.direction));
++			const edge = directionToPosition(options.position.direction);
++			const group = this.orthogonalize(edge, void 0, edge === "left" || edge === "right" ? initial.width : initial.height);
+ 			const panel = this.createPanel(options, group);
+ 			group.model.openPanel(panel, {
+ 				skipSetActive: shouldSkipSetActive(group),

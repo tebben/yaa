@@ -7,6 +7,7 @@ import {
 } from "./agent-events.ts";
 import { keybindingsState } from "./keybindings.ts";
 import { defineProtocol } from "./lib/define.ts";
+import { permissionMode } from "./permission-modes.ts";
 import { pluginEvent } from "./plugin-host-protocol.ts";
 import { pluginId, pluginManifest } from "./plugin-manifest.ts";
 import {
@@ -131,6 +132,12 @@ export const coreProtocol = defineProtocol({
 		"worktrees.reopen": {
 			params: z.object({ id: z.string() }),
 			result: z.object({ problem: z.string().optional() }),
+		},
+		// Sets how far the worktree's agents go without asking, for the agents
+		// running now and those that start later.
+		"worktrees.setPermissionMode": {
+			params: z.object({ id: z.string(), mode: permissionMode }),
+			result: z.object({}),
 		},
 		// The states derived from core's events; `worktrees.statesChanged`
 		// carries them again after each change.

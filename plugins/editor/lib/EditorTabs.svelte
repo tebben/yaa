@@ -1,6 +1,5 @@
 <script lang="ts">
-import File from "@lucide/svelte/icons/file";
-import { TabStrip } from "@yaa/ui";
+import { FileIcon, TabStrip } from "@yaa/ui";
 import type { EditorPanelController } from "./editor-panel.svelte.ts";
 
 let { editor }: { editor: EditorPanelController } = $props();
@@ -9,9 +8,12 @@ let { editor }: { editor: EditorPanelController } = $props();
 <TabStrip
 	tabs={editor.tabs}
 	label="Open files"
-	icon={File}
 	empty="Editor"
 	onselect={editor.select}
 	ondblclick={editor.keep}
 	onclose={editor.close}
-/>
+>
+	{#snippet icon(tab)}
+		<FileIcon path={tab.id} />
+	{/snippet}
+</TabStrip>

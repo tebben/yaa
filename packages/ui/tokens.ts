@@ -36,7 +36,6 @@ export type TokenName =
 	| "spacing-focus-side"
 	| "spacing-kbd"
 	| "spacing-control"
-	| "spacing-control-lg"
 	| "spacing-panel-header"
 	| "spacing-header"
 	| "spacing-footer"
@@ -48,10 +47,10 @@ export type TokenName =
 	| "spacing-field"
 	| "spacing-settings-page"
 	| "spacing-palette-offset"
+	| "spacing-modal-inset"
 	| "color-chrome"
 	| "color-grid"
 	| "color-menu"
-	| "color-rail"
 	| "color-surface"
 	| "color-panel-header"
 	| "color-panel-header-hover"
@@ -134,7 +133,6 @@ export const tokenValues = {
 	"spacing-focus-side": "1px",
 	"spacing-kbd": "20px",
 	"spacing-control": "26px",
-	"spacing-control-lg": "32px",
 	"spacing-panel-header": "36px",
 	"spacing-header": "40px",
 	"spacing-footer": "28px",
@@ -146,10 +144,10 @@ export const tokenValues = {
 	"spacing-field": "240px",
 	"spacing-settings-page": "760px",
 	"spacing-palette-offset": "96px",
+	"spacing-modal-inset": "32px",
 	"color-chrome": "#0b0d12",
 	"color-grid": "#1a1e27",
 	"color-menu": "#0f1218",
-	"color-rail": "#12151c",
 	"color-surface": "#12151c",
 	"color-panel-header": "#0f1218",
 	"color-panel-header-hover": "#13161e",

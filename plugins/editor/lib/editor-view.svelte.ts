@@ -11,8 +11,12 @@ type GoTo = { line?: number | undefined; focus?: boolean | undefined };
 
 // The panel's one Monaco editor, showing one file's model at a time and
 // coming back to each where it was left, set up by the editor's settings,
-// with vim keys whose `:w` calls `save` while they are on.
-export const createEditorView = (save: () => void) => {
+// with vim keys whose `:w` calls `save` while they are on. `captureKeys`
+// gives the vim status line the keys typed after / and :.
+export const createEditorView = (
+	save: () => void,
+	captureKeys: Attachment<HTMLElement>,
+) => {
 	let view = $state.raw<editor.IStandaloneCodeEditor>();
 	const places = new Map<string, editor.ICodeEditorViewState | null>();
 	let shown: string | undefined;
@@ -71,6 +75,8 @@ export const createEditorView = (save: () => void) => {
 				text.className = "text";
 				status = document.createElement("div");
 				status.className = "vim";
+				// What is typed after / and : is vim's, Escape included.
+				const released = captureKeys(status);
 				element.replaceChildren(text, status);
 				const created = createEditor(text, options(element, settings));
 				view = created;
@@ -81,6 +87,7 @@ export const createEditorView = (save: () => void) => {
 					status = undefined;
 					shown = undefined;
 					created.dispose();
+					if (typeof released === "function") released();
 				};
 			})) satisfies Attachment<HTMLElement>,
 		// Takes changed settings, and the app's tokens again, which the

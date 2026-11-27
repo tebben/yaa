@@ -1,4 +1,5 @@
 import type { Context } from "@yaa/commands/when";
+import { isParked, isTextEntry, isTextField } from "@yaa/ui/focus";
 import { tick } from "svelte";
 import { appCommands, panelCommands } from "./app-commands.ts";
 import { createCommands, defaultKeybindings } from "./commands/index.ts";
@@ -15,15 +16,6 @@ import {
 } from "./projects/index.ts";
 import { createSettings, settingsCommands } from "./settings/index.ts";
 import { createTerminalLinks } from "./terminals/index.ts";
-
-// Keys typed here are text, so bindings such as shift+h leave them alone.
-const isTextEntry = (element: Element | null) =>
-	element instanceof HTMLInputElement ||
-	element instanceof HTMLTextAreaElement ||
-	(element instanceof HTMLElement &&
-		(element.isContentEditable ||
-			// An editor that takes text through the EditContext API.
-			("editContext" in element && Boolean(element.editContext))));
 
 const describe = (reason: unknown) =>
 	reason instanceof Error ? reason.message : String(reason);
@@ -63,7 +55,7 @@ export const createWorkbench = (core: CoreConnection) => {
 		dock: (id) => layouts.docks.get(id),
 		pick: (source) => palette.pick(source),
 	});
-	// The app's kinds in rail order, then the plugins'; a plugin's kind with
+	// The app's kinds in panel bar order, then the plugins'; a plugin's kind with
 	// an app kind's id replaces that placeholder where it stands.
 	const kinds = plugins
 		.kinds()
@@ -95,6 +87,7 @@ export const createWorkbench = (core: CoreConnection) => {
 	const context = (): Context => ({
 		"panel.kind": dock()?.activeKind,
 		"project.selected": projects.selected !== undefined,
+		"worktree.open": projects.worktree !== undefined,
 		"worktree.selected": (projects.worktree?.index ?? 0) > 0,
 		"worktree.done":
 			projects.worktree !== undefined &&
@@ -103,6 +96,8 @@ export const createWorkbench = (core: CoreConnection) => {
 		"focus.list": regions.list(),
 		"focus.highlight": regions.highlighted,
 		inputFocus: isTextEntry(document.activeElement),
+		textField: isTextField(document.activeElement),
+		"focus.parked": isParked(document.activeElement),
 		"palette.open": palette.open,
 		"settings.open": settings.open,
 	});

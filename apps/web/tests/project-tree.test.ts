@@ -13,6 +13,7 @@ const worktree = (id: string, index: number, settled = false): Worktree => ({
 	path: `/w/${id}`,
 	index,
 	settled,
+	permissionMode: "ask",
 });
 
 const projects: Project[] = [

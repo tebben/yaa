@@ -1,4 +1,5 @@
 import type { PanelContext } from "@yaa/plugin-api/ui";
+import { arrive, editField } from "@yaa/ui/focus";
 import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import { createFileEdits } from "./file-edits.svelte.ts";
@@ -39,7 +40,7 @@ export const createFilesPanel = (panel: PanelContext) => {
 		await tick();
 		const index = rows.findIndex((row) => row.path === path);
 		if (rows.length > 0) focusRow(Math.max(index, 0));
-		else field?.focus({ focusVisible: true });
+		else if (field !== undefined) arrive(field, { focusVisible: true });
 	};
 	// The index of the row focus is on; -1 when it is on none.
 	const focused = () =>
@@ -78,7 +79,7 @@ export const createFilesPanel = (panel: PanelContext) => {
 		"files.previous": () => {
 			const at = focused();
 			if (at > 0) focusRow(at - 1);
-			else field?.focus({ focusVisible: true });
+			else if (field !== undefined) arrive(field, { focusVisible: true });
 		},
 		// Opens a folder, then steps into it.
 		"files.expand": () => {
@@ -97,8 +98,9 @@ export const createFilesPanel = (panel: PanelContext) => {
 			else void focusPath(parentOf(row.path) || row.path);
 		},
 		"files.filter": () => {
-			field?.focus({ focusVisible: true });
-			field?.select();
+			if (field === undefined) return;
+			editField(field, { focusVisible: true });
+			field.select();
 		},
 		"files.new": edits.create,
 		"files.rename": edits.rename,

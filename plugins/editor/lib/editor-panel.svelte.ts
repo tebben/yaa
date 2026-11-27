@@ -39,7 +39,7 @@ export const createEditorPanel = (panel: PanelContext) => {
 		failure = describe(reason);
 	};
 
-	const view = createEditorView(() => saveActive());
+	const view = createEditorView(() => saveActive(), panel.captureKeys);
 	panel.settings.watch((values) =>
 		view.configure(editorSettings.parse(values)),
 	);

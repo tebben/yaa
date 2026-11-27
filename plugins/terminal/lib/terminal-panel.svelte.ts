@@ -142,7 +142,7 @@ export const createTerminalPanel = (panel: PanelContext) => {
 			return;
 		}
 		const shown = view(selected);
-		// Focus may be waiting on the panel itself, as after the rail opened it.
+		// Focus may be waiting on the panel itself, as after the panel bar opened it.
 		const waiting =
 			document.activeElement !== document.body &&
 			document.activeElement?.contains(screen);

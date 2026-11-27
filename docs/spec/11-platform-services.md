@@ -16,7 +16,7 @@ Lands in: M1 for the database, migrations and the event log; M2 for the rest.
 
 Lands in: M2 for permission modes; M4 for the keyring, with the first secret (Jira).
 
-- Each worktree has an agent permission mode (ask for everything, ask for risky actions, allow all) applied through the provider where the agent supports it, and shown in the chat header next to the model.
+- Each worktree has an agent permission mode (ask for everything, ask for risky actions, allow all), "ask for everything" until set from the palette. A provider applies it where the agent supports it, by mapping each mode to values of one of the agent's config options in its manifest. Core sets it when a chat's agent starts or resumes and when the worktree's mode changes; an agent that offers none of a mode's values stays in its own mode. The chat header shows, next to the model, the mode the agent is really in (`docs/decisions/0038-permission-modes.md`).
 - Permission requests from agents are events, so they can be answered in the chat, in a panel, or by a workflow step.
 - Secrets (Jira token, API keys) are stored in the operating system keyring, never in the JSON config or the repository.
 
@@ -60,7 +60,7 @@ Settings and keybindings are human-editable files with a schema, layered as app,
 
 Lands in: M3 (moved ahead of M6 so features add their options as they land: `docs/decisions/0038-settings-screen.md`).
 
-- Opened with Ctrl , or the settings button at the foot of the left menu, and closed with the same key or Back to app. While it is open the left menu lists its pages, core's (Appearance, Worktrees, Keyboard) and then one per plugin with settings, under a search field; the grid's place shows the page, the rail hides, and the header's path reads Settings, then the page. The grid keeps its state underneath.
+- Opened with Ctrl , or the settings button at the foot of the left menu, and closed with the same key or Back to app. While it is open the left menu lists its pages, core's (Appearance, Worktrees, Keyboard) and then one per plugin with settings, under a search field; the grid's place shows the page, the header's panel bar hides, and the header's path reads Settings, then the page. The grid keeps its state underneath.
 - A page has titled groups of settings. Each row shows the setting's title, description and control, and a reset button while the value is not the default. Controls follow the spec's type: a switch, a number with step buttons and its unit, a text field, side-by-side options for a choice of up to three and a list for more, a colour swatch with its hex value, or a grid of fields for a list of texts. A setting whose `enabledBy` switch is off is dimmed and disabled.
 - The search keeps the settings whose page, group, key, title or description hold every typed word, across all pages.
 - A change applies at once and is written to `settings.json` (`settings.set`); a value equal to its default is taken out of the file. A file that does not parse is left for the user to fix, and the change is refused with a message in the footer. The page lists the file's problems above the settings.

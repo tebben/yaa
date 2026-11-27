@@ -47,16 +47,34 @@ export const applyTheme = (element: Element) => {
 export const remeasureFonts = () =>
 	void document.fonts.ready.then(() => editor.remeasureFonts());
 
+// The width of the app's thin scrollbar (packages/ui/styles.css), measured,
+// since CSS names it only as thin.
+const scrollbarWidth = (within: HTMLElement) => {
+	const probe = document.createElement("div");
+	probe.style.cssText = "position: absolute; overflow: scroll; width: 50px";
+	within.append(probe);
+	const width = probe.offsetWidth - probe.clientWidth;
+	probe.remove();
+	return width;
+};
+
 export const createEditor = (
 	element: HTMLElement,
 	options: editor.IEditorOptions & editor.IGlobalEditorOptions,
 ): editor.IStandaloneCodeEditor => {
+	const scrollbar = scrollbarWidth(element);
 	applyTheme(element);
 	const created = editor.create(element, {
 		...options,
 		model: null,
 		theme: THEME,
 		automaticLayout: true,
+		// The app's thin scrollbar, not Monaco's wide one.
+		scrollbar: {
+			verticalScrollbarSize: scrollbar,
+			horizontalScrollbarSize: scrollbar,
+			useShadows: false,
+		},
 		// Menus and hovers would otherwise be cut off at the panel's edge.
 		fixedOverflowWidgets: true,
 	});
